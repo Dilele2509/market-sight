@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Layers, Repeat, Timer, Users } from "lucide-react";
 import { ChartContainer } from "@/components/ui/chart";
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const lifecycleData = [
   {
@@ -34,6 +35,8 @@ const lifecycleData = [
 ];
 
 export default function Segments() {
+  const isMobile = useIsMobile();
+
   return (
     <DashboardShell>
       <div className="flex flex-col gap-6">
@@ -76,40 +79,45 @@ export default function Segments() {
             <CardTitle>Lifecycle Stage Performance</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="h-[400px]">
-              <ChartContainer
-                config={{
-                  customers: { color: "#9b87f5" },
-                  gmv: { color: "#1EAEDB" },
-                  orders: { color: "#F97316" },
-                }}
-              >
-                <BarChart data={lifecycleData}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="stage" />
-                  <YAxis yAxisId="left" orientation="left" stroke="#9b87f5" />
-                  <YAxis yAxisId="right" orientation="right" stroke="#1EAEDB" />
-                  <Tooltip />
-                  <Bar
-                    yAxisId="left"
-                    dataKey="customers"
-                    fill="#9b87f5"
-                    name="Customers"
-                  />
-                  <Bar
-                    yAxisId="right"
-                    dataKey="gmv"
-                    fill="#1EAEDB"
-                    name="GMV"
-                  />
-                  <Bar
-                    yAxisId="left"
-                    dataKey="orders"
-                    fill="#F97316"
-                    name="Orders"
-                  />
-                </BarChart>
-              </ChartContainer>
+            <div className="w-full" style={{ height: isMobile ? "300px" : "400px" }}>
+              <ResponsiveContainer width="100%" height="100%">
+                <ChartContainer
+                  config={{
+                    customers: { color: "#9b87f5" },
+                    gmv: { color: "#1EAEDB" },
+                    orders: { color: "#F97316" },
+                  }}
+                >
+                  <BarChart
+                    data={lifecycleData}
+                    margin={isMobile ? { top: 5, right: 20, left: -20, bottom: 5 } : { top: 20, right: 30, left: 0, bottom: 5 }}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="stage" />
+                    <YAxis yAxisId="left" orientation="left" stroke="#9b87f5" />
+                    <YAxis yAxisId="right" orientation="right" stroke="#1EAEDB" />
+                    <Tooltip />
+                    <Bar
+                      yAxisId="left"
+                      dataKey="customers"
+                      fill="#9b87f5"
+                      name="Customers"
+                    />
+                    <Bar
+                      yAxisId="right"
+                      dataKey="gmv"
+                      fill="#1EAEDB"
+                      name="GMV"
+                    />
+                    <Bar
+                      yAxisId="left"
+                      dataKey="orders"
+                      fill="#F97316"
+                      name="Orders"
+                    />
+                  </BarChart>
+                </ChartContainer>
+              </ResponsiveContainer>
             </div>
           </CardContent>
         </Card>
@@ -123,17 +131,17 @@ export default function Segments() {
               <div className="space-y-4">
                 {lifecycleData.map((stage) => (
                   <div key={stage.stage} className="flex items-center justify-between">
-                    <div>
+                    <div className="min-w-[120px]">
                       <p className="font-medium">{stage.stage}</p>
                       <p className="text-sm text-muted-foreground">{stage.customers} customers</p>
                     </div>
-                    <div className="w-24 h-2 rounded-full bg-secondary overflow-hidden">
+                    <div className="flex-1 mx-4 h-2 rounded-full bg-secondary overflow-hidden">
                       <div
                         className="h-full bg-primary"
                         style={{ width: `${(stage.customers / 450) * 100}%` }}
                       />
                     </div>
-                    <span className="text-sm font-medium">
+                    <span className="text-sm font-medium min-w-[40px] text-right">
                       {Math.round((stage.customers / 450) * 100)}%
                     </span>
                   </div>
