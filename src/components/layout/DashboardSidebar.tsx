@@ -1,5 +1,5 @@
 
-import { Home, Users, PieChart, Layers, Settings } from "lucide-react";
+import { Home, Users, PieChart, Layers, Settings, Database } from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
@@ -32,6 +32,11 @@ const menuItems = [
     title: "Segmentation",
     icon: Layers,
     path: "/segments",
+  },
+  {
+    title: "Data Sync",
+    icon: Database,
+    path: "/sync",
   },
   {
     title: "Settings",

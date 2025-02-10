@@ -10,6 +10,7 @@ import Customers from "./pages/Customers";
 import RFM from "./pages/RFM";
 import Segments from "./pages/Segments";
 import Settings from "./pages/Settings";
+import Sync from "./pages/Sync";
 
 const queryClient = new QueryClient();
 
@@ -24,6 +25,7 @@ const App = () => (
           <Route path="/customers" element={<Customers />} />
           <Route path="/rfm" element={<RFM />} />
           <Route path="/segments" element={<Segments />} />
+          <Route path="/sync" element={<Sync />} />
           <Route path="/settings" element={<Settings />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
