@@ -52,9 +52,9 @@ export function DashboardSidebar() {
   return (
     <Sidebar className="border-r border-border/50">
       <SidebarContent>
-        <div className="p-6">
+        <a href="/" className="p-6">
           <h1 className="text-2xl font-semibold text-primary">RetailSight</h1>
-        </div>
+        </a>
         <SidebarGroup>
           <SidebarGroupLabel>Analytics</SidebarGroupLabel>
           <SidebarGroupContent>

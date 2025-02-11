@@ -83,9 +83,9 @@ export default function Segments() {
               <ResponsiveContainer width="100%" height="100%">
                 <ChartContainer
                   config={{
-                    customers: { color: "#9b87f5" },
-                    gmv: { color: "#1EAEDB" },
-                    orders: { color: "#F97316" },
+                    customers: { color: "#08C2FF" },
+                    gmv: { color: "#FCC737" },
+                    orders: { color: "#1F316F" },
                   }}
                 >
                   <BarChart
@@ -94,25 +94,25 @@ export default function Segments() {
                   >
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis dataKey="stage" />
-                    <YAxis yAxisId="left" orientation="left" stroke="#9b87f5" />
-                    <YAxis yAxisId="right" orientation="right" stroke="#1EAEDB" />
+                    <YAxis yAxisId="left" orientation="left" stroke="#08C2FF" />
+                    <YAxis yAxisId="right" orientation="right" stroke="#FCC737" />
                     <Tooltip />
                     <Bar
                       yAxisId="left"
                       dataKey="customers"
-                      fill="#9b87f5"
+                      fill="#08C2FF"
                       name="Customers"
                     />
                     <Bar
                       yAxisId="right"
                       dataKey="gmv"
-                      fill="#1EAEDB"
+                      fill="#FCC737"
                       name="GMV"
                     />
                     <Bar
                       yAxisId="left"
                       dataKey="orders"
-                      fill="#F97316"
+                      fill="#1F316F"
                       name="Orders"
                     />
                   </BarChart>

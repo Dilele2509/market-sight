@@ -67,7 +67,7 @@ export default function RFM() {
               <div className="h-[300px]">
                 <ChartContainer
                   config={{
-                    champions: { color: "#9b87f5" },
+                    champions: { color: "#08C2FF" },
                     loyal: { color: "#1EAEDB" },
                     risk: { color: "#F97316" },
                   }}
@@ -81,8 +81,8 @@ export default function RFM() {
                       type="monotone"
                       dataKey="champions"
                       stackId="1"
-                      stroke="#9b87f5"
-                      fill="#9b87f5"
+                      stroke="#08C2FF"
+                      fill="#08C2FF"
                     />
                     <Area
                       type="monotone"
