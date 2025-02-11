@@ -4,7 +4,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { ThemeProvider } from "@/components/ThemeProvider";
+import { ThemeProvider } from "@/components/dark-mode/ThemeProvider";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import Customers from "./pages/Customers";
@@ -17,7 +17,7 @@ const queryClient = new QueryClient();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <ThemeProvider defaultTheme="light" storageKey="app-theme">
+    <ThemeProvider defaultTheme="light" storageKey="vite-ui-theme">
       <TooltipProvider>
         <Toaster />
         <Sonner />

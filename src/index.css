@@ -1,33 +1,89 @@
-
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
- 
+
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
+    /* Light Mode */
+    --background: 0 0% 98%;
+    /* Nền sáng nhưng không trắng hoàn toàn */
+    --foreground: 222.2 47% 12%;
+    /* Văn bản tối nhưng không quá đen */
+
     --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+    --card-foreground: 222.2 47% 12%;
+
     --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
-    --primary: 262 85% 74%;
+    --popover-foreground: 222.2 47% 12%;
+
+    --primary: 262 85% 64%;
+    /* Giữ màu chủ đạo nhưng giảm độ sáng nhẹ */
     --primary-foreground: 210 40% 98%;
-    --secondary: 240 10% 97%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
-    --destructive: 0 84.2% 60.2%;
+
+    --secondary: 240 10% 90%;
+    /* Màu phụ giảm sáng */
+    --secondary-foreground: 222.2 47.4% 15%;
+    /* Giữ contrast tốt */
+
+    --muted: 210 30% 94%;
+    /* Màu nhạt hơn một chút */
+    --muted-foreground: 215.4 16.3% 40%;
+    /* Giảm độ sáng của chữ trên nền muted */
+
+    --accent: 262 60% 70%;
+    --accent-foreground: 222.2 47.4% 12%;
+
+    --destructive: 0 72% 55%;
+    /* Màu đỏ giảm sáng nhẹ */
     --destructive-foreground: 210 40% 98%;
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 262 85% 74%;
+
+    --border: 214.3 25% 85%;
+    /* Viền tối hơn một chút */
+    --input: 214.3 25% 85%;
+    --ring: 262 70% 60%;
+
     --radius: 0.75rem;
   }
+
+  .dark {
+    /* Dark Mode */
+    --background: 222.2 47% 10%;
+    /* Nền tối nhưng không quá đen */
+    --foreground: 210 40% 92%;
+    /* Văn bản sáng nhưng không trắng gắt */
+
+    --card: 220 40% 15%;
+    --card-foreground: 210 40% 90%;
+
+    --popover: 220 40% 18%;
+    --popover-foreground: 210 40% 90%;
+
+    --primary: 262 80% 60%;
+    /* Giữ màu chính nhưng tối hơn */
+    --primary-foreground: 210 40% 95%;
+
+    --secondary: 220 20% 25%;
+    --secondary-foreground: 210 40% 85%;
+
+    --muted: 220 15% 20%;
+    --muted-foreground: 220 15% 65%;
+
+    --accent: 262 60% 35%;
+    --accent-foreground: 210 40% 85%;
+
+    --destructive: 0 72% 45%;
+    /* Màu đỏ tối hơn để dịu mắt */
+    --destructive-foreground: 210 40% 95%;
+
+    --border: 220 15% 30%;
+    --input: 220 15% 25%;
+    --ring: 262 70% 50%;
+
+    --radius: 0.75rem;
+  }
+
 
   * {
     @apply border-border;
@@ -41,9 +97,9 @@
 
 @layer utilities {
   .glass-card {
-    @apply bg-white/80 backdrop-blur-sm border border-white/20 shadow-lg;
+    @apply backdrop-blur-sm border border-white/20 shadow-lg;
   }
-  
+
   .animate-in {
     animation: fade-in 0.5s ease-out;
   }

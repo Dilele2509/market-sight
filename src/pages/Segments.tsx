@@ -85,7 +85,7 @@ export default function Segments() {
                   config={{
                     customers: { color: "#08C2FF" },
                     gmv: { color: "#FCC737" },
-                    orders: { color: "#1F316F" },
+                    orders: { color: "#006BFF" },
                   }}
                 >
                   <BarChart
@@ -112,7 +112,7 @@ export default function Segments() {
                     <Bar
                       yAxisId="left"
                       dataKey="orders"
-                      fill="#1F316F"
+                      fill="#006BFF"
                       name="Orders"
                     />
                   </BarChart>

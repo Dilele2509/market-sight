@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/sidebar";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { useTheme } from "@/components/ThemeProvider";
+import { useTheme } from "@/components/dark-mode/ThemeProvider";
 
 const menuItems = [
   {
