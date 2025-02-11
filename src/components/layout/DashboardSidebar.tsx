@@ -1,5 +1,5 @@
 
-import { Home, Users, PieChart, Layers, Settings, Database } from "lucide-react";
+import { Home, Users, PieChart, Layers, Settings, Database, Moon, Sun } from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
@@ -9,8 +9,11 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  SidebarFooter,
 } from "@/components/ui/sidebar";
 import { useNavigate, useLocation } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import { useTheme } from "@/components/ThemeProvider";
 
 const menuItems = [
   {
@@ -48,6 +51,7 @@ const menuItems = [
 export function DashboardSidebar() {
   const navigate = useNavigate();
   const location = useLocation();
+  const { theme, setTheme } = useTheme();
 
   return (
     <Sidebar className="border-r border-border/50">
@@ -74,6 +78,26 @@ export function DashboardSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
+      <SidebarFooter className="p-4 border-t">
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+          className="w-full flex items-center justify-center gap-2"
+        >
+          {theme === "dark" ? (
+            <>
+              <Sun className="h-4 w-4" />
+              <span>Light Mode</span>
+            </>
+          ) : (
+            <>
+              <Moon className="h-4 w-4" />
+              <span>Dark Mode</span>
+            </>
+          )}
+        </Button>
+      </SidebarFooter>
     </Sidebar>
   );
 }
