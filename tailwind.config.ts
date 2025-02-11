@@ -26,9 +26,9 @@ export default {
         background: "hsl(var(--background))",
         foreground: "hsl(var(--foreground))",
         primary: {
-          DEFAULT: "#8B5CF6",
-          light: "#EDE9FE",
-          dark: "#7C3AED",
+          DEFAULT: "#3B82F6",
+          light: "#EFF6FF",
+          dark: "#2563EB",
         },
         secondary: {
           DEFAULT: "#F1F0FB",
@@ -76,3 +76,4 @@ export default {
   },
   plugins: [require("tailwindcss-animate")],
 } satisfies Config;
+
