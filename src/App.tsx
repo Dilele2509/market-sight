@@ -12,6 +12,7 @@ import RFM from "./pages/RFM";
 import Lifecycle from "./pages/Lifecycle";
 import Settings from "./pages/Settings";
 import Sync from "./pages/Sync";
+import Segmentation from "./pages/Segmentation";
 
 const queryClient = new QueryClient();
 
@@ -29,6 +30,7 @@ const App = () => (
             <Route path="/lifecycle" element={<Lifecycle />} />
             <Route path="/sync" element={<Sync />} />
             <Route path="/settings" element={<Settings />} />
+            <Route path="/segmentation" element={<Segmentation />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
