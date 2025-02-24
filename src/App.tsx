@@ -13,6 +13,7 @@ import Lifecycle from "./pages/Lifecycle";
 import Settings from "./pages/Settings";
 import Sync from "./pages/Sync";
 import Segmentation from "./pages/Segmentation";
+import DataModeling from "./pages/DataModeling";
 
 const queryClient = new QueryClient();
 
@@ -31,6 +32,7 @@ const App = () => (
             <Route path="/sync" element={<Sync />} />
             <Route path="/settings" element={<Settings />} />
             <Route path="/segmentation" element={<Segmentation />} />
+            <Route path="/data-modeling" element={<DataModeling />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>

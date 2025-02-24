@@ -1,5 +1,5 @@
 
-import { Home, Users, PieChart, Layers, RefreshCcwDot, Settings, Database, Moon, Sun, ChevronLeft, ChevronRight } from "lucide-react";
+import { Home, Users, PieChart, Layers, Settings, Database, Moon, Sun, ChevronLeft, ChevronRight, Table } from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
@@ -33,14 +33,14 @@ const menuItems = [
     path: "/rfm",
   },
   {
-    title: "Customer Lifecycle",
-    icon: RefreshCcwDot,
-    path: "/lifecycle",
-  },
-  {
     title: "Segmentation",
     icon: Layers,
     path: "/segmentation",
+  },
+  {
+    title: "Data Modeling",
+    icon: Table,
+    path: "/data-modeling",
   },
   {
     title: "Data Sync",
