@@ -15,7 +15,7 @@ interface Message {
 export default function Segmentation() {
   const [messages, setMessages] = useState<Message[]>([
     {
-      type: "ai",
+      type: "ai" as const,
       content: "Hello! I'm your AI assistant. I can help you create customer segments based on your data. How would you like to segment your customers?",
     },
   ]);
@@ -25,11 +25,10 @@ export default function Segmentation() {
   const handleSendMessage = () => {
     if (!inputMessage.trim()) return;
 
-    // Add user message
-    const newMessages = [
+    const newMessages: Message[] = [
       ...messages,
-      { type: "user", content: inputMessage },
-      { type: "ai", content: "I understand you want to create a segment. Could you provide more details about the criteria you'd like to use?" },
+      { type: "user" as const, content: inputMessage },
+      { type: "ai" as const, content: "I understand you want to create a segment. Could you provide more details about the criteria you'd like to use?" },
     ];
     setMessages(newMessages);
     setInputMessage("");

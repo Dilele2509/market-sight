@@ -1,3 +1,4 @@
+
 import { Home, Users, PieChart, Layers, Settings, Database, Moon, Sun, ChevronLeft, ChevronRight } from "lucide-react";
 import {
   Sidebar,
@@ -54,48 +55,65 @@ const DashboardSidebar = () => {
   const { theme, setTheme } = useTheme();
   const [isCollapsed, setIsCollapsed] = useState(false);
 
-  const toggleCollapse = () => {
-    setIsCollapsed(!isCollapsed);
-  };
-
   return (
-    <Sidebar isCollapsed={isCollapsed}>
+    <Sidebar>
       <SidebarContent>
-        <SidebarMenu>
-          <SidebarGroup>
-            <SidebarGroupLabel>Main</SidebarGroupLabel>
-            <SidebarGroupContent>
-              {menuItems.map((item) => (
-                <SidebarMenuItem
-                  key={item.title}
-                  isActive={location.pathname === item.path}
-                  onClick={() => navigate(item.path)}
-                >
-                  {item.title}
-                  <item.icon className="mr-2 h-4 w-4" />
-                </SidebarMenuItem>
-              ))}
-            </SidebarGroupContent>
-          </SidebarGroup>
-        </SidebarMenu>
-      </SidebarContent>
-      <SidebarFooter>
-        <div className="flex items-center justify-between p-4">
+        <div className="flex items-center justify-between p-6">
+          <div className={`${isCollapsed ? 'hidden' : 'block'}`}>
+            <h1 className="text-2xl font-semibold text-primary">RetailSight</h1>
+          </div>
           <Button
-            size="icon"
             variant="ghost"
-            onClick={() =>
-              setTheme(theme === "light" ? "dark" : "light")
-            }
+            size="icon"
+            onClick={() => setIsCollapsed(!isCollapsed)}
+            className="h-8 w-8"
           >
-            {theme === "light" ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4" />}
-            <span className="sr-only">Toggle theme</span>
-          </Button>
-          <Button size="icon" variant="ghost" onClick={toggleCollapse}>
-            {isCollapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
-            <span className="sr-only">Toggle sidebar</span>
+            {isCollapsed ? (
+              <ChevronRight className="h-4 w-4" />
+            ) : (
+              <ChevronLeft className="h-4 w-4" />
+            )}
           </Button>
         </div>
+        <SidebarGroup>
+          <SidebarGroupLabel>{!isCollapsed && "Analytics"}</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {menuItems.map((item) => (
+                <SidebarMenuItem key={item.path}>
+                  <SidebarMenuButton
+                    tooltip={isCollapsed ? item.title : undefined}
+                    onClick={() => navigate(item.path)}
+                    data-active={location.pathname === item.path}
+                  >
+                    <item.icon className="w-5 h-5" />
+                    {!isCollapsed && <span>{item.title}</span>}
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+      </SidebarContent>
+      <SidebarFooter className="p-4 border-t">
+        <Button
+          variant="ghost"
+          size={isCollapsed ? "icon" : "default"}
+          onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+          className="w-full flex items-center justify-center gap-2"
+        >
+          {theme === "dark" ? (
+            <>
+              <Sun className="h-4 w-4" />
+              {!isCollapsed && <span>Light Mode</span>}
+            </>
+          ) : (
+            <>
+              <Moon className="h-4 w-4" />
+              {!isCollapsed && <span>Dark Mode</span>}
+            </>
+          )}
+        </Button>
       </SidebarFooter>
     </Sidebar>
   );
