@@ -60,7 +60,7 @@ const DashboardSidebar = ({ isCollapsed, updateCollapsedStatus }) => {
   const { theme, setTheme } = useTheme();
 
   return (
-    <Sidebar>
+    <Sidebar className={`border-r border-border/50 transition-all duration-300 ${isCollapsed ? 'w-[80px]' : 'w-[240px]'}`}>
       <SidebarContent>
         <div className="flex items-center justify-between p-6">
           <div className={`${isCollapsed ? 'hidden' : 'block'}`}>

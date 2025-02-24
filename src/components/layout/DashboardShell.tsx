@@ -8,8 +8,10 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
 
   return (
     <SidebarProvider>
-      <div className="min-h-screen flex w-full bg-background">
-        <DashboardSidebar isCollapsed={isCollapsed} updateCollapsedStatus={setIsCollapsed} />
+      <div className={`min-h-screen flex w-full bg-background`}>
+        <div className={`duration-300 ${isCollapsed ? 'w-[80px]' : 'w-[240px]'}`}>
+          <DashboardSidebar isCollapsed={isCollapsed} updateCollapsedStatus={setIsCollapsed} />
+        </div>
         <main className="flex-1 p-6 overflow-auto">{children}</main>
       </div>
     </SidebarProvider>
