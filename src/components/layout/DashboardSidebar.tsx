@@ -1,5 +1,5 @@
 
-import { Home, Users, PieChart, Layers, Settings, Database, Moon, Sun, ChevronLeft, ChevronRight } from "lucide-react";
+import { Home, Users, PieChart, Layers, RefreshCcwDot, Settings, Database, Moon, Sun, ChevronLeft, ChevronRight } from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
@@ -33,6 +33,11 @@ const menuItems = [
     path: "/rfm",
   },
   {
+    title: "Customer Lifecycle",
+    icon: RefreshCcwDot,
+    path: "/lifecycle",
+  },
+  {
     title: "Segmentation",
     icon: Layers,
     path: "/segmentation",
@@ -49,11 +54,10 @@ const menuItems = [
   },
 ];
 
-const DashboardSidebar = () => {
+const DashboardSidebar = ({ isCollapsed, updateCollapsedStatus }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const { theme, setTheme } = useTheme();
-  const [isCollapsed, setIsCollapsed] = useState(false);
 
   return (
     <Sidebar>
@@ -65,7 +69,7 @@ const DashboardSidebar = () => {
           <Button
             variant="ghost"
             size="icon"
-            onClick={() => setIsCollapsed(!isCollapsed)}
+            onClick={() => updateCollapsedStatus(!isCollapsed)}
             className="h-8 w-8"
           >
             {isCollapsed ? (
