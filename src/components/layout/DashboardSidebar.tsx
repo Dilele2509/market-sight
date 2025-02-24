@@ -1,5 +1,5 @@
 
-import { Home, Users, PieChart, Layers, Settings, Database, Moon, Sun, ChevronLeft, ChevronRight, Table } from "lucide-react";
+import { Home, Users, PieChart, RefreshCcwDot, Layers, Settings, Database, Moon, Sun, ChevronLeft, ChevronRight, Table } from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
@@ -31,6 +31,11 @@ const menuItems = [
     title: "RFM Analysis",
     icon: PieChart,
     path: "/rfm",
+  },
+  {
+    title: "Customer Lifecycle",
+    icon: RefreshCcwDot,
+    path: "/lifecycle",
   },
   {
     title: "Segmentation",
