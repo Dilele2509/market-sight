@@ -48,11 +48,10 @@ const menuItems = [
   },
 ];
 
-export function DashboardSidebar() {
+export function DashboardSidebar({ isCollapsed, updateCollapsedStatus }) {
   const navigate = useNavigate();
   const location = useLocation();
   const { theme, setTheme } = useTheme();
-  const [isCollapsed, setIsCollapsed] = useState(false);
 
   return (
     <Sidebar className={`border-r border-border/50 transition-all duration-300 ${isCollapsed ? 'w-[80px]' : 'w-[240px]'}`}>
@@ -64,7 +63,7 @@ export function DashboardSidebar() {
           <Button
             variant="ghost"
             size="icon"
-            onClick={() => setIsCollapsed(!isCollapsed)}
+            onClick={() => updateCollapsedStatus(!isCollapsed)}
             className="h-8 w-8"
           >
             {isCollapsed ? (
