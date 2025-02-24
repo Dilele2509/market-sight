@@ -32,9 +32,9 @@ const menuItems = [
     path: "/rfm",
   },
   {
-    title: "Segmentation",
+    title: "Customer Lifecycle",
     icon: Layers,
-    path: "/segments",
+    path: "/lifecycle",
   },
   {
     title: "Data Sync",
@@ -78,7 +78,7 @@ export function DashboardSidebar({ isCollapsed, updateCollapsedStatus }) {
           <SidebarGroupContent>
             <SidebarMenu>
               {menuItems.map((item) => (
-                <SidebarMenuItem key={item.path}>
+                <SidebarMenuItem key={item.path} className="hover:bg-primary hover:rounded-md cursor-pointer">
                   <SidebarMenuButton
                     className={location.pathname === item.path ? "bg-primary/10 text-primary" : ""}
                     onClick={() => navigate(item.path)}
