@@ -6,6 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { useState } from "react";
 
 // Mock data - replace with actual data from your backend
 const tables = [
@@ -55,6 +56,7 @@ type Order {
 ];
 
 export default function DataModeling() {
+  const [selectedTable, setSelectedTable] = useState(tables[0]);
   return (
     <DashboardShell>
       <div className="flex flex-col gap-6">
@@ -80,13 +82,16 @@ export default function DataModeling() {
               </TabsList>
 
               <div className="mt-4 space-y-4">
-                <Select>
+                <Select onValueChange={(value) => {
+                  const table = tables.find(t => t.name === value);
+                  if (table) setSelectedTable(table);
+                }}>
                   <SelectTrigger>
                     <SelectValue placeholder="Select a table" />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="bg-card border-[0.5px] border-card-foreground shadow-lg rounded-md z-50">
                     {tables.map((table) => (
-                      <SelectItem key={table.name} value={table.name}>
+                      <SelectItem className="hover:bg-background hover:rounded-md cursor-pointer" key={table.name} value={table.name}>
                         {table.name}
                       </SelectItem>
                     ))}
@@ -105,7 +110,7 @@ export default function DataModeling() {
                           </TableRow>
                         </TableHeader>
                         <TableBody>
-                          {tables[0].fields.map((field) => (
+                          {selectedTable.fields.map((field) => (
                             <TableRow key={field.name}>
                               <TableCell className="font-medium">{field.name}</TableCell>
                               <TableCell>
@@ -126,7 +131,7 @@ export default function DataModeling() {
                   <Card className="bg-muted">
                     <ScrollArea className="h-[400px]">
                       <pre className="p-4 text-sm">
-                        {tables[0].schema}
+                        {selectedTable.schema}
                       </pre>
                     </ScrollArea>
                   </Card>

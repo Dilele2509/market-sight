@@ -59,7 +59,6 @@ const CustomTooltip = ({ active, payload }) => {
 
 export default function RFM() {
   const [selectedSegment, setSelectedSegment] = useState("none");
-  const [tempSegment, setTempSegment] = useState("");
   const [rfmData, setRfmData] = useState(segmentationData.none);
   const [trendData, setTrendData] = useState(generateTrendData("none"));
 
@@ -128,7 +127,7 @@ export default function RFM() {
             if (value) {
               toast({
                 title: "Analysis successfully",
-                description: `Synced data of ${tempSegment} segmentation successfully`,
+                description: `Synced data of ${selectedSegment} segmentation successfully`,
                 duration: 3000,
               })
             }
