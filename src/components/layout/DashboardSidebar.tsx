@@ -89,8 +89,9 @@ const DashboardSidebar = ({ isCollapsed, updateCollapsedStatus }) => {
           <SidebarGroupContent>
             <SidebarMenu>
               {menuItems.map((item) => (
-                <SidebarMenuItem key={item.path}>
+                <SidebarMenuItem className="hover:bg-primary hover:text-white hover:rounded-md cursor-pointer" key={item.path}>
                   <SidebarMenuButton
+                    className="data-[active=true]:bg-primary-light data-[active=true]:text-primary"
                     tooltip={isCollapsed ? item.title : undefined}
                     onClick={() => navigate(item.path)}
                     data-active={location.pathname === item.path}

@@ -54,8 +54,8 @@ export default function Segmentation() {
                   <div
                     className={`max-w-[80%] p-3 rounded-lg ${
                       message.type === "user"
-                        ? "bg-primary text-primary-foreground"
-                        : "bg-muted"
+                        ? "bg-primary text-secondary-light"
+                        : "bg-background text-primary-foreground"
                     }`}
                   >
                     {message.content}

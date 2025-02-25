@@ -114,7 +114,7 @@ export default function DataModeling() {
                             <TableRow key={field.name}>
                               <TableCell className="font-medium">{field.name}</TableCell>
                               <TableCell>
-                                <Badge variant="secondary">{field.type}</Badge>
+                                <Badge className="text-black" variant="secondary">{field.type}</Badge>
                               </TableCell>
                               <TableCell className="text-muted-foreground">
                                 {field.description}

@@ -169,7 +169,7 @@ export default function RFM() {
                 <CardTitle>RFM Segment Distribution</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="h-[300px]">
+                <div className="">
                   <ChartContainer
                     config={{
                       champions: { color: "#08C2FF" },

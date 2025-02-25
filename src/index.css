@@ -64,7 +64,7 @@
     /* Giữ màu chính nhưng tối hơn */
     --primary-foreground: 210 40% 95%;
 
-    --secondary: 220 20% 25%;
+    --secondary: 0 0% 0%;
     --secondary-foreground: 210 40% 85%;
 
     --muted: 220 15% 20%;
