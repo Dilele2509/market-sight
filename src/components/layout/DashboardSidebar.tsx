@@ -14,7 +14,6 @@ import {
 import { useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useTheme } from "@/components/dark-mode/ThemeProvider";
-import { useState } from "react";
 
 const menuItems = [
   {
@@ -66,7 +65,7 @@ const DashboardSidebar = ({ isCollapsed, updateCollapsedStatus }) => {
 
   return (
     <Sidebar className={`border-r border-border/50 transition-all duration-300 ${isCollapsed ? 'w-[80px]' : 'w-[240px]'}`}>
-      <SidebarContent>
+      <SidebarContent> 
         <div className="flex items-center justify-between p-6">
           <div className={`${isCollapsed ? 'hidden' : 'block'}`}>
             <h1 className="text-2xl font-semibold text-primary">RetailSight</h1>
