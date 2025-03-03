@@ -7,6 +7,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { ThemeProvider } from "@/components/dark-mode/ThemeProvider";
 import { privateRoutes, microSegmentRoutes } from "./routes";
 import MicroSegmentation from "./pages/MicroSegmentation";
+import { MicroSegmentationProvider } from "./context/MicroSegmentationContext";
 
 const queryClient = new QueryClient();
 
@@ -16,23 +17,25 @@ const App = () => (
       <TooltipProvider>
         <Toaster />
         <Sonner />
-        <BrowserRouter>
-          <Routes>
-            {privateRoutes.map((route, index) => {
-              const Page = route.component;
-              return <Route key={index} path={route.path} element={<Page />} />;
-            })}
-
-            {/* Route cha của MicroSegmentation */}
-            <Route path="/micro-segmentation" element={<MicroSegmentation />}>
-              <Route index element={<Navigate to="rfm" replace />} />
-              {microSegmentRoutes.map((route, index) => {
+        <MicroSegmentationProvider>
+          <BrowserRouter>
+            <Routes>
+              {privateRoutes.map((route, index) => {
                 const Page = route.component;
                 return <Route key={index} path={route.path} element={<Page />} />;
               })}
-            </Route>
-          </Routes>
-        </BrowserRouter>
+  
+              {/* Route cha của MicroSegmentation */}
+              <Route path="/micro-segmentation" element={<MicroSegmentation />}>
+                <Route index element={<Navigate to="rfm" replace />} />
+                {microSegmentRoutes.map((route, index) => {
+                  const Page = route.component;
+                  return <Route key={index} path={route.path} element={<Page />} />;
+                })}
+              </Route>
+            </Routes>
+          </BrowserRouter>
+        </MicroSegmentationProvider>
       </TooltipProvider>
     </ThemeProvider>
   </QueryClientProvider>

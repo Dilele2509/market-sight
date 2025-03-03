@@ -6,33 +6,12 @@ import { Users } from "lucide-react";
 import { ChartContainer } from "@/components/ui/chart";
 import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Treemap, Tooltip, XAxis, YAxis } from "recharts";
 import { useState } from "react";
-import { toast } from "@/hooks/use-toast";
-
-const segmentationData = {
-  market: [
-    { name: "Champions", value: 234, percentage: 20, recency: 5, frequency: 5 },
-    { name: "Loyal", value: 189, percentage: 15, recency: 4, frequency: 5 },
-    { name: "At Risk", value: 142, percentage: 12, recency: 3, frequency: 4 },
-    { name: "Lost", value: 98, percentage: 8, recency: 1, frequency: 2 },
-  ],
-  business: [
-    { name: "Champions", value: 180, percentage: 18, recency: 5, frequency: 5 },
-    { name: "Loyal", value: 160, percentage: 14, recency: 4, frequency: 4 },
-    { name: "At Risk", value: 120, percentage: 10, recency: 3, frequency: 3 },
-    { name: "Lost", value: 80, percentage: 6, recency: 1, frequency: 2 },
-  ],
-  sub: [
-    { name: "Champions", value: 150, percentage: 15, recency: 5, frequency: 5 },
-    { name: "Loyal", value: 140, percentage: 12, recency: 4, frequency: 4 },
-    { name: "At Risk", value: 110, percentage: 9, recency: 3, frequency: 3 },
-    { name: "Lost", value: 70, percentage: 5, recency: 1, frequency: 2 },
-  ],
-  none: []
-};
+import { Trophy, User, TriangleAlert, Ban, CircleHelp } from "lucide-react";
+import { useMicroSegmentation } from "@/context/MicroSegmentationContext";
 
 // Hàm chuyển đổi dữ liệu từ segmentationData -> trendData
-const generateTrendData = (segment) => {
-  const data = segmentationData[segment] || [];
+const generateTrendData = (segment : object) => {
+  const data = segment
   return [
     { date: "Jan", champions: data[0]?.value * 0.8 || 0, loyal: data[1]?.value * 0.8 || 0, risk: data[2]?.value * 0.8 || 0 },
     { date: "Feb", champions: data[0]?.value * 0.85 || 0, loyal: data[1]?.value * 0.85 || 0, risk: data[2]?.value * 0.85 || 0 },
@@ -40,6 +19,22 @@ const generateTrendData = (segment) => {
     { date: "Apr", champions: data[0]?.value || 0, loyal: data[1]?.value || 0, risk: data[2]?.value || 0 },
   ];
 };
+
+const setIcon = (name: string) => {
+  switch (name) {
+    case "Champions":
+      return <Trophy className="h-4 w-4" />;
+    case "Loyal":
+      return <User className="h-4 w-4" />;
+    case "At Risk":
+      return <TriangleAlert className="h-4 w-4" />;
+    case "Lost":
+      return <Ban className="h-4 w-4" />;
+    default:
+      return <CircleHelp className="h-4 w-4" />;
+  }
+};
+
 
 const CustomTooltip = ({ active, payload }) => {
   if (active && payload && payload.length) {
@@ -56,9 +51,8 @@ const CustomTooltip = ({ active, payload }) => {
 };
 
 export default function RFM() {
-  const [selectedSegment, setSelectedSegment] = useState("none");
-  const [rfmData, setRfmData] = useState(segmentationData.none);
-  const [trendData, setTrendData] = useState(generateTrendData("none"));
+  const { selectedSegment } = useMicroSegmentation()
+  const [trendData, setTrendData] = useState(generateTrendData(selectedSegment));
 
   const TreemapRFM = () => {
     return (
@@ -84,7 +78,7 @@ export default function RFM() {
             <div className="flex-1 flex flex-col">
               <ResponsiveContainer width="100%" height="100%">
                 <Treemap
-                  data={rfmData}
+                  data={selectedSegment}
                   dataKey="value"
                   nameKey="name"
                   aspectRatio={4 / 3}
@@ -116,130 +110,96 @@ export default function RFM() {
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold tracking-tight">RFM Analysis</h1>
       </div>
-      <div className="flex items-center">
-        <Select onValueChange={(value) => {
-          setSelectedSegment(value);
-          setTrendData(generateTrendData(value));
-          setRfmData(segmentationData[value]);
-          if (value) {
-            toast({
-              title: "Analysis successfully",
-              description: `Synced data of ${selectedSegment} segmentation successfully`,
-              duration: 3000,
-            })
-          }
-        }}>
-          <SelectTrigger className="w-48">
-            <SelectValue placeholder="Choose segment" />
-          </SelectTrigger>
-          <SelectContent className="bg-card border-[0.5px] border-card-foreground shadow-lg rounded-md z-50">
-            <SelectItem value="market" className="hover:bg-background hover:rounded-md cursor-pointer">Market segmentation</SelectItem>
-            <SelectItem value="business" className="hover:bg-background hover:rounded-md cursor-pointer">Business segmentation</SelectItem>
-            <SelectItem value="sub" className="hover:bg-background hover:rounded-md cursor-pointer">Sub segmentation</SelectItem>
-          </SelectContent>
-        </Select>
-        {/* <Button
-            type="submit"
-            className="ml-3 h-9"
-            onClick={handleAnalysis}>Analysis</Button> */}
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        {selectedSegment.map((segment) => (
+          <>
+            <MetricCard
+              key={segment.name}
+              title={segment.name}
+              value={segment.value.toString()}
+              subtitle={`${segment.percentage}% of customers`}
+              icon={setIcon(segment.name)}
+              trend={{ value: segment.percentage, isPositive: segment.percentage > 10 }}
+            />
+          </>
+        ))}
       </div>
 
-      {selectedSegment !== 'none' ? (<>
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          {rfmData.map((segment) => (
-            <>
-              <MetricCard
-                key={segment.name}
-                title={segment.name}
-                value={segment.value.toString()}
-                subtitle={`${segment.percentage}% of customers`}
-                icon={<Users className="h-4 w-4" />}
-                trend={{ value: segment.percentage, isPositive: segment.percentage > 10 }}
-              />
-            </>
-          ))}
-        </div>
+      <div className="grid gap-4 md:grid-cols-2">
+        <Card>
+          <CardHeader>
+            <CardTitle>RFM Segment Distribution</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="">
+              <ChartContainer
+                config={{
+                  champions: { color: "#08C2FF" },
+                  loyal: { color: "#1EAEDB" },
+                  risk: { color: "#F97316" },
+                }}
+              >
+                <AreaChart data={trendData}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="date" />
+                  <YAxis />
+                  <Tooltip />
+                  <Area
+                    type="monotone"
+                    dataKey="champions"
+                    stackId="1"
+                    stroke="#08C2FF"
+                    fill="#08C2FF"
+                  />
+                  <Area
+                    type="monotone"
+                    dataKey="loyal"
+                    stackId="1"
+                    stroke="#1EAEDB"
+                    fill="#1EAEDB"
+                  />
+                  <Area
+                    type="monotone"
+                    dataKey="risk"
+                    stackId="1"
+                    stroke="#F97316"
+                    fill="#F97316"
+                  />
+                </AreaChart>
+              </ChartContainer>
+            </div>
+          </CardContent>
+        </Card>
 
-        <div className="grid gap-4 md:grid-cols-2">
-          <Card>
-            <CardHeader>
-              <CardTitle>RFM Segment Distribution</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="">
-                <ChartContainer
-                  config={{
-                    champions: { color: "#08C2FF" },
-                    loyal: { color: "#1EAEDB" },
-                    risk: { color: "#F97316" },
-                  }}
-                >
-                  <AreaChart data={trendData}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="date" />
-                    <YAxis />
-                    <Tooltip />
-                    <Area
-                      type="monotone"
-                      dataKey="champions"
-                      stackId="1"
-                      stroke="#08C2FF"
-                      fill="#08C2FF"
-                    />
-                    <Area
-                      type="monotone"
-                      dataKey="loyal"
-                      stackId="1"
-                      stroke="#1EAEDB"
-                      fill="#1EAEDB"
-                    />
-                    <Area
-                      type="monotone"
-                      dataKey="risk"
-                      stackId="1"
-                      stroke="#F97316"
-                      fill="#F97316"
-                    />
-                  </AreaChart>
-                </ChartContainer>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Segment Details</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {rfmData.map((segment) => (
-                  <div key={segment.name} className="flex items-center justify-between">
-                    <div>
-                      <p className="font-medium">{segment.name}</p>
-                      <p className="text-sm text-muted-foreground">{segment.value} customers</p>
-                    </div>
-                    <div className="w-24 h-2 rounded-full bg-secondary overflow-hidden">
-                      <div
-                        className="h-full bg-primary"
-                        style={{ width: `${segment.percentage}%` }}
-                      />
-                    </div>
-                    <span className="text-sm font-medium">{segment.percentage}%</span>
+        <Card>
+          <CardHeader>
+            <CardTitle>Segment Details</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {selectedSegment.map((segment) => (
+                <div key={segment.name} className="flex items-center justify-between">
+                  <div>
+                    <p className="font-medium">{segment.name}</p>
+                    <p className="text-sm text-muted-foreground">{segment.value} customers</p>
                   </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+                  <div className="w-24 h-2 rounded-full bg-secondary overflow-hidden">
+                    <div
+                      className="h-full bg-primary"
+                      style={{ width: `${segment.percentage}%` }}
+                    />
+                  </div>
+                  <span className="text-sm font-medium">{segment.percentage}%</span>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
 
-        <div className="grid gap-4 md:grid-cols-2">
-          <TreemapRFM />
-        </div>
-      </>) : (
-        <>
-          <h1>Please choose segment to sync</h1>
-        </>
-      )}
+      <div className="grid gap-4 md:grid-cols-2">
+        <TreemapRFM />
+      </div>
     </div>
   );
 }
