@@ -27,14 +27,9 @@ const menuItems = [
     path: "/customers",
   },
   {
-    title: "RFM Analysis",
+    title: "Micro Segmentation",
     icon: PieChart,
-    path: "/rfm",
-  },
-  {
-    title: "Customer Lifecycle",
-    icon: RefreshCcwDot,
-    path: "/lifecycle",
+    path: "/micro-segmentation",
   },
   {
     title: "Segmentation",
