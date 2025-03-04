@@ -53,7 +53,7 @@ export default function MicroSegmentation() {
                     if (value) {
                         toast({
                             title: "Analysis successfully",
-                            description: `Synced data of ${selectedSegment} segmentation successfully`,
+                            description: `Synced data of ${String(value)} segmentation successfully`,
                             duration: 3000,
                         })
                     }
