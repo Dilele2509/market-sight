@@ -1,13 +1,12 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter } from "react-router-dom";
 import { ThemeProvider } from "@/components/dark-mode/ThemeProvider";
-import { privateRoutes, microSegmentRoutes } from "./routes";
-import MicroSegmentation from "./pages/MicroSegmentation";
 import { MicroSegmentationProvider } from "./context/MicroSegmentationContext";
+import { AuthProvider } from "./context/AuthContext";
+import ProtectedRoutes from "./components/utils/protectedRoutes";
 
 const queryClient = new QueryClient();
 
@@ -19,21 +18,9 @@ const App = () => (
         <Sonner />
         <MicroSegmentationProvider>
           <BrowserRouter>
-            <Routes>
-              {privateRoutes.map((route, index) => {
-                const Page = route.component;
-                return <Route key={index} path={route.path} element={<Page />} />;
-              })}
-  
-              {/* Route cha của MicroSegmentation */}
-              <Route path="/micro-segmentation" element={<MicroSegmentation />}>
-                <Route index element={<Navigate to="rfm" replace />} />
-                {microSegmentRoutes.map((route, index) => {
-                  const Page = route.component;
-                  return <Route key={index} path={route.path} element={<Page />} />;
-                })}
-              </Route>
-            </Routes>
+            <AuthProvider>
+              <ProtectedRoutes />
+            </AuthProvider>
           </BrowserRouter>
         </MicroSegmentationProvider>
       </TooltipProvider>

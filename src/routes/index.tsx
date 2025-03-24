@@ -13,7 +13,7 @@ import Login from "@/pages/Authentication/Login";
 import Register from "@/pages/Authentication/Register";
 
 const publicRoutes = [
-    { path: '/', component: Login},
+    { path: "/", component: Login},
     { path: "/register", component: Register}
 ]
 
@@ -25,8 +25,6 @@ const privateRoutes = [
     { path: "/settings", component: Settings},
     { path: "/segmentation", component: Segmentation},
     { path: "/data-modeling", component:  DataModeling},
-    { path: "/login", component: Login},
-    { path: "/register", component: Register},
     { path: "*", component: NotFound}
 ]
 
@@ -35,4 +33,4 @@ const microSegmentRoutes = [
     {path: "lifecycle", component: Lifecycle},
 ]
 
-export { privateRoutes, microSegmentRoutes }
+export { privateRoutes, microSegmentRoutes, publicRoutes }
