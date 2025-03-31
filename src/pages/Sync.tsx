@@ -25,7 +25,7 @@ const sources = [
   },
 ];
 
-export default function Sync() {
+export default function ImportData() {
   return (
     <DashboardShell>
       <div className="flex flex-col gap-6">

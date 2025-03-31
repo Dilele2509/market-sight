@@ -32,9 +32,9 @@ const menuItems = [
     path: "/micro-segmentation",
   },
   {
-    title: "Segmentation",
+    title: "Create Segmentation",
     icon: Layers,
-    path: "/segmentation",
+    path: "/create-segmentation",
   },
   {
     title: "Data Modeling",
@@ -42,9 +42,9 @@ const menuItems = [
     path: "/data-modeling",
   },
   {
-    title: "Data Sync",
+    title: "Import Data",
     icon: Database,
-    path: "/sync",
+    path: "/import-data",
   },
   {
     title: "Settings",
