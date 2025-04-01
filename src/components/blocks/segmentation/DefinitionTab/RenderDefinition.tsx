@@ -21,159 +21,76 @@ import { EventCondition, ConditionGroup, RelatedDatasetCondition, AttributeCondi
 import { InclusionExclusion, SegmentSelectorDialog } from "./InclusionExclusionState";
 import { SQLDialog, SQLPreview } from "./SQLState";
 import { DiscardConfirmDialog, PreviewDialog } from "./InforSetupState";
-
-interface Attribute {
-    name: string;
-    type: string;
-}
-
-interface Condition {
-    id: string;
-    type: string;
-    field: string;
-    operator: string;
-    value?: string;
-    value2?: string;
-}
-
-interface Dataset {
-    name: string;
-    description: string;
-    schema: string;
-    fields: string[];
-}
+import { useSegmentToggle } from "@/context/SegmentToggleContext";
+import { useSegmentData } from "@/context/SegmentDataContext";
 
 
 interface SegmentDefinitionProps {
-    sqlError: any;
     editSegment?: Segment;
-    segmentName?: string;
-    segmentId?: string;
-    previewOpen?: boolean;
-    previewData?: any;
-    previewLoading?: boolean;
-    selectedDataset?: string;
-    datasets?: Record<string, Dataset>;
-    editableSql?: string;
-    sqlDialogOpen?: boolean;
-    setSqlError: (value: any) => void;
-    setSelectedDataset?: React.Dispatch<React.SetStateAction<string>>;
-    setDatasets?: React.Dispatch<React.SetStateAction<Record<string, Dataset>>>;
-    setSegmentName?: React.Dispatch<React.SetStateAction<string>>;
-    setSegmentId?: React.Dispatch<React.SetStateAction<string>>;
-    setEditableSql?: React.Dispatch<React.SetStateAction<string>>;
-    setSqlDialogOpen: React.Dispatch<React.SetStateAction<boolean>>;
     generateSQLPreview?: () => string;
     handleClosePreview?: () => void;
-    discardConfirmOpen: boolean;
-    setDiscardConfirmOpen: (value: boolean) => void;
-    setHasUnsavedChanges: (unsaved: boolean) => void;
-    initialConditions: Condition[];
-    initialConditionGroups: any[];
-    initialRootOperator: string;
-    initialSegmentName: string;
-    initialDescription: string;
-    description: string; 
-    setDescription: React.Dispatch<React.SetStateAction<string>>; 
-    estimatedSize?: any; 
 }
 
 
 const RenderDefinition: React.FC<SegmentDefinitionProps> = ({
-    sqlError,
     editSegment,
-    segmentName,
-    segmentId,
-    previewOpen,
-    previewData,
-    previewLoading,
-    selectedDataset,
-    datasets,
-    editableSql,
-    sqlDialogOpen,
-    setSqlError,
-    setSelectedDataset,
-    setDatasets,
-    setSegmentName,
-    setSegmentId,
-    setEditableSql,
-    setSqlDialogOpen,
     generateSQLPreview,
     handleClosePreview,
-    discardConfirmOpen,
-    setDiscardConfirmOpen,
-    setHasUnsavedChanges,
-    initialConditions,
-    initialConditionGroups,
-    initialRootOperator,
-    initialSegmentName,
-    initialDescription,
-    description,
-    setDescription,
-    estimatedSize,
-}) => { 
+}) => {
+    const { datasets,
+        setDatasets,
+        segmentName,
+        setSegmentName,
+        setSegmentId,
+        selectedDataset,
+        conditions,
+        attributes,
+        rootOperator,
+        setPreviewData,
+        segmentId,
+        description,
+        estimatedSize,
+        conditionGroups,
+        previewData,
+        setSelectedDataset,
+        setDescription,
+        editableSql,
+        setEditableSql,
+        sqlError,
+        initialConditionGroups,
+        setSqlError,
+        initialConditions,
+        initialDescription,
+        initialRootOperator,
+        initialSegmentName,
+        setAttributes,
+        setConditions,
+        setRootOperator,
+        setConditionGroups,
+        relatedDatasets,
+        setInclusions,
+        inclusions,
+        setExclusions,
+        exclusions,
+        setSelectionMode,
+        selectionMode,
+        availableSegments } = useSegmentData();
 
-    // General state
-    const [relatedDatasets, setRelatedDatasets] = useState({
-        "Customer Profile": ["Transactions", "Events"],
-        "Transactions": ["Customer Profile", "Stores", "Product Line"],
-        "Stores": ["Transactions"],
-        "Product Line": ["Transactions"]
-    });
-
-    const [showDescriptionField, setShowDescriptionField] = useState(editSegment ? !!editSegment.description : false);
-    const [loading, setLoading] = useState<boolean>(false);
-    const [copySuccess, setCopySuccess] = useState(false);
-    const [attributes, setAttributes] = useState([]);
-
-    // Conditions state
-    const [rootOperator, setRootOperator] = useState(editSegment?.rootOperator || "AND");
-
-    const [conditions, setConditions] = useState(
-        editSegment?.conditions || [
-            {
-                id: 1,
-                type: "attribute",
-                field: "email",
-                operator: "is_not_null",
-                value: null
-            }
-        ]
-    );
-    const [conditionGroups, setConditionGroups] = useState(
-        editSegment?.conditionGroups || [
-            {
-                id: 2,
-                type: "group",
-                operator: "AND",
-                conditions: [
-                    {
-                        id: 3,
-                        type: "event",
-                        eventType: "performed",
-                        eventName: "New Canvas",
-                        frequency: "at_least",
-                        count: 3,
-                        timePeriod: "days",
-                        timeValue: 90
-                    }
-                ]
-            }
-        ]
-    );
-
-    // Inclusion/Exclusion state
-    const [inclusions, setInclusions] = useState([]);
-    const [exclusions, setExclusions] = useState([]);
-    const [availableSegments, setAvailableSegments] = useState([
-        { id: "segment:recent-customers", name: "Recent Customers", count: 456 },
-        { id: "segment:vip-users", name: "VIP Users", count: 123 },
-        { id: "segment:high-spenders", name: "High Spenders", count: 78 }
-    ]);
-
-    // Dialog states
-    const [segmentSelectorOpen, setSegmentSelectorOpen] = useState(false);
-    const [selectionMode, setSelectionMode] = useState("include"); // 'include' or 'exclude'
+    const { setLoading,
+        loading,
+        setSqlDialogOpen,
+        setHasUnsavedChanges,
+        previewLoading,
+        previewOpen,
+        sqlDialogOpen,
+        discardConfirmOpen,
+        setDiscardConfirmOpen,
+        setCopySuccess,
+        setSegmentSelectorOpen,
+        copySuccess,
+        segmentSelectorOpen,
+        showDescriptionField,
+        setShowDescriptionField } = useSegmentToggle();
 
     //FUNCTION STATE
 
@@ -198,10 +115,11 @@ const RenderDefinition: React.FC<SegmentDefinitionProps> = ({
         handleFetchDatasets();
     }, [handleFetchDatasets]);
 
-    const handleDatasetChange = (e) => {
-        const newDataset = e.target.value;
-        setSelectedDataset(newDataset);
+    const handleDatasetChange = (value: string) => {
+        console.log("Dataset changed to:", value);
+        setSelectedDataset(value);
     };
+
 
     const handleCopySegmentId = () => {
         navigator.clipboard.writeText(segmentId)
@@ -563,18 +481,22 @@ const RenderDefinition: React.FC<SegmentDefinitionProps> = ({
         const operators = OPERATORS[attributeType] || OPERATORS.text;
 
         return (
-            <AttributeCondition
-                condition={condition}
-                attributes={attributes}
-                operators={operators}
-                isInGroup={isInGroup}
-                groupId={groupId}
-                handleUpdateCondition={handleUpdateCondition}
-                handleUpdateGroupCondition={handleUpdateGroupCondition}
-                handleRemoveCondition={handleRemoveCondition}
-                handleRemoveGroupCondition={handleRemoveGroupCondition}
-            />
-
+            // <ReactSortable list={conditions} setList={setConditions} animation={200} className="space-y-2">
+            //     {conditions.map((condition) => (
+                    <AttributeCondition
+                        key={condition.id}
+                        condition={condition}
+                        attributes={attributes}
+                        operators={operators}
+                        isInGroup={isInGroup}
+                        groupId={groupId}
+                        handleUpdateCondition={handleUpdateCondition}
+                        handleUpdateGroupCondition={handleUpdateGroupCondition}
+                        handleRemoveCondition={handleRemoveCondition}
+                        handleRemoveGroupCondition={handleRemoveGroupCondition}
+                    />
+            //     ))}
+            // </ReactSortable>
         );
     };
 
@@ -746,7 +668,7 @@ const RenderDefinition: React.FC<SegmentDefinitionProps> = ({
                                 <SelectTrigger>
                                     <SelectValue placeholder="Select dataset" />
                                 </SelectTrigger>
-                                <SelectContent className="bg-card border-[0.5px] border-card-foreground shadow-lg rounded-md z-50">
+                                <SelectContent className="z-[9999] bg-card border border-card-foreground shadow-lg rounded-md">
                                     {Object.entries(datasets).map(([name, info]) => (
                                         <SelectItem className="hover:bg-background hover:rounded-md cursor-pointer" key={name} value={name}>
                                             <div className="flex items-center gap-2">
@@ -816,12 +738,17 @@ const RenderDefinition: React.FC<SegmentDefinitionProps> = ({
                         </div>
 
                         {/* Individual conditions */}
-                        {conditions.map((condition) => {
-                            if (condition.type === "attribute") return renderAttributeCondition(condition);
-                            if (condition.type === "event") return renderEventCondition(condition);
-                            if (condition.type === "related") return renderRelatedDatasetCondition(condition);
-                            return null;
-                        })}
+                        <div className="space-y-4">
+                            <ReactSortable list={conditions} setList={setConditions} animation={200} className="space-y-2">
+                                {conditions.map((condition) => {
+                                    if (condition.type === "attribute") return renderAttributeCondition(condition);
+                                    if (condition.type === "event") return renderEventCondition(condition);
+                                    if (condition.type === "related") return renderRelatedDatasetCondition(condition);
+                                    return null;
+                                })}
+                            </ReactSortable>
+                        </div>
+
 
                         {/* Condition groups */}
                         {conditionGroups.map((group) => renderConditionGroup(group))}
@@ -834,7 +761,7 @@ const RenderDefinition: React.FC<SegmentDefinitionProps> = ({
                                 className="px-2 py-1 text-xs w-auto"
                                 onClick={() => handleAddCondition("attribute")}
                             >
-                                <SlidersHorizontal className="w-3 h-3 mr-1" /> Add attribute
+                                <SlidersHorizontal className="w-3 h-3 mr-1" /> Add attribute condition
                             </Button>
                             <Button
                                 variant="outline"
@@ -842,7 +769,7 @@ const RenderDefinition: React.FC<SegmentDefinitionProps> = ({
                                 className="px-2 py-1 text-xs w-auto"
                                 onClick={() => handleAddCondition("event")}
                             >
-                                <Calendar className="w-3 h-3 mr-1" /> Add event
+                                <Calendar className="w-3 h-3 mr-1" /> Add event condition
                             </Button>
                             <Button
                                 variant="outline"
@@ -850,7 +777,7 @@ const RenderDefinition: React.FC<SegmentDefinitionProps> = ({
                                 className="px-2 py-1 text-xs w-auto"
                                 onClick={handleAddRelatedCondition}
                             >
-                                <Link className="w-3 h-3 mr-1" /> Add related
+                                <Link className="w-3 h-3 mr-1" /> Add related condition
                             </Button>
                             <Button
                                 variant="outline"
@@ -858,7 +785,7 @@ const RenderDefinition: React.FC<SegmentDefinitionProps> = ({
                                 className="px-2 py-1 text-xs w-auto"
                                 onClick={handleAddConditionGroup}
                             >
-                                <Users className="w-3 h-3 mr-1" /> Add group
+                                <Users className="w-3 h-3 mr-1" /> Add condition group
                             </Button>
                         </div>
                     </CardContent>

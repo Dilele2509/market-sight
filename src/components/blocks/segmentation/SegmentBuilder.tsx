@@ -8,87 +8,50 @@ import { ArrowLeft, Code, EllipsisVertical } from "lucide-react";
 import { SegmentBuilderProps } from "@/types/segmentTypes"
 import { generateSQLPreview } from "./DefinitionTab/SQLState/SQLPreview";
 import RenderDefinition from "./DefinitionTab/RenderDefinition";
+import { useSegmentToggle } from "@/context/SegmentToggleContext";
+import { useSegmentData } from "@/context/SegmentDataContext";
 
 
 export default function SegmentBuilder({ onBack, editSegment }: SegmentBuilderProps) {
-    const isEditMode = !!editSegment;
-    const [segmentName, setSegmentName] = useState<string>(editSegment?.name || "High Value Users (new)");
-    const [segmentId, setSegmentId] = useState<string>(editSegment?.id || "segment:high-value-users-new");
-    const [attributes, setAttributes] = useState([]);
-    const [loading, setLoading] = useState<boolean>(false);
-    const [selectedDataset, setSelectedDataset] = useState<string>(
-        editSegment?.dataset || "Customer Profile"
-    );
+    const { datasets,
+        setDatasets,
+        segmentName,
+        setSegmentName,
+        setSegmentId,
+        selectedDataset,
+        conditions,
+        attributes,
+        rootOperator,
+        setPreviewData,
+        segmentId,
+        description,
+        estimatedSize,
+        conditionGroups,
+        previewData,
+        setSelectedDataset,
+        setDescription,
+        editableSql,
+        setEditableSql,
+        sqlError,
+        initialConditionGroups,
+        setSqlError,
+        initialConditions,
+        initialDescription,
+        initialRootOperator,
+        initialSegmentName } = useSegmentData();
 
-    const [datasets, setDatasets] = useState({
-        "Customer Profile": { name: "customers", description: "Customer information", fields: [], schema: "public" },
-        "Transactions": { name: "transactions", description: "Transaction records", fields: [], schema: "public" },
-        "Stores": { name: "stores", description: "Store information", fields: [], schema: "public" },
-        "Product Line": { name: "product_lines", description: "Product information", fields: [], schema: "public" },
-        "Events": { name: "events", description: "User event data", fields: [], schema: "public" }
-    });
+    const { setLoading,
+        setSqlDialogOpen,
+        setPreviewLoading,
+        setPreviewOpen,
+        hasUnsavedChanges,
+        setHasUnsavedChanges,
+        previewLoading,
+        previewOpen,
+        sqlDialogOpen,
+        discardConfirmOpen,
+        setDiscardConfirmOpen } = useSegmentToggle();
 
-    // New states for preview
-    const [previewData, setPreviewData] = useState([]);
-    const [previewLoading, setPreviewLoading] = useState(false);
-    const [previewOpen, setPreviewOpen] = useState<boolean>(false);
-
-    // Conditions state
-    const [rootOperator, setRootOperator] = useState(editSegment?.rootOperator || "AND");
-
-    const [conditions, setConditions] = useState(
-        editSegment?.conditions || [
-            {
-                id: 1,
-                type: "attribute",
-                field: "email",
-                operator: "is_not_null",
-                value: null
-            }
-        ]
-    );
-    const [conditionGroups, setConditionGroups] = useState(
-        editSegment?.conditionGroups || [
-            {
-                id: 2,
-                type: "group",
-                operator: "AND",
-                conditions: [
-                    {
-                        id: 3,
-                        type: "event",
-                        eventType: "performed",
-                        eventName: "New Canvas",
-                        frequency: "at_least",
-                        count: 3,
-                        timePeriod: "days",
-                        timeValue: 90
-                    }
-                ]
-            }
-        ]
-    );
-
-    // Add this new state to track if there are unsaved changes
-    const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
-    const [initialConditions, setInitialConditions] = useState([]);
-    const [initialConditionGroups, setInitialConditionGroups] = useState([]);
-    const [initialRootOperator, setInitialRootOperator] = useState('AND');
-    const [initialSegmentName, setInitialSegmentName] = useState('High Value Users (new)');
-    const [initialDescription, setInitialDescription] = useState('');
-    const [discardConfirmOpen, setDiscardConfirmOpen] = useState(false);
-    const [description, setDescription] = useState<string>(editSegment?.description || "");
-    const [estimatedSize, setEstimatedSize] = useState(
-        editSegment
-            ? { count: editSegment.size, percentage: Math.round((editSegment.size / 400) * 100) }
-            : { count: 88, percentage: 22 }
-    );
-
-
-    // Add these new states for SQL editing
-    const [sqlDialogOpen, setSqlDialogOpen] = useState(false);
-    const [editableSql, setEditableSql] = useState('');
-    const [sqlError, setSqlError] = useState(null);
 
     useEffect(() => {
         const slug = segmentName.toLowerCase().replace(/[^\w\s-]/g, "").replace(/\s+/g, "-").replace(/-+/g, "-");
@@ -98,7 +61,7 @@ export default function SegmentBuilder({ onBack, editSegment }: SegmentBuilderPr
     const handleFetchDatasets = useCallback(async () => {
         setLoading(true);
         try {
-            await axios.get(`/datasources/postgres/tables`);
+            await axios.get(`/datasources/postgres/tables`); //lấy từ python
             toast.success("Datasets loaded successfully");
         } catch (error) {
             toast.error("Failed to fetch datasets");
@@ -237,7 +200,7 @@ export default function SegmentBuilder({ onBack, editSegment }: SegmentBuilderPr
         setDiscardConfirmOpen(true);
     };
 
-    // Update the handleSaveSegment function to pass the new segment data back to the parent component
+    // create nếu chưa có, update nếu có
     const handleSaveSegment = () => {
         try {
             console.log('💾 [SegmentBuilder] Saving segment, edit mode:', !!editSegment);
@@ -258,20 +221,16 @@ export default function SegmentBuilder({ onBack, editSegment }: SegmentBuilderPr
 
             console.log('📝 [SegmentBuilder] Saving segment:', segment);
 
-            // Get existing segments from localStorage
-            const storedSegments = JSON.parse(localStorage.getItem('segments') || '[]');
+            const storedSegments = JSON.parse(localStorage.getItem('segments') || '[]'); //lưu tạm vào localStorage -> nên chuyển qua table db
 
-            // If this is an edit, update the existing segment
             if (editSegment) {
-                // Find if this segment already exists in localStorage
                 const existingIndex = storedSegments.findIndex(s => s.id === segment.id);
 
                 if (existingIndex >= 0) {
-                    // Update the existing segment by completely replacing it
                     storedSegments[existingIndex] = {
-                        ...storedSegments[existingIndex],  // keep any properties we might not have changed
-                        ...segment,  // override with all our new values
-                        last_updated: new Date().toISOString()  // ensure timestamp is updated
+                        ...storedSegments[existingIndex],
+                        ...segment,
+                        last_updated: new Date().toISOString()
                     };
 
                     console.log('✅ [SegmentBuilder] Updated existing segment in localStorage');
@@ -326,7 +285,7 @@ export default function SegmentBuilder({ onBack, editSegment }: SegmentBuilderPr
                     <Input className="w-auto" value={segmentName} onChange={(e) => setSegmentName(e.target.value)} placeholder="Segment Name" />
 
                 </div>
-                <div className="flex items-center">
+                <div className="flex flex-wrap items-center gap-2">
                     <Button
                         variant="outline"
                         className="mx-1 flex items-center"
@@ -380,37 +339,9 @@ export default function SegmentBuilder({ onBack, editSegment }: SegmentBuilderPr
                 {/* render definition UI */}
                 <TabsContent value="definition">
                     <RenderDefinition
-                        sqlError={sqlError}
                         editSegment={editSegment}
-                        segmentName={segmentName}
-                        segmentId={segmentId}
-                        previewOpen={previewOpen}
-                        previewData={previewData}
-                        previewLoading={previewLoading}
-                        selectedDataset={selectedDataset}
-                        datasets={datasets}
-                        editableSql={editableSql}
-                        sqlDialogOpen={sqlDialogOpen}
-                        setSqlError={setSqlError}
-                        setSelectedDataset={setSelectedDataset}
-                        setDatasets={setDatasets}
-                        setSegmentName={setSegmentName}
-                        setSegmentId={setSegmentId}
-                        setEditableSql={setEditableSql}
-                        setSqlDialogOpen={setSqlDialogOpen}
                         generateSQLPreview={generateSQL}
                         handleClosePreview={handleClosePreview}
-                        discardConfirmOpen={discardConfirmOpen}
-                        setDiscardConfirmOpen={setDiscardConfirmOpen}
-                        setHasUnsavedChanges={setHasUnsavedChanges}
-                        initialConditions={initialConditions}
-                        initialConditionGroups={initialConditionGroups}
-                        initialRootOperator={initialRootOperator}
-                        initialSegmentName={initialSegmentName}
-                        initialDescription={initialDescription}
-                        description = {description}
-                        setDescription = {setDescription}
-                        estimatedSize = {estimatedSize}
                     />
 
                 </TabsContent>

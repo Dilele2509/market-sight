@@ -7,6 +7,8 @@ import { ThemeProvider } from "@/components/dark-mode/ThemeProvider";
 import { MicroSegmentationProvider } from "./context/MicroSegmentationContext";
 import { AuthProvider } from "./context/AuthContext";
 import ProtectedRoutes from "./components/utils/protectedRoutes";
+import { SegmentToggleProvider } from "./context/SegmentToggleContext";
+import { SegmentDataProvider } from "./context/SegmentDataContext";
 
 const queryClient = new QueryClient();
 
@@ -16,13 +18,17 @@ const App = () => (
       <TooltipProvider>
         <Toaster />
         <Sonner />
-        <MicroSegmentationProvider>
-          <BrowserRouter>
-            <AuthProvider>
-              <ProtectedRoutes />
-            </AuthProvider>
-          </BrowserRouter>
-        </MicroSegmentationProvider>
+        <SegmentToggleProvider>
+          <SegmentDataProvider>
+            <MicroSegmentationProvider>
+              <BrowserRouter>
+                <AuthProvider>
+                  <ProtectedRoutes />
+                </AuthProvider>
+              </BrowserRouter>
+            </MicroSegmentationProvider>
+          </SegmentDataProvider>
+        </SegmentToggleProvider>
       </TooltipProvider>
     </ThemeProvider>
   </QueryClientProvider>

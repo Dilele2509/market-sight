@@ -45,6 +45,7 @@ const AttributeCondition: React.FC<AttributeConditionProps> = ({
   handleRemoveCondition,
   handleRemoveGroupCondition,
 }) => {
+
   const updateCondition = (key: string, value: string) => {
     if (isInGroup && groupId !== undefined && handleUpdateGroupCondition) {
       handleUpdateGroupCondition(groupId, condition.id, key, value);
