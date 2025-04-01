@@ -1,28 +1,25 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { useSegmentData } from "@/context/SegmentDataContext";
+import { useSegmentToggle } from "@/context/SegmentToggleContext";
 import { X, Plus } from "lucide-react";
 
-interface Segment {
-    id: string;
-    name: string;
-    count: number;
-}
 
-interface InclusionExclusionProps {
-    inclusions: Segment[];
-    exclusions: Segment[];
-    handleRemoveInclusion: (id: string) => void;
-    handleRemoveExclusion: (id: string) => void;
-    handleOpenSegmentSelector: (type: "include" | "exclude") => void;
-}
+const InclusionExclusion = () => {
+    const { inclusions, exclusions, setInclusions, setExclusions, setSelectionMode } = useSegmentData();
+    const { setSegmentSelectorOpen } = useSegmentToggle();
+    const handleOpenSegmentSelector = (mode) => {
+        setSelectionMode(mode);
+        setSegmentSelectorOpen(true);
+    };
 
-const InclusionExclusion = ({
-    inclusions,
-    exclusions,
-    handleRemoveInclusion,
-    handleRemoveExclusion,
-    handleOpenSegmentSelector,
-}: InclusionExclusionProps) => {
+    const handleRemoveInclusion = (segmentId) => {
+        setInclusions(inclusions.filter(segment => segment.id !== segmentId));
+    };
+
+    const handleRemoveExclusion = (segmentId) => {
+        setExclusions(exclusions.filter(segment => segment.id !== segmentId));
+    };
     return (
         <div className="mt-4 mb-4">
             <h2 className="text-lg font-semibold">Include or Exclude Other Segments</h2>

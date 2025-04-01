@@ -15,7 +15,6 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 
 import { OPERATORS } from "@/types/constant";
-import { Segment } from "@/types/segmentTypes";
 
 import { EventCondition, ConditionGroup, RelatedDatasetCondition, AttributeCondition } from "./ConditionState";
 import { InclusionExclusion, SegmentSelectorDialog } from "./InclusionExclusionState";
@@ -26,16 +25,12 @@ import { useSegmentData } from "@/context/SegmentDataContext";
 
 
 interface SegmentDefinitionProps {
-    editSegment?: Segment;
     generateSQLPreview?: () => string;
-    handleClosePreview?: () => void;
 }
 
 
 const RenderDefinition: React.FC<SegmentDefinitionProps> = ({
-    editSegment,
     generateSQLPreview,
-    handleClosePreview,
 }) => {
     const { datasets,
         setDatasets,
@@ -46,7 +41,6 @@ const RenderDefinition: React.FC<SegmentDefinitionProps> = ({
         conditions,
         attributes,
         rootOperator,
-        setPreviewData,
         segmentId,
         description,
         estimatedSize,
@@ -54,51 +48,21 @@ const RenderDefinition: React.FC<SegmentDefinitionProps> = ({
         previewData,
         setSelectedDataset,
         setDescription,
-        editableSql,
-        setEditableSql,
-        sqlError,
-        initialConditionGroups,
-        setSqlError,
-        initialConditions,
-        initialDescription,
-        initialRootOperator,
-        initialSegmentName,
         setAttributes,
         setConditions,
         setRootOperator,
         setConditionGroups,
-        relatedDatasets,
-        setInclusions,
-        inclusions,
-        setExclusions,
-        exclusions,
-        setSelectionMode,
-        selectionMode,
-        availableSegments } = useSegmentData();
+        relatedDatasets, } = useSegmentData();
 
     const { setLoading,
         loading,
-        setSqlDialogOpen,
-        setHasUnsavedChanges,
-        previewLoading,
-        previewOpen,
-        sqlDialogOpen,
-        discardConfirmOpen,
-        setDiscardConfirmOpen,
         setCopySuccess,
-        setSegmentSelectorOpen,
         copySuccess,
-        segmentSelectorOpen,
         showDescriptionField,
         setShowDescriptionField } = useSegmentToggle();
 
-    //FUNCTION STATE
 
-    useEffect(() => {
-        const slug = segmentName.toLowerCase().replace(/[^\w\s-]/g, "").replace(/\s+/g, "-").replace(/-+/g, "-");
-        setSegmentId(`segment:${slug}`);
-    }, [segmentName]);
-
+    //fetch api data
     const handleFetchDatasets = useCallback(async () => {
         setLoading(true);
         try {
@@ -110,99 +74,9 @@ const RenderDefinition: React.FC<SegmentDefinitionProps> = ({
             setLoading(false);
         }
     }, []);
-
     useEffect(() => {
         handleFetchDatasets();
     }, [handleFetchDatasets]);
-
-    const handleDatasetChange = (value: string) => {
-        console.log("Dataset changed to:", value);
-        setSelectedDataset(value);
-    };
-
-
-    const handleCopySegmentId = () => {
-        navigator.clipboard.writeText(segmentId)
-            .then(() => {
-                setCopySuccess(true);
-                toast.success('Segment ID copied to clipboard');
-
-                setTimeout(() => {
-                    setCopySuccess(false);
-                }, 2000);
-            })
-            .catch(err => {
-                console.error('Failed to copy text: ', err);
-                toast.error('Failed to copy to clipboard');
-            });
-    };
-
-    //CONDITION STATE
-    const getDefaultOperatorForType = (type) => {
-        switch (type) {
-            case 'text': return 'equals';
-            case 'number': return 'equals';
-            case 'datetime': return 'after';
-            case 'boolean': return 'equals';
-            case 'array': return 'contains';
-            default: return 'equals';
-        }
-    };
-
-    const handleAttributeClick = (attribute) => {
-        const newId = Math.max(...conditions.map(c => c.id), ...conditionGroups.map(g => g.id), 0) + 1;
-
-        const newCondition = {
-            id: newId,
-            type: 'attribute',
-            field: attribute.name,
-            operator: getDefaultOperatorForType(attribute.type),
-            value: null
-        };
-
-        setConditions([...conditions, newCondition]);
-        toast.info(`Added condition for "${attribute.name}"`);
-    };
-
-    const determineFieldType = (fieldName, dataType = null) => {
-        // If we have the actual data type from PostgreSQL, use it
-        if (dataType) {
-            // Convert PostgreSQL data types to our field types
-            if (dataType.includes('timestamp') || dataType.includes('date') || dataType.includes('time')) {
-                return 'datetime';
-            } else if (dataType.includes('int') || dataType.includes('float') || dataType.includes('numeric') || dataType.includes('decimal') || dataType.includes('double')) {
-                return 'number';
-            } else if (dataType === 'boolean') {
-                return 'boolean';
-            } else if (dataType.includes('array') || dataType.includes('json') || dataType.includes('jsonb')) {
-                return 'array';
-            } else {
-                return 'text';
-            }
-        }
-
-        // Fallback to field name heuristics
-        const lowerField = fieldName.toLowerCase();
-
-        if (lowerField.includes('date') || lowerField.includes('time') || lowerField.includes('_at')) {
-            return 'datetime';
-        } else if (
-            lowerField.includes('id') ||
-            lowerField.includes('amount') ||
-            lowerField.includes('price') ||
-            lowerField.includes('cost') ||
-            lowerField.includes('quantity') ||
-            lowerField.includes('number')
-        ) {
-            return 'number';
-        } else if (lowerField.includes('is_') || lowerField.includes('has_')) {
-            return 'boolean';
-        } else if (lowerField.includes('tags') || lowerField.includes('categories') || lowerField.includes('array')) {
-            return 'array';
-        } else {
-            return 'text';
-        }
-    };
 
     const fetchAttributes = async (datasetName, forceRefresh = false, showToast = true) => {
         try {
@@ -322,12 +196,106 @@ const RenderDefinition: React.FC<SegmentDefinitionProps> = ({
         }
     };
 
+    //function define type
+    const determineFieldType = (fieldName, dataType = null) => {
+        // If we have the actual data type from PostgreSQL, use it
+        if (dataType) {
+            // Convert PostgreSQL data types to our field types
+            if (dataType.includes('timestamp') || dataType.includes('date') || dataType.includes('time')) {
+                return 'datetime';
+            } else if (dataType.includes('int') || dataType.includes('float') || dataType.includes('numeric') || dataType.includes('decimal') || dataType.includes('double')) {
+                return 'number';
+            } else if (dataType === 'boolean') {
+                return 'boolean';
+            } else if (dataType.includes('array') || dataType.includes('json') || dataType.includes('jsonb')) {
+                return 'array';
+            } else {
+                return 'text';
+            }
+        }
+
+        // Fallback to field name heuristics
+        const lowerField = fieldName.toLowerCase();
+
+        if (lowerField.includes('date') || lowerField.includes('time') || lowerField.includes('_at')) {
+            return 'datetime';
+        } else if (
+            lowerField.includes('id') ||
+            lowerField.includes('amount') ||
+            lowerField.includes('price') ||
+            lowerField.includes('cost') ||
+            lowerField.includes('quantity') ||
+            lowerField.includes('number')
+        ) {
+            return 'number';
+        } else if (lowerField.includes('is_') || lowerField.includes('has_')) {
+            return 'boolean';
+        } else if (lowerField.includes('tags') || lowerField.includes('categories') || lowerField.includes('array')) {
+            return 'array';
+        } else {
+            return 'text';
+        }
+    };
+    useEffect(() => {
+        const slug = segmentName.toLowerCase().replace(/[^\w\s-]/g, "").replace(/\s+/g, "-").replace(/-+/g, "-");
+        setSegmentId(`segment:${slug}`);
+    }, [segmentName]);
+
+
+    //handle changes
+    const handleDatasetChange = (value: string) => {
+        console.log("Dataset changed to:", value);
+        setSelectedDataset(value);
+    };
     const handleRootOperatorChange = (newValue) => {
         if (newValue !== null) {
             setRootOperator(newValue);
         }
     };
 
+
+    //handle onclick
+    const handleCopySegmentId = () => {
+        navigator.clipboard.writeText(segmentId)
+            .then(() => {
+                setCopySuccess(true);
+                toast.success('Segment ID copied to clipboard');
+
+                setTimeout(() => {
+                    setCopySuccess(false);
+                }, 2000);
+            })
+            .catch(err => {
+                console.error('Failed to copy text: ', err);
+                toast.error('Failed to copy to clipboard');
+            });
+    };
+    const handleAttributeClick = (attribute) => {
+        const newId = Math.max(...conditions.map(c => c.id), ...conditionGroups.map(g => g.id), 0) + 1;
+
+        const newCondition = {
+            id: newId,
+            type: 'attribute',
+            field: attribute.name,
+            operator: getDefaultOperatorForType(attribute.type),
+            value: null
+        };
+
+        setConditions([...conditions, newCondition]);
+        toast.info(`Added condition for "${attribute.name}"`);
+    };
+    const getDefaultOperatorForType = (type) => {
+        switch (type) {
+            case 'text': return 'equals';
+            case 'number': return 'equals';
+            case 'datetime': return 'after';
+            case 'boolean': return 'equals';
+            case 'array': return 'contains';
+            default: return 'equals';
+        }
+    };
+
+    //for condition state
     const handleAddCondition = (type = 'attribute') => {
         const newId = Math.max(...conditions.map(c => c.id), ...conditionGroups.map(g => g.id), 0) + 1;
 
@@ -358,7 +326,6 @@ const RenderDefinition: React.FC<SegmentDefinitionProps> = ({
             ]);
         }
     };
-
     const handleAddConditionGroup = () => {
         const newId = Math.max(...conditions.map(c => c.id), ...conditionGroups.map(g => g.id), 0) + 1;
 
@@ -372,7 +339,6 @@ const RenderDefinition: React.FC<SegmentDefinitionProps> = ({
             }
         ]);
     };
-
     const handleAddRelatedCondition = () => {
         const newId = Math.max(...conditions.map(c => c.id), ...conditionGroups.map(g => g.id), 0) + 1;
 
@@ -387,7 +353,6 @@ const RenderDefinition: React.FC<SegmentDefinitionProps> = ({
             }
         ]);
     };
-
     const handleUpdateGroupCondition = (groupId, conditionId, field, value) => {
         setConditionGroups(conditionGroups.map(group => {
             if (group.id === groupId) {
@@ -403,7 +368,6 @@ const RenderDefinition: React.FC<SegmentDefinitionProps> = ({
             return group;
         }));
     };
-
     const handleRemoveGroupCondition = (groupId, conditionId) => {
         setConditionGroups(conditionGroups.map(group => {
             if (group.id === groupId) {
@@ -415,66 +379,19 @@ const RenderDefinition: React.FC<SegmentDefinitionProps> = ({
             return group;
         }));
     };
-
     const handleRemoveCondition = (id) => {
         setConditions(conditions.filter(condition => condition.id !== id));
     };
-
-    const handleRemoveConditionGroup = (groupId) => {
-        setConditionGroups(conditionGroups.filter(group => group.id !== groupId));
-    };
-
-    const handleUpdateGroupOperator = (groupId, newOperator) => {
-        setConditionGroups(conditionGroups.map(group => {
-            if (group.id === groupId) {
-                return { ...group, operator: newOperator };
+    const handleUpdateCondition = (id, field, value) => {
+        setConditions(conditions.map(condition => {
+            if (condition.id === id) {
+                return { ...condition, [field]: value };
             }
-            return group;
+            return condition;
         }));
     };
 
-    const handleAddConditionToGroup = (groupId, type = 'attribute') => {
-        setConditionGroups(conditionGroups.map(group => {
-            if (group.id === groupId) {
-                const newId = Math.max(
-                    ...conditions.map(c => c.id),
-                    ...conditionGroups.map(g => g.id),
-                    ...group.conditions.map(c => c.id),
-                    0
-                ) + 1;
-
-                let newCondition;
-
-                if (type === 'attribute') {
-                    newCondition = {
-                        id: newId,
-                        type: 'attribute',
-                        field: '',
-                        operator: '',
-                        value: null
-                    };
-                } else if (type === 'event') {
-                    newCondition = {
-                        id: newId,
-                        type: 'event',
-                        eventType: 'performed',
-                        eventName: '',
-                        frequency: 'at_least',
-                        count: 1,
-                        timePeriod: 'days',
-                        timeValue: 30
-                    };
-                }
-
-                return {
-                    ...group,
-                    conditions: [...group.conditions, newCondition]
-                };
-            }
-            return group;
-        }));
-    };
-
+    //render function
     const renderAttributeCondition = (condition, isInGroup = false, groupId = null) => {
         const attribute = attributes.find((attr) => attr.name === condition.field);
         const attributeType = attribute ? attribute.type : "text";
@@ -483,23 +400,22 @@ const RenderDefinition: React.FC<SegmentDefinitionProps> = ({
         return (
             // <ReactSortable list={conditions} setList={setConditions} animation={200} className="space-y-2">
             //     {conditions.map((condition) => (
-                    <AttributeCondition
-                        key={condition.id}
-                        condition={condition}
-                        attributes={attributes}
-                        operators={operators}
-                        isInGroup={isInGroup}
-                        groupId={groupId}
-                        handleUpdateCondition={handleUpdateCondition}
-                        handleUpdateGroupCondition={handleUpdateGroupCondition}
-                        handleRemoveCondition={handleRemoveCondition}
-                        handleRemoveGroupCondition={handleRemoveGroupCondition}
-                    />
+            <AttributeCondition
+                key={condition.id}
+                condition={condition}
+                attributes={attributes}
+                operators={operators}
+                isInGroup={isInGroup}
+                groupId={groupId}
+                handleUpdateCondition={handleUpdateCondition}
+                handleUpdateGroupCondition={handleUpdateGroupCondition}
+                handleRemoveCondition={handleRemoveCondition}
+                handleRemoveGroupCondition={handleRemoveGroupCondition}
+            />
             //     ))}
             // </ReactSortable>
         );
     };
-
     const renderEventCondition = (condition, isInGroup = false, groupId = null) => {
         return (<EventCondition
             condition={condition}
@@ -511,7 +427,6 @@ const RenderDefinition: React.FC<SegmentDefinitionProps> = ({
             handleRemoveGroupCondition={handleRemoveGroupCondition}
         />)
     }
-
     const renderRelatedDatasetCondition = (condition, isInGroup = false, groupId = null) => {
         const relatedOptions = relatedDatasets[selectedDataset] || [];
 
@@ -528,75 +443,16 @@ const RenderDefinition: React.FC<SegmentDefinitionProps> = ({
             />
         );
     };
-
     const renderConditionGroup = (group) => {
         return (
             <ConditionGroup
                 group={group}
-                handleUpdateGroupOperator={handleUpdateGroupOperator}
-                handleRemoveConditionGroup={handleRemoveConditionGroup}
-                handleAddConditionToGroup={handleAddConditionToGroup}
                 renderAttributeCondition={renderAttributeCondition}
                 renderEventCondition={renderEventCondition}
                 renderRelatedDatasetCondition={renderRelatedDatasetCondition}
             />
         );
     };
-
-    const handleUpdateCondition = (id, field, value) => {
-        setConditions(conditions.map(condition => {
-            if (condition.id === id) {
-                return { ...condition, [field]: value };
-            }
-            return condition;
-        }));
-    };
-
-
-    //INCLUSION/EXCLUSION STATE
-
-    const handleRemoveInclusion = (segmentId) => {
-        setInclusions(inclusions.filter(segment => segment.id !== segmentId));
-    };
-
-    const handleRemoveExclusion = (segmentId) => {
-        setExclusions(exclusions.filter(segment => segment.id !== segmentId));
-    };
-
-    const handleOpenSegmentSelector = (mode) => {
-        setSelectionMode(mode);
-        setSegmentSelectorOpen(true);
-    };
-
-    const handleCloseSegmentSelector = () => {
-        setSegmentSelectorOpen(false);
-    };
-
-    const handleIncludeSegment = (segment) => {
-        // Check if segment is already included
-        if (!inclusions.some(inc => inc.id === segment.id)) {
-            setInclusions([...inclusions, segment]);
-            toast.success(`Added "${segment.name}" to inclusions`);
-        } else {
-            toast.info(`"${segment.name}" is already included`);
-        }
-        setSegmentSelectorOpen(false);
-    };
-
-    const handleExcludeSegment = (segment) => {
-        // Check if segment is already excluded
-        if (!exclusions.some(exc => exc.id === segment.id)) {
-            setExclusions([...exclusions, segment]);
-            toast.success(`Added "${segment.name}" to exclusions`);
-        } else {
-            toast.info(`"${segment.name}" is already excluded`);
-        }
-        setSegmentSelectorOpen(false);
-    };
-
-
-    //FUNCTION FOR INFO-SETUP
-    // Function to render the preview dialog
     const renderPreviewDialog = () => {
         // Determine columns based on the first result row
         const columns = previewData.length > 0
@@ -605,34 +461,11 @@ const RenderDefinition: React.FC<SegmentDefinitionProps> = ({
 
         return (
             <PreviewDialog
-                previewOpen={previewOpen}
-                previewData={previewData}
-                previewLoading={previewLoading}
                 columns={columns}
-                formatCellValue={formatCellValue}
                 generateSQLPreview={generateSQLPreview}
-                handleClosePreview={handleClosePreview}
             />
         );
     };
-
-
-    const formatCellValue = (value) => {
-        if (value === null || value === undefined) return '-';
-        if (typeof value === 'object') {
-            try {
-                return JSON.stringify(value);
-            } catch (e) {
-                return String(value);
-            }
-        }
-        if (typeof value === 'boolean') return value ? 'Yes' : 'No';
-        return String(value);
-    };
-
-    // Function to apply SQL changes to conditions
-
-
 
     return (
         <div className="grid grid-cols-10 gap-4">
@@ -794,33 +627,14 @@ const RenderDefinition: React.FC<SegmentDefinitionProps> = ({
                 <Card className="mb-4 p-4">
                     {/* Inclusion/Exclusion section */}
                     <CardContent>
-                        <InclusionExclusion
-                            inclusions={inclusions}
-                            exclusions={exclusions}
-                            handleRemoveInclusion={handleRemoveInclusion}
-                            handleRemoveExclusion={handleRemoveExclusion}
-                            handleOpenSegmentSelector={handleOpenSegmentSelector}
-                        />
+                        <InclusionExclusion />
                     </CardContent>
-                    <SegmentSelectorDialog
-                        segmentSelectorOpen={segmentSelectorOpen}
-                        selectionMode={selectionMode}
-                        availableSegments={availableSegments}
-                        handleCloseSegmentSelector={handleCloseSegmentSelector}
-                        handleIncludeSegment={handleIncludeSegment}
-                        handleExcludeSegment={handleExcludeSegment}
-                    />
+                    <SegmentSelectorDialog />
                 </Card>
 
                 <Card className="mb-4 p-4 border border-gray-300 bg-gray-100 rounded-md font-mono whitespace-pre-wrap">
                     <CardContent>
-                        <SQLPreview
-                            datasets={datasets}
-                            selectedDataset={selectedDataset}
-                            conditions={conditions}
-                            attributes={attributes}
-                            rootOperator={rootOperator}
-                        />
+                        <SQLPreview />
                     </CardContent>
                 </Card>
 
@@ -828,35 +642,10 @@ const RenderDefinition: React.FC<SegmentDefinitionProps> = ({
                 {renderPreviewDialog()}
 
                 {/* SQL Editor dialog */}
-                <SQLDialog
-                    sqlDialogOpen={sqlDialogOpen}
-                    editableSql={editableSql}
-                    sqlError={sqlError}
-                    setEditableSql={setEditableSql}
-                    setConditions={setConditions}
-                    setConditionGroups={setConditionGroups}
-                    setRootOperator={setRootOperator}
-                    setSqlDialogOpen={setSqlDialogOpen}
-                    setSqlError={setSqlError}
-                />
+                <SQLDialog />
 
                 {/* Discard confirmation dialog */}
-                <DiscardConfirmDialog
-                    discardConfirmOpen={discardConfirmOpen}
-                    setDiscardConfirmOpen={setDiscardConfirmOpen}
-                    setConditions={setConditions}
-                    setConditionGroups={setConditionGroups}
-                    setRootOperator={setRootOperator}
-                    setSegmentName={setSegmentName}
-                    setDescription={setDescription}
-                    setShowDescriptionField={setShowDescriptionField}
-                    setHasUnsavedChanges={setHasUnsavedChanges}
-                    initialConditions={initialConditions}
-                    initialConditionGroups={initialConditionGroups}
-                    initialRootOperator={initialRootOperator}
-                    initialSegmentName={initialSegmentName}
-                    initialDescription={initialDescription}
-                />
+                <DiscardConfirmDialog />
 
             </div >
             <div className="col-span-3 space-y-4">

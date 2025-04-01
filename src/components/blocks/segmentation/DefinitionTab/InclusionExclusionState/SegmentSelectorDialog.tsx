@@ -1,30 +1,40 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
+import { useSegmentToggle } from "@/context/SegmentToggleContext";
+import { useSegmentData } from "@/context/SegmentDataContext";
+import { toast } from "sonner";
 
-interface Segment {
-    id: string;
-    name: string;
-    count: number;
-}
+const SegmentSelectorDialog = () => {
+    const { inclusions, exclusions, setInclusions, setExclusions, setSelectionMode, selectionMode, availableSegments} = useSegmentData();
+    const { setSegmentSelectorOpen, segmentSelectorOpen } = useSegmentToggle()
 
-interface SegmentSelectorDialogProps {
-    segmentSelectorOpen: boolean;
-    selectionMode: string;
-    availableSegments: Segment[];
-    handleCloseSegmentSelector: () => void;
-    handleIncludeSegment: (segment: Segment) => void;
-    handleExcludeSegment: (segment: Segment) => void;
-}
+    const handleIncludeSegment = (segment) => {
+        // Check if segment is already included
+        if (!inclusions.some(inc => inc.id === segment.id)) {
+            setInclusions([...inclusions, segment]);
+            toast.success(`Added "${segment.name}" to inclusions`);
+        } else {
+            toast.info(`"${segment.name}" is already included`);
+        }
+        setSegmentSelectorOpen(false);
+    };
 
-const SegmentSelectorDialog = ({
-    segmentSelectorOpen,
-    selectionMode,
-    availableSegments,
-    handleCloseSegmentSelector,
-    handleIncludeSegment,
-    handleExcludeSegment,
-}: SegmentSelectorDialogProps) => {
+    const handleExcludeSegment = (segment) => {
+        // Check if segment is already excluded
+        if (!exclusions.some(exc => exc.id === segment.id)) {
+            setExclusions([...exclusions, segment]);
+            toast.success(`Added "${segment.name}" to exclusions`);
+        } else {
+            toast.info(`"${segment.name}" is already excluded`);
+        }
+        setSegmentSelectorOpen(false);
+    };
+
+    const handleCloseSegmentSelector = () => {
+        setSegmentSelectorOpen(false);
+    };
+
     return (
         <Dialog open={segmentSelectorOpen} onOpenChange={handleCloseSegmentSelector}>
             <DialogContent className="max-w-2xl">
@@ -60,8 +70,8 @@ const SegmentSelectorDialog = ({
                                         <TableCell className="text-right">
                                             <Button
                                                 className={`flex items-center gap-1 px-2 text-secondary-light py-1 text-sm ${selectionMode === "include"
-                                               ? "bg-primary hover:bg-blue-700"
-                                                : "bg-error hover:bg-red-900"}`}
+                                                    ? "bg-primary hover:bg-blue-700"
+                                                    : "bg-error hover:bg-red-900"}`}
                                                 size="sm"
                                                 onClick={() =>
                                                     selectionMode === "include" ? handleIncludeSegment(segment) : handleExcludeSegment(segment)

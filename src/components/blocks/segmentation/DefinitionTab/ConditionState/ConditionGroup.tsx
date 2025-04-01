@@ -1,6 +1,7 @@
 import { Trash, SlidersHorizontal, Calendar, Link } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { useSegmentData } from "@/context/SegmentDataContext";
 
 interface Condition {
     id: string;
@@ -13,9 +14,6 @@ interface ConditionGroupProps {
         operator: "AND" | "OR";
         conditions: Condition[];
     };
-    handleUpdateGroupOperator: (groupId: string, operator: "AND" | "OR") => void;
-    handleRemoveConditionGroup: (groupId: string) => void;
-    handleAddConditionToGroup: (groupId: string, type: "attribute" | "event" | "related") => void;
     renderAttributeCondition: (condition: Condition, isInGroup: boolean, groupId: string) => JSX.Element | null;
     renderEventCondition: (condition: Condition, isInGroup: boolean, groupId: string) => JSX.Element | null;
     renderRelatedDatasetCondition: (condition: Condition, isInGroup: boolean, groupId: string) => JSX.Element | null;
@@ -23,13 +21,67 @@ interface ConditionGroupProps {
 
 const ConditionGroup: React.FC<ConditionGroupProps> = ({
     group,
-    handleUpdateGroupOperator,
-    handleRemoveConditionGroup,
-    handleAddConditionToGroup,
     renderAttributeCondition,
     renderEventCondition,
     renderRelatedDatasetCondition
 }) => {
+    const { setConditionGroups, conditionGroups, conditions } = useSegmentData()
+
+    const handleAddConditionToGroup = (groupId, type = 'attribute') => {
+        setConditionGroups(conditionGroups.map(group => {
+            if (group.id === groupId) {
+                const newId = Math.max(
+                    ...conditions.map(c => c.id),
+                    ...conditionGroups.map(g => g.id),
+                    ...group.conditions.map(c => c.id),
+                    0
+                ) + 1;
+
+                let newCondition;
+
+                if (type === 'attribute') {
+                    newCondition = {
+                        id: newId,
+                        type: 'attribute',
+                        field: '',
+                        operator: '',
+                        value: null
+                    };
+                } else if (type === 'event') {
+                    newCondition = {
+                        id: newId,
+                        type: 'event',
+                        eventType: 'performed',
+                        eventName: '',
+                        frequency: 'at_least',
+                        count: 1,
+                        timePeriod: 'days',
+                        timeValue: 30
+                    };
+                }
+
+                return {
+                    ...group,
+                    conditions: [...group.conditions, newCondition]
+                };
+            }
+            return group;
+        }));
+    };
+
+    const handleRemoveConditionGroup = (groupId) => {
+        setConditionGroups(conditionGroups.filter(group => group.id !== groupId));
+    };
+
+    const handleUpdateGroupOperator = (groupId, newOperator) => {
+        setConditionGroups(conditionGroups.map(group => {
+            if (group.id === groupId) {
+                return { ...group, operator: newOperator };
+            }
+            return group;
+        }));
+    };
+
     return (
         <div className="mb-3 mt-2 border border-gray-300 rounded p-2">
             <div className="flex items-center mb-2">

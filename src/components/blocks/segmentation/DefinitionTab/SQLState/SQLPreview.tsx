@@ -1,4 +1,5 @@
 import { Card } from "@/components/ui/card";
+import { useSegmentData } from "@/context/SegmentDataContext";
 
 interface Attribute {
   name: string;
@@ -16,14 +17,6 @@ interface Condition {
 interface Dataset {
   name?: string;
   schema?: string;
-}
-
-interface SQLPreviewProps {
-  datasets: Record<string, Dataset>;
-  selectedDataset: string;
-  conditions: Condition[];
-  attributes: Attribute[];
-  rootOperator: string;
 }
 
 const generateSQLPreview = (
@@ -117,13 +110,9 @@ const generateSQLPreview = (
 export { generateSQLPreview };
 
 
-const SQLPreview: React.FC<SQLPreviewProps> = ({
-  datasets,
-  selectedDataset,
-  conditions,
-  attributes,
-  rootOperator,
+const SQLPreview = ({
 }) => {
+  const {datasets, selectedDataset, conditions, attributes, rootOperator} = useSegmentData();
 
   return (
     <>

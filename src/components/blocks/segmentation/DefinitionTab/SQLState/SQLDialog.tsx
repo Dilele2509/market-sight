@@ -3,30 +3,12 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useState } from "react";
+import { useSegmentData } from "@/context/SegmentDataContext";
+import { useSegmentToggle } from "@/context/SegmentToggleContext";
 
-interface SqlDialogProps {
-    sqlDialogOpen: boolean;
-    editableSql: string;
-    sqlError: any;
-    setEditableSql: (value: any) => void;
-    setConditions: (conditions: any[]) => void;
-    setConditionGroups: (conditions: any[]) => void;
-    setRootOperator: (operator: string) => void;
-    setSqlDialogOpen: (value: any) => void;
-    setSqlError: (value: any) => void;
-}
-
-export default function SQLDialog({
-    sqlDialogOpen,
-    editableSql,
-    sqlError,
-    setEditableSql,
-    setConditions,
-    setConditionGroups,
-    setRootOperator,
-    setSqlDialogOpen, 
-    setSqlError
-}: SqlDialogProps) {
+export default function SQLDialog() {
+    const {setSqlError,setEditableSql, editableSql, setRootOperator, setConditions, setConditionGroups, sqlError} = useSegmentData();
+    const {setSqlDialogOpen, sqlDialogOpen} = useSegmentToggle();
 
     // Function to close SQL dialog
     const handleCloseSqlDialog = () => {

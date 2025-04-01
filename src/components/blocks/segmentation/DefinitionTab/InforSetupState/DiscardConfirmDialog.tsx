@@ -1,6 +1,8 @@
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import { useSegmentData } from "@/context/SegmentDataContext";
+import { useSegmentToggle } from "@/context/SegmentToggleContext";
 
 // Interface cho điều kiện trong segmentation
 interface Condition {
@@ -37,22 +39,10 @@ interface DiscardConfirmDialogProps {
     initialDescription: string;
 }
 
-const DiscardConfirmDialog: React.FC<DiscardConfirmDialogProps> = ({
-    discardConfirmOpen,
-    setDiscardConfirmOpen,
-    setConditions,
-    setConditionGroups,
-    setRootOperator,
-    setSegmentName,
-    setDescription,
-    setShowDescriptionField,
-    setHasUnsavedChanges,
-    initialConditions,
-    initialConditionGroups,
-    initialRootOperator,
-    initialSegmentName,
-    initialDescription
-}) => {
+const DiscardConfirmDialog = () => {
+    const {setConditions, setConditionGroups, initialConditions, initialConditionGroups, initialRootOperator, initialSegmentName, initialDescription, setRootOperator, setSegmentName, setDescription} = useSegmentData();
+    const {setShowDescriptionField, setHasUnsavedChanges, setDiscardConfirmOpen, discardConfirmOpen} = useSegmentToggle();
+
     const confirmDiscardChanges = () => {
         // Reset tất cả các điều kiện về trạng thái ban đầu
         setConditions([...initialConditions]);
