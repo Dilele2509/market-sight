@@ -3,8 +3,10 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useMicroSegmentation } from "@/context/MicroSegmentationContext";
-import { useState } from "react";
+import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
 import { toast } from "@/hooks/use-toast";
+import { useSegmentData } from "@/context/SegmentDataContext";
 
 const segmentationData = {
     market: [
@@ -31,11 +33,24 @@ const segmentationData = {
 export default function MicroSegmentation() {
     const navigate = useNavigate();
     const location = useLocation();
+    const { connectionUrl } = useSegmentData();
     const { selectedSegment, setSelectedSegment } = useMicroSegmentation();
 
     return (
         <DashboardShell>
-            <div className="flex flex-col gap-6">
+            {!connectionUrl ? (
+                <div className="flex flex-col gap-6 items-center justify-center h-[60vh]">
+                    <Alert variant="destructive" className="max-w-md text-center">
+                        <AlertTitle>Database Connection Required</AlertTitle>
+                        <AlertDescription>
+                            No data has been imported. Please navigate to the Import Data page to connect to your database.
+                        </AlertDescription>
+                    </Alert>
+                    <Button onClick={() => navigate("/import-data")} className="mt-4">
+                        Go to Import Data
+                    </Button>
+                </div>
+            ) : (<div className="flex flex-col gap-6">
                 <h1 className="text-3xl font-bold tracking-tight">Micro Segmentation</h1>
                 <Tabs
                     defaultValue="rfm"
@@ -69,7 +84,7 @@ export default function MicroSegmentation() {
                 </Select>
 
                 {selectedSegment !== null ? (<Outlet />) : (<h1>Please select a segmentation to sync</h1>)}
-            </div>
+            </div>)}
         </DashboardShell>
     );
 }

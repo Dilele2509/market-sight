@@ -3,29 +3,25 @@ import { DashboardShell } from "@/components/layout/DashboardShell";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Database, FileSpreadsheet, Box, ArrowRight } from "lucide-react";
+import ConnectionDialog from "@/components/blocks/connectDB/connectDialog";
+import { useSegmentToggle } from "@/context/SegmentToggleContext";
 
 const sources = [
   {
     title: "Database",
     description: "Connect directly to your database",
     icon: Database,
-    sources: ["PostgreSQL", "MySQL", "MongoDB", "Snowflake"],
-  },
-  {
-    title: "Spreadsheets",
-    description: "Import data from spreadsheet files",
-    icon: FileSpreadsheet,
-    sources: ["Google Sheets", "Excel", "CSV"],
-  },
-  {
-    title: "Other Sources",
-    description: "Connect to other data sources",
-    icon: Box,
-    sources: ["Shopify", "WooCommerce", "Custom API"],
+    sources: ["PostgreSQL"],
   },
 ];
 
 export default function ImportData() {
+  const { setConnectionDialog, connectionDialog } = useSegmentToggle();
+
+  const renderConnectionDialog = () => {
+    setConnectionDialog(!connectionDialog)
+  }
+
   return (
     <DashboardShell>
       <div className="flex flex-col gap-6">
@@ -36,7 +32,7 @@ export default function ImportData() {
           </p>
         </div>
 
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid">
           {sources.map((source) => (
             <Card key={source.title} className="relative group hover:shadow-md transition-shadow">
               <CardHeader>
@@ -50,6 +46,11 @@ export default function ImportData() {
                 <div className="space-y-2">
                   {source.sources.map((item) => (
                     <Button
+                      onClick={() => {
+                        if (item === "PostgreSQL") {
+                          renderConnectionDialog()
+                        }
+                      }}
                       key={item}
                       variant="outline"
                       className="w-full justify-between group/btn hover:border-primary"
@@ -76,6 +77,7 @@ export default function ImportData() {
           </CardContent>
         </Card>
       </div>
+      <ConnectionDialog />
     </DashboardShell>
   );
 }

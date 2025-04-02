@@ -20,6 +20,8 @@ interface SegmentToggleContextProps {
     setCopySuccess: React.Dispatch<React.SetStateAction<boolean>>
     segmentSelectorOpen: boolean;
     setSegmentSelectorOpen: React.Dispatch<React.SetStateAction<boolean>>
+    connectionDialog: boolean;
+    setConnectionDialog: React.Dispatch<React.SetStateAction<boolean>>
 }
 
 const SegmentToggleContext = createContext<SegmentToggleContextProps | undefined>(undefined);
@@ -40,6 +42,8 @@ export const SegmentToggleProvider: React.FC<{ children: ReactNode; editSegment?
 
     // Dialog states
     const [segmentSelectorOpen, setSegmentSelectorOpen] = useState(false);
+
+    const [connectionDialog, setConnectionDialog] = useState(false);
 
 
     return (
@@ -63,7 +67,9 @@ export const SegmentToggleProvider: React.FC<{ children: ReactNode; editSegment?
                 copySuccess,
                 setCopySuccess,
                 segmentSelectorOpen,
-                setSegmentSelectorOpen
+                setSegmentSelectorOpen,
+                connectionDialog,
+                setConnectionDialog
             }}
         >
             {children}

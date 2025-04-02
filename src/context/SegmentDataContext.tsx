@@ -47,7 +47,25 @@ interface SegmentDataContextProps {
     setAvailableSegments: Record<string, any>;
     selectionMode: string
     setSelectionMode: React.Dispatch<React.SetStateAction<string>>;
-
+    connectionUrl: string;
+    setConnectionUrl: React.Dispatch<React.SetStateAction<string>>;
+    CONNECTION_STORAGE_KEY: string;
+    CONNECTION_EXPIRY_KEY: string;
+    ONE_HOUR_MS: number;
+    query: string;
+    setQuery: React.Dispatch<React.SetStateAction<string>>;
+    selectedTable: string;
+    setSelectedTable: React.Dispatch<React.SetStateAction<string>>;
+    tables: Record<string, any>;
+    setTables: React.Dispatch<React.SetStateAction<Record<string, any>>>;
+    results: any
+    setResults: React.Dispatch<React.SetStateAction<any>>;
+    error: any
+    setError: React.Dispatch<React.SetStateAction<any>>;
+    file: any
+    setFile: React.Dispatch<React.SetStateAction<any>>;
+    displayUrl: string
+    setDisplayUrl: React.Dispatch<React.SetStateAction<string>>;
 }
 
 const SegmentDataContext = createContext<SegmentDataContextProps | undefined>(undefined);
@@ -109,6 +127,20 @@ export const SegmentDataProvider: React.FC<{ children: ReactNode; editSegment?: 
     const [selectionMode, setSelectionMode] = useState("include"); // 'include' or 'exclude'
 
 
+    const [connectionUrl, setConnectionUrl] = useState('');
+    const CONNECTION_STORAGE_KEY = 'postgres_connection';
+    const CONNECTION_EXPIRY_KEY = 'postgres_connection_expiry';
+    const ONE_HOUR_MS = 60 * 60 * 1000; // 1 hour in milliseconds
+
+    const [selectedTable, setSelectedTable] = useState('');
+    const [query, setQuery] = useState('');
+    const [tables, setTables] = useState<Record<string, any>>({});
+    const [results, setResults] = useState(null);
+    const [error, setError] = useState(null);
+    const [file, setFile] = useState(null);
+    const [displayUrl, setDisplayUrl] = useState('');
+
+
     return (
         <SegmentDataContext.Provider
             value={{
@@ -158,6 +190,25 @@ export const SegmentDataProvider: React.FC<{ children: ReactNode; editSegment?: 
                 setAvailableSegments,
                 selectionMode,
                 setSelectionMode,
+                connectionUrl,
+                setConnectionUrl,
+                CONNECTION_STORAGE_KEY,
+                CONNECTION_EXPIRY_KEY,
+                ONE_HOUR_MS,
+                selectedTable,
+                setSelectedTable,
+                query,
+                setQuery,
+                tables,
+                setTables,
+                results,
+                setResults,
+                error,
+                setError,
+                file,
+                setFile,
+                displayUrl,
+                setDisplayUrl
             }}
         >
             {children}
