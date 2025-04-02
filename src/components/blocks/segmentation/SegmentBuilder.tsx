@@ -61,8 +61,14 @@ export default function SegmentBuilder({ onBack, editSegment }: SegmentBuilderPr
     const handleFetchDatasets = useCallback(async () => {
         setLoading(true);
         try {
-            await axios.get(`/datasources/postgres/tables`); //lấy từ python
-            toast.success("Datasets loaded successfully");
+            await axios.get(`/datasources/postgres/tables`)
+                .then((response) => {
+                    console.log(response);
+                    toast.success("Datasets loaded successfully");
+                })
+                .catch((error) => {
+                    toast.error("Failed to fetch datasets", error);
+                })
         } catch (error) {
             toast.error("Failed to fetch datasets");
         } finally {
