@@ -1,5 +1,5 @@
-import { useState, useEffect, useCallback } from "react";
-import axios from "@/API/axios";
+import { useState, useEffect, useCallback, useContext } from "react";
+import axios, { axiosPrivate } from "@/API/axios";
 import { toast } from "sonner";
 import { ReactSortable } from "react-sortablejs";
 
@@ -22,6 +22,7 @@ import { SQLDialog, SQLPreview } from "./SQLState";
 import { DiscardConfirmDialog, PreviewDialog } from "./InforSetupState";
 import { useSegmentToggle } from "@/context/SegmentToggleContext";
 import { useSegmentData } from "@/context/SegmentDataContext";
+import AuthContext from "@/context/AuthContext";
 
 
 interface SegmentDefinitionProps {
@@ -52,7 +53,7 @@ const RenderDefinition: React.FC<SegmentDefinitionProps> = ({
         setConditions,
         setRootOperator,
         setConditionGroups,
-        relatedDatasets, } = useSegmentData();
+        relatedDatasets } = useSegmentData();
 
     const { setLoading,
         loading,
@@ -61,40 +62,26 @@ const RenderDefinition: React.FC<SegmentDefinitionProps> = ({
         showDescriptionField,
         setShowDescriptionField } = useSegmentToggle();
 
+        useEffect(()=>{
+            fetchAttributes(selectedDataset)
+        },[selectedDataset])
 
-    //fetch api data
-    const handleFetchDatasets = useCallback(async () => {
-        setLoading(true);
-        try {
-            await axios.get(`/datasources/postgres/tables`);
-            toast.success("Datasets loaded successfully");
-        } catch (error) {
-            toast.error("Failed to fetch datasets");
-        } finally {
-            setLoading(false);
-        }
-    }, []);
-    useEffect(() => {
-        handleFetchDatasets();
-    }, [handleFetchDatasets]);
-
-    const fetchAttributes = async (datasetName, forceRefresh = false, showToast = true) => {
+    const fetchAttributes = async (dataset: any, showToast = true) => {
         try {
             setLoading(true);
+            console.log('run fetch attributes with: ', dataset);
 
-            const tableInfo = datasets[datasetName];
-
-            if (!tableInfo) {
+            if (!dataset) {
                 if (showToast) {
-                    toast.error(`Table information for ${datasetName} not found`);
+                    toast.error(`Table information for ${dataset.name} not found`);
                 }
                 setLoading(false);
                 return;
             }
-
+            //console.log('dataset field: ', dataset.fields);
             // If we already have fields from the initial fetch AND we're not forcing a refresh, use those
-            if (!forceRefresh && tableInfo.fields && Array.isArray(tableInfo.fields) && tableInfo.fields.length > 0) {
-                const formattedAttributes = tableInfo.fields.map(field => ({
+            if (dataset.fields && Array.isArray(dataset.fields) && dataset.fields.length > 0) {
+                const formattedAttributes = dataset.fields.map(field => ({
                     name: field,
                     type: determineFieldType(field)
                 }));
@@ -102,102 +89,23 @@ const RenderDefinition: React.FC<SegmentDefinitionProps> = ({
                 setAttributes(formattedAttributes);
                 setLoading(false);
                 return;
+            }else{
+                toast.error('can not fetch attribute, please check database connection')
             }
 
-            // If fields aren't available or we're forcing a refresh, fetch them from the API
-            const connectionUrl = process.env.REACT_APP_CONNECTION_URL ||
-                process.env.SEGMENTATION_URL ||
-                localStorage.getItem('postgres_connection');
-
-            if (!connectionUrl) {
-                if (showToast) {
-                    toast.error("Connection URL not configured. Please set the connection URL in your settings or environment variables.");
-                }
-                setLoading(false);
-                return;
-            }
-
-            try {
-                const url = new URL(connectionUrl);
-                const tableName = tableInfo.name.toLowerCase();
-
-                // Parse the connection URL to get individual components
-                const username = url.username;
-                const password = url.password;
-                const host = url.hostname;
-                const port = url.port;
-                const database = url.pathname.replace('/', '');
-
-                console.log(`Fetching columns for ${tableName}...`);
-
-                // Fetch columns for the specific table
-                const response = await axios.get(`/datasources/postgres/tables`, {
-                    params: {
-                        host: host,
-                        port: port,
-                        database: database,
-                        username: username,
-                        password: password,
-                        table: tableName
-                    }
-                });
-
-                // Find the table in the response
-                const tableData = response.data.find(table =>
-                    table.table_name.toLowerCase() === tableName
-                );
-
-                if (tableData && Array.isArray(tableData.columns) && tableData.columns.length > 0) {
-                    // Update the dataset information with the columns
-                    setDatasets(prevDatasets => ({
-                        ...prevDatasets,
-                        [datasetName]: {
-                            ...prevDatasets[datasetName],
-                            fields: tableData.columns
-                        }
-                    }));
-
-                    // Create formatted attributes from the column data
-                    const formattedAttributes = tableData.columns.map(field => ({
-                        name: field,
-                        type: determineFieldType(field)
-                    }));
-
-                    setAttributes(formattedAttributes);
-
-                    // Only show success toast if requested
-                    if (showToast) {
-                        toast.success(`Loaded ${formattedAttributes.length} fields for ${datasetName}`);
-                    }
-                } else {
-                    setAttributes([]);
-                    if (showToast) {
-                        toast.warning(`No fields found for ${datasetName}. The table might be empty.`);
-                    }
-                }
-            } catch (error) {
-                console.error(`Error fetching columns for ${datasetName}:`, error);
-                const sanitizedError = error.message?.replace(/postgresql:\/\/[^:]+:[^@]+@/g, 'postgresql://****:****@');
-
-                if (showToast) {
-                    toast.error(`Failed to load fields: ${sanitizedError}`);
-                }
-                setAttributes([]);
-            }
-
-            setLoading(false);
-        } catch (error) {
-            console.error('Error in fetchAttributes:', error);
-            if (showToast) {
-                toast.error(`Failed to load attributes for ${datasetName}`);
-            }
-            setLoading(false);
-            setAttributes([]);
+            setAttributes(dataset.field)
+            return dataset.fields;
+        }catch{
+            toast.error('can not run fetch attribute function')
         }
     };
 
+    // useEffect(()=>{
+    //     console.log(selectedDataset);
+    // })
+
     //function define type
-    const determineFieldType = (fieldName, dataType = null) => {
+    const determineFieldType = (fieldName: string, dataType = null) => {
         // If we have the actual data type from PostgreSQL, use it
         if (dataType) {
             // Convert PostgreSQL data types to our field types
@@ -241,11 +149,28 @@ const RenderDefinition: React.FC<SegmentDefinitionProps> = ({
         setSegmentId(`segment:${slug}`);
     }, [segmentName]);
 
+    const defineDatasetName = (value : string) => {
+        switch (value.toLowerCase()) {
+            case 'customers':
+                return 'Customer Profile';
+            case 'transactions':
+                return 'Transactions';
+            case 'stores':
+                return 'Stores';
+            case 'product_lines':
+                return 'Product Line';
+            default:
+                // return value.charAt(0).toUpperCase + value.slice(1);
+                return 'Customer Profile';
+        }
+    }
+
 
     //handle changes
     const handleDatasetChange = (value: string) => {
-        console.log("Dataset changed to:", value);
-        setSelectedDataset(value);
+        const datasetName = defineDatasetName(value)
+        console.log("Dataset changed to:", datasetName);
+        setSelectedDataset(datasets[datasetName]);
     };
     const handleRootOperatorChange = (newValue) => {
         if (newValue !== null) {
@@ -497,7 +422,7 @@ const RenderDefinition: React.FC<SegmentDefinitionProps> = ({
                         {/* Segment of */}
                         <div className="space-y-1">
                             <label className="font-medium">Segment of</label>
-                            <Select value={selectedDataset} onValueChange={handleDatasetChange}>
+                            <Select value={defineDatasetName(selectedDataset.name)} onValueChange={handleDatasetChange}>
                                 <SelectTrigger>
                                     <SelectValue placeholder="Select dataset" />
                                 </SelectTrigger>
@@ -693,7 +618,7 @@ const RenderDefinition: React.FC<SegmentDefinitionProps> = ({
                             <Button
                                 size="icon"
                                 variant="ghost"
-                                onClick={() => fetchAttributes(selectedDataset, true, true)}
+                                onClick={() => fetchAttributes(selectedDataset, true)}
                                 disabled={loading}
                             >
                                 <RefreshCw size={16} />
@@ -708,17 +633,17 @@ const RenderDefinition: React.FC<SegmentDefinitionProps> = ({
                             <div className="p-2 bg-gray-100 border-b border-gray-300">
                                 <div className="flex items-center mb-1">
                                     <span className="w-6 h-6 flex items-center justify-center bg-gray-300 text-sm font-semibold text-gray-700 rounded-md mr-2">
-                                        {selectedDataset ? selectedDataset.charAt(0) : 'U'}
+                                        {selectedDataset.name ? selectedDataset.name.charAt(0) : 'U'}
                                     </span>
                                     <span className="flex-grow flex justify-between items-center text-sm font-medium text-gray-900">
-                                        {selectedDataset} Attributes
+                                        {selectedDataset.name} Attributes
                                         <span className="w-6 h-6 flex items-center justify-center bg-gray-300 text-sm font-semibold text-gray-700 rounded-md">
                                             {attributes.length}
                                         </span>
                                     </span>
                                 </div>
 
-                                <p className="text-xs text-gray-500">A condition on an attribute of {selectedDataset}</p>
+                                <p className="text-xs text-gray-500">A condition on an attribute of {selectedDataset.name}</p>
                             </div>
                             <ScrollArea className="max-h-[350px] overflow-y-auto">
                                 {loading ? (

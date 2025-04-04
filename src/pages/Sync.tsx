@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Database, FileSpreadsheet, Box, ArrowRight } from "lucide-react";
 import ConnectionDialog from "@/components/blocks/connectDB/connectDialog";
 import { useSegmentToggle } from "@/context/SegmentToggleContext";
+import { useContext, useEffect } from "react";
+import AuthContext from "@/context/AuthContext";
 
 const sources = [
   {

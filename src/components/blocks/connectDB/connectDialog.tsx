@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useContext, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogFooter, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -9,9 +9,11 @@ import { Eye, EyeOff, Loader2 } from "lucide-react";
 import { useSegmentToggle } from "@/context/SegmentToggleContext";
 import { useSegmentData } from "@/context/SegmentDataContext";
 import { axiosPrivate } from "@/API/axios";
+import AuthContext from "@/context/AuthContext";
 
 export default function ConnectionDialog() {
     const [showPassword, setShowPassword] = useState(false);
+    const { token } = useContext(AuthContext)
 
     const { loading, setLoading, setConnectionDialog, connectionDialog } = useSegmentToggle();
     const { ONE_HOUR_MS, CONNECTION_EXPIRY_KEY, CONNECTION_STORAGE_KEY, setTables, setError, connectionUrl, setConnectionUrl } = useSegmentData();
@@ -19,7 +21,11 @@ export default function ConnectionDialog() {
     const fetchTables = async () => {
         try {
             setLoading(true);
-            const response = await axiosPrivate.get(`/data/tables`);
+            const response = await axiosPrivate.get('/data/tables', {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
             console.log('Fetched tables:', response.data);
             setTables(response.data);
             setError(null);

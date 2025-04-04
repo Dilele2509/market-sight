@@ -13,8 +13,7 @@ import { useSegmentData } from "@/context/SegmentDataContext";
 
 
 export default function SegmentBuilder({ onBack, editSegment }: SegmentBuilderProps) {
-    const { datasets,
-        setDatasets,
+    const {
         segmentName,
         setSegmentName,
         setSegmentId,
@@ -27,20 +26,10 @@ export default function SegmentBuilder({ onBack, editSegment }: SegmentBuilderPr
         description,
         estimatedSize,
         conditionGroups,
-        previewData,
-        setSelectedDataset,
-        setDescription,
-        editableSql,
         setEditableSql,
-        sqlError,
-        initialConditionGroups,
-        setSqlError,
-        initialConditions,
-        initialDescription,
-        initialRootOperator,
-        initialSegmentName } = useSegmentData();
+        setSqlError } = useSegmentData();
 
-    const { setLoading,
+    const { 
         setSqlDialogOpen,
         setPreviewLoading,
         setPreviewOpen,
@@ -58,31 +47,9 @@ export default function SegmentBuilder({ onBack, editSegment }: SegmentBuilderPr
         setSegmentId(`segment:${slug}`);
     }, [segmentName]);
 
-    const handleFetchDatasets = useCallback(async () => {
-        setLoading(true);
-        try {
-            await axios.get(`/datasources/postgres/tables`)
-                .then((response) => {
-                    console.log(response);
-                    toast.success("Datasets loaded successfully");
-                })
-                .catch((error) => {
-                    toast.error("Failed to fetch datasets", error);
-                })
-        } catch (error) {
-            toast.error("Failed to fetch datasets");
-        } finally {
-            setLoading(false);
-        }
-    }, []);
-
-    useEffect(() => {
-        handleFetchDatasets();
-    }, [handleFetchDatasets]);
-
     //SQL Preview
     const generateSQL = () => {
-        return generateSQLPreview(datasets, selectedDataset, conditions, attributes, rootOperator)
+        return generateSQLPreview(selectedDataset, conditions, attributes, rootOperator)
     }
     // Function to open SQL dialog
     const handleOpenSqlDialog = () => {
@@ -97,7 +64,7 @@ export default function SegmentBuilder({ onBack, editSegment }: SegmentBuilderPr
         setPreviewOpen(true); // Open dialog immediately to show loading state
 
         try {
-            const sqlQuery = generateSQLPreview(datasets, selectedDataset, conditions, attributes, rootOperator);
+            const sqlQuery = generateSQLPreview(selectedDataset, conditions, attributes, rootOperator);
 
             // Get connection URL from localStorage
             const connectionUrl = localStorage.getItem('postgres_connection');
@@ -121,7 +88,7 @@ export default function SegmentBuilder({ onBack, editSegment }: SegmentBuilderPr
 
                 // Format request data to match what the API expects
                 const requestData = {
-                    table: datasets[selectedDataset].name,
+                    table: selectedDataset.name,
                     query: sqlQuery,
                     connection_details: {
                         host,
@@ -215,7 +182,7 @@ export default function SegmentBuilder({ onBack, editSegment }: SegmentBuilderPr
             const segment = {
                 id: segmentId,
                 name: segmentName,
-                dataset: selectedDataset,
+                dataset: selectedDataset.name,
                 description: description,
                 last_updated: new Date().toISOString(),
                 size: estimatedSize.count,

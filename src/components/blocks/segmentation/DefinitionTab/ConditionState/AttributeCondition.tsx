@@ -73,9 +73,8 @@ const AttributeCondition: React.FC<AttributeConditionProps> = ({
       >
         <SelectTrigger className="w-[160px]">
           <SelectValue placeholder="Select field">
-            {condition.field
-              ? attributes.find((attr) => attr.name === condition.field)?.name || "No attribute"
-              : "Select field"}
+            {condition.field ? attributes.find((attr) => attr.name === condition.field)?.name || "Select field"
+              : "no attribute"}
           </SelectValue>
         </SelectTrigger>
         <SelectContent className="bg-card border-[0.5px] border-card-foreground shadow-lg rounded-md z-50">

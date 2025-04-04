@@ -64,7 +64,7 @@ const EventCondition: React.FC<EventConditionProps> = ({
           <Trash className="w-4 h-4" />
         </Button>
       </CardContent>
-      
+
       {/* Event Name */}
       <CardContent className="flex items-center mb-3">
         <Label className="font-medium text-sm w-20">with</Label>
@@ -78,42 +78,46 @@ const EventCondition: React.FC<EventConditionProps> = ({
         </Select>
         <Input className="flex-grow ml-4" placeholder="Event name" value={condition.eventName || ""} onChange={(e) => updateCondition("eventName", e.target.value)} />
       </CardContent>
-      
+
       {/* Occurrence Conditions */}
       {!["first_time", "last_time"].includes(condition.eventType) ? (
-        <CardContent className="flex items-center gap-4">
-          <Label className="font-medium text-sm w-20">Occurring</Label>
-          <Select value={condition.frequency || "at_least"} onValueChange={(value) => updateCondition("frequency", value)}>
-            <SelectTrigger className="w-32">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent className="bg-card border-[0.5px] border-card-foreground shadow-lg rounded-md z-50">
-              {FREQUENCY_OPTIONS.map((option) => (
-                <SelectItem className="hover:bg-background hover:rounded-md cursor-pointer" key={option.value} value={option.value}>{option.label}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Input type="number" className="w-14" min={1} value={condition.count || 1} onChange={(e) => updateCondition("count", Number(e.target.value))} />
-          <span className="text-sm font-medium">times</span>
-          <Select value="within last">
-            <SelectTrigger className="w-32">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent className="bg-card border-[0.5px] border-card-foreground shadow-lg rounded-md z-50">
-              <SelectItem className="hover:bg-background hover:rounded-md cursor-pointer" value="within last">within last</SelectItem>
-            </SelectContent>
-          </Select>
-          <Input type="number" className="w-20" min={1} value={condition.timeValue || 30} onChange={(e) => updateCondition("timeValue", Number(e.target.value))} />
-          <Select value={condition.timePeriod || "days"} onValueChange={(value) => updateCondition("timePeriod", value)}>
-            <SelectTrigger className="w-24">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent className="bg-card border-[0.5px] border-card-foreground shadow-lg rounded-md z-50">
-              {TIME_PERIOD_OPTIONS.map((option) => (
-                <SelectItem className="hover:bg-background hover:rounded-md cursor-pointer" key={option.value} value={option.value}>{option.label}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+        <CardContent className="flex items-center flex-wrap space-y-4">
+          <div className="flex items-center gap-4">
+            <Label className="font-medium text-sm w-20">Occurring</Label>
+            <Select value={condition.frequency || "at_least"} onValueChange={(value) => updateCondition("frequency", value)}>
+              <SelectTrigger className="w-32">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent className="bg-card border-[0.5px] border-card-foreground shadow-lg rounded-md z-50">
+                {FREQUENCY_OPTIONS.map((option) => (
+                  <SelectItem className="hover:bg-background hover:rounded-md cursor-pointer" key={option.value} value={option.value}>{option.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Input type="number" className="w-14" min={1} value={condition.count || 1} onChange={(e) => updateCondition("count", Number(e.target.value))} />
+          </div>
+          <div className="flex items-center gap-4">
+            <Label className="text-sm font-medium">Times</Label>
+            <Select value="within last">
+              <SelectTrigger className="w-32">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent className="bg-card border-[0.5px] border-card-foreground shadow-lg rounded-md z-50">
+                <SelectItem className="hover:bg-background hover:rounded-md cursor-pointer" value="within last">within last</SelectItem>
+              </SelectContent>
+            </Select>
+            <Input type="number" className="w-20" min={1} value={condition.timeValue || 30} onChange={(e) => updateCondition("timeValue", Number(e.target.value))} />
+            <Select value={condition.timePeriod || "days"} onValueChange={(value) => updateCondition("timePeriod", value)}>
+              <SelectTrigger className="w-24">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent className="bg-card border-[0.5px] border-card-foreground shadow-lg rounded-md z-50">
+                {TIME_PERIOD_OPTIONS.map((option) => (
+                  <SelectItem className="hover:bg-background hover:rounded-md cursor-pointer" key={option.value} value={option.value}>{option.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         </CardContent>
       ) : (
         <CardContent className="flex items-center gap-4">

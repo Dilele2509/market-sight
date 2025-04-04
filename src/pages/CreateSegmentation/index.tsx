@@ -8,11 +8,12 @@ import { Button } from "@/components/ui/button";
 export default function CreateSegmentation() {
     const navigate = useNavigate();
     const location = useLocation();
-    const { connectionUrl } = useSegmentData();
+    const { CONNECTION_EXPIRY_KEY } = useSegmentData();
+    const connection = localStorage.getItem(CONNECTION_EXPIRY_KEY)
 
     return (
         <DashboardShell>
-            {!connectionUrl ? (
+            {!connection ? (
                 <div className="flex flex-col gap-6 items-center justify-center h-[60vh]">
                     <Alert variant="destructive" className="max-w-md text-center">
                         <AlertTitle>Database Connection Required</AlertTitle>

@@ -20,17 +20,15 @@ interface Dataset {
 }
 
 const generateSQLPreview = (
-  datasets: Record<string, Dataset>,
-  selectedDataset: string,
+  selectedDataset: any,
   conditions: Condition[],
   attributes: Attribute[],
   rootOperator: string
 ): string => {
-  const dataset = datasets[selectedDataset];
-  let tableName = dataset?.name || selectedDataset.toLowerCase();
+  let tableName = selectedDataset.name.toLowerCase();
 
-  if (dataset?.schema && dataset.schema !== "public") {
-    tableName = `${dataset.schema}.${tableName}`;
+  if (selectedDataset?.schema && selectedDataset.schema !== "public") {
+    tableName = `${selectedDataset.schema}.${tableName}`;
   }
 
   let sql = `SELECT * FROM ${tableName}`;
@@ -112,13 +110,13 @@ export { generateSQLPreview };
 
 const SQLPreview = ({
 }) => {
-  const {datasets, selectedDataset, conditions, attributes, rootOperator} = useSegmentData();
+  const {selectedDataset, conditions, attributes, rootOperator} = useSegmentData();
 
   return (
     <>
       <h5 className="text-lg font-semibold mb-2">SQL Preview</h5>
       <Card className="border border-gray-300 bg-gray-100 p-4 rounded-md font-mono whitespace-pre-wrap">
-        {generateSQLPreview(datasets, selectedDataset, conditions, attributes, rootOperator)}
+        {generateSQLPreview(selectedDataset, conditions, attributes, rootOperator)}
       </Card>
     </>
   );

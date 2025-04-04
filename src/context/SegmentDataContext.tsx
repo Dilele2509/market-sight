@@ -7,8 +7,8 @@ interface SegmentDataContextProps {
     setSegmentId: React.Dispatch<React.SetStateAction<string>>;
     attributes: any[];
     setAttributes: React.Dispatch<React.SetStateAction<any[]>>;
-    selectedDataset: string;
-    setSelectedDataset: React.Dispatch<React.SetStateAction<string>>;
+    selectedDataset: any;
+    setSelectedDataset: React.Dispatch<React.SetStateAction<any>>;
     datasets: Record<string, any>;
     setDatasets: React.Dispatch<React.SetStateAction<Record<string, any>>>;
     previewData: any[];
@@ -75,13 +75,73 @@ export const SegmentDataProvider: React.FC<{ children: ReactNode; editSegment?: 
     const [segmentName, setSegmentName] = useState<string>(editSegment?.name || "High Value Users (new)");
     const [segmentId, setSegmentId] = useState<string>(editSegment?.id || "segment:high-value-users-new");
     const [attributes, setAttributes] = useState<any[]>([]);
-    const [selectedDataset, setSelectedDataset] = useState<string>(editSegment?.dataset || "Customer Profile");
+    const [selectedDataset, setSelectedDataset] = useState<string>(editSegment?.dataset || {
+        name: "customers",
+        fields: [
+            "customer_id",
+            "first_name",
+            "last_name",
+            "email",
+            "phone",
+            "gender",
+            "birth_date",
+            "registration_date",
+            "address",
+            "city"
+        ],
+        description: "Customer information",
+        schema: "public"
+    });
+    // const [selectedDataset, setSelectedDataset] = useState<string>(editSegment?.dataset || 'Customer Profile');
     const [datasets, setDatasets] = useState<Record<string, any>>({
-        "Customer Profile": { name: "customers", description: "Customer information", fields: [], schema: "public" },
-        "Transactions": { name: "transactions", description: "Transaction records", fields: [], schema: "public" },
-        "Stores": { name: "stores", description: "Store information", fields: [], schema: "public" },
-        "Product Line": { name: "product_lines", description: "Product information", fields: [], schema: "public" },
-        "Events": { name: "events", description: "User event data", fields: [], schema: "public" }
+        "Customer Profile": {
+            name: "customers", description: "Customer information", fields: [
+                "customer_id",
+                "first_name",
+                "last_name",
+                "email",
+                "phone",
+                "gender",
+                "birth_date",
+                "registration_date",
+                "address",
+                "city"
+            ], schema: "public"
+        },
+        "Transactions": {
+            name: "transactions", description: "Transaction records", fields: [
+                "transaction_id",
+                "customer_id",
+                "store_id",
+                "transaction_date",
+                "total_amount",
+                "payment_method",
+                "product_line_id",
+                "quantity",
+                "unit_price"
+            ], schema: "public"
+        },
+        "Stores": {
+            name: "stores", description: "Store information", fields: [
+                "store_id",
+                "store_name",
+                "address",
+                "city",
+                "store_type",
+                "opening_date",
+                "region"
+            ], schema: "public"
+        },
+        "Product Line": {
+            name: "product_lines", description: "Product information", fields: [
+                "product_line_id",
+                "name",
+                "category",
+                "subcategory",
+                "brand",
+                "unit_cost"
+            ], schema: "public"
+        },
     });
 
     const [previewData, setPreviewData] = useState<any[]>([]);
@@ -127,7 +187,7 @@ export const SegmentDataProvider: React.FC<{ children: ReactNode; editSegment?: 
     const [selectionMode, setSelectionMode] = useState("include"); // 'include' or 'exclude'
 
 
-    const [connectionUrl, setConnectionUrl] = useState('');
+    const [connectionUrl, setConnectionUrl] = useState();
     const CONNECTION_STORAGE_KEY = 'postgres_connection';
     const CONNECTION_EXPIRY_KEY = 'postgres_connection_expiry';
     const ONE_HOUR_MS = 60 * 60 * 1000; // 1 hour in milliseconds
