@@ -64,29 +64,34 @@ const SegmentsList: React.FC<SegmentsListProps> = ({ segments = [], onCreateSegm
             </div>
 
             <Card>
-                <Table>
-                    <TableHead>
+                <Table className="w-full ">
+                    <TableHead className="table-header-group">
                         <TableRow className="w-full">
                             <TableCell className="w-2/6 px-4 text-left">Name</TableCell>
-                            <TableCell className="w-1/6 px-4 text-left">Dataset</TableCell>
+                            <TableCell className="w-1/6 px-4 text-center">Dataset</TableCell>
                             <TableCell className="w-1/6 px-4 text-center">Last Updated</TableCell>
                             <TableCell className="w-1/6 px-4 text-center">Size</TableCell>
                             <TableCell className="w-1/6 px-4 text-center">Status</TableCell>
-                            <TableCell className="w-1/6 px-4 text-right">Actions</TableCell>
+                            <TableCell className="w-1/6 px-4 text-center">Action</TableCell>
                         </TableRow>
                     </TableHead>
-                    <TableBody>
+
+                    <TableBody className="px-4">
                         {filteredSegments.length > 0 ? (
                             filteredSegments.map((segment) => (
                                 <TableRow key={segment.id} className="cursor-pointer" onClick={() => handleRowClick(segment)}>
-                                    <TableCell>{segment.name}</TableCell>
-                                    <TableCell>{segment.dataset}</TableCell>
-                                    <TableCell>{new Date(segment.last_updated).toLocaleDateString()}</TableCell>
-                                    <TableCell>{segment.size.toLocaleString()}</TableCell>
-                                    <TableCell>
-                                        <Badge variant={segment.status === "active" ? "default" : "destructive"}>{segment.status}</Badge>
+                                    <TableCell className="px-4 text-left">
+                                        {segment.name}
                                     </TableCell>
-                                    <TableCell className="text-right">
+                                    <TableCell className="px-4 text-center">{segment.dataset}</TableCell>
+                                    <TableCell className="px-4 text-center">{new Date(segment.last_updated).toLocaleDateString()}</TableCell>
+                                    <TableCell className="px-4 text-center">{segment.size.toLocaleString()}</TableCell>
+                                    <TableCell className="px-4 text-center">
+                                        <Badge variant={segment.status === "active" ? "default" : "destructive"}>
+                                            {segment.status}
+                                        </Badge>
+                                    </TableCell>
+                                    <TableCell className="px-4 flex justify-center">
                                         <MoreHorizontal size={16} className="cursor-pointer" />
                                     </TableCell>
                                 </TableRow>

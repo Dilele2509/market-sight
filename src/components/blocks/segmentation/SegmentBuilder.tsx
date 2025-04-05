@@ -282,7 +282,7 @@ export default function SegmentBuilder({ onBack, editSegment }: SegmentBuilderPr
                         variant="default"
                         className="mx-1"
                         onClick={handleSaveSegment}
-                        disabled={!hasUnsavedChanges || !segmentName.trim()}
+                        disabled={hasUnsavedChanges || !segmentName.trim()}
                     >
                         Save Segment
                     </Button>
