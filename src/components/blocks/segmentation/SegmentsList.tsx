@@ -7,11 +7,39 @@ import { Card } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { MoreHorizontal, Search, Filter, Plus } from "lucide-react";
-import { Segment, SegmentsListProps } from "@/types/segmentTypes"; // Import đúng kiểu dữ liệu
+import { Segment, SegmentsListProps } from "@/types/segmentTypes";
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuLabel,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 
 const SegmentsList: React.FC<SegmentsListProps> = ({ segments = [], onCreateSegment, onEditSegment }) => {
     const [localSegments, setLocalSegments] = useState<Segment[]>([]);
     const [searchTerm, setSearchTerm] = useState("");
+
+    const handleToggleStatus = (id: string) => {
+        setLocalSegments((prev) =>
+            prev.map((seg) =>
+                seg.id === id
+                    ? { ...seg, status: seg.status === "active" ? "inactive" : "active" }
+                    : seg
+            )
+        );
+
+        // Optional: update in localStorage if needed
+        const storedSegments = JSON.parse(localStorage.getItem("segments") || "[]");
+        const updated = storedSegments.map((seg: Segment) =>
+            seg.id === id
+                ? { ...seg, status: seg.status === "active" ? "inactive" : "active" }
+                : seg
+        );
+        localStorage.setItem("segments", JSON.stringify(updated));
+    };
+
 
     useEffect(() => {
         try {
@@ -79,20 +107,35 @@ const SegmentsList: React.FC<SegmentsListProps> = ({ segments = [], onCreateSegm
                     <TableBody className="px-4">
                         {filteredSegments.length > 0 ? (
                             filteredSegments.map((segment) => (
-                                <TableRow key={segment.id} className="cursor-pointer" onClick={() => handleRowClick(segment)}>
-                                    <TableCell className="px-4 text-left">
+                                <TableRow key={segment.id} className="cursor-pointer hover:bg-gray-100">
+                                    <TableCell className="px-4 text-left" onClick={() => handleRowClick(segment)}>
                                         {segment.name}
                                     </TableCell>
-                                    <TableCell className="px-4 text-center">{segment.dataset}</TableCell>
-                                    <TableCell className="px-4 text-center">{new Date(segment.last_updated).toLocaleDateString()}</TableCell>
-                                    <TableCell className="px-4 text-center">{segment.size.toLocaleString()}</TableCell>
-                                    <TableCell className="px-4 text-center">
-                                        <Badge variant={segment.status === "active" ? "default" : "destructive"}>
+                                    <TableCell className="px-4 text-center" onClick={() => handleRowClick(segment)}>{segment.dataset}</TableCell>
+                                    <TableCell className="px-4 text-center" onClick={() => handleRowClick(segment)}>{new Date(segment.last_updated).toLocaleDateString()}</TableCell>
+                                    <TableCell className="px-4 text-center" onClick={() => handleRowClick(segment)}>{segment.size.toLocaleString()}</TableCell>
+                                    <TableCell className="px-4 text-center" onClick={() => handleRowClick(segment)}>
+                                        <Badge className={`${segment.status === "active" ? "bg-primary" : "bg-error"} text-secondary`}>
                                             {segment.status}
                                         </Badge>
                                     </TableCell>
-                                    <TableCell className="px-4 flex justify-center">
-                                        <MoreHorizontal size={16} className="cursor-pointer" />
+                                    <TableCell className="flex justify-center relative">
+                                        <DropdownMenu>
+                                            <DropdownMenuTrigger>
+                                                <MoreHorizontal size={16} className="absolute cursor-pointer hover:bg-gray-300 rounded-xl w-6 h-4" />
+                                            </DropdownMenuTrigger>
+                                            <DropdownMenuContent className="mr-4 bg-card">
+                                                <DropdownMenuLabel>Action</DropdownMenuLabel>
+                                                <DropdownMenuSeparator />
+                                                <DropdownMenuItem
+                                                    className="hover:bg-gray-100"
+                                                    onClick={() => handleToggleStatus(segment.id)}
+                                                >
+                                                    {segment.status === "active" ? "Disable" : "Enable"}
+                                                </DropdownMenuItem>
+                                                <DropdownMenuItem className="hover:bg-red-200 text-red-500">Delete</DropdownMenuItem>
+                                            </DropdownMenuContent>
+                                        </DropdownMenu>
                                     </TableCell>
                                 </TableRow>
                             ))
