@@ -1,10 +1,10 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useContext } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
-import { Table, TableBody, TableCell, TableHead, TableRow } from "@/components/ui/table";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { MoreHorizontal, Search, Filter, Plus } from "lucide-react";
 import { Segment, SegmentsListProps } from "@/types/segmentTypes";
@@ -12,19 +12,23 @@ import {
     DropdownMenu,
     DropdownMenuContent,
     DropdownMenuItem,
-    DropdownMenuLabel,
-    DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import { axiosPrivate } from "@/API/axios";
+import AuthContext from "@/context/AuthContext";
+import { toast } from "sonner";
 
 const SegmentsList: React.FC<SegmentsListProps> = ({ segments = [], onCreateSegment, onEditSegment }) => {
     const [localSegments, setLocalSegments] = useState<Segment[]>([]);
+    const [segmentList, setSegmentList] = useState([]);
     const [searchTerm, setSearchTerm] = useState("");
+    const { user, token } = useContext(AuthContext);
+
 
     const handleToggleStatus = (id: string) => {
         setLocalSegments((prev) =>
             prev.map((seg) =>
-                seg.id === id
+                seg.segment_id === id
                     ? { ...seg, status: seg.status === "active" ? "inactive" : "active" }
                     : seg
             )
@@ -33,33 +37,34 @@ const SegmentsList: React.FC<SegmentsListProps> = ({ segments = [], onCreateSegm
         // Optional: update in localStorage if needed
         const storedSegments = JSON.parse(localStorage.getItem("segments") || "[]");
         const updated = storedSegments.map((seg: Segment) =>
-            seg.id === id
+            seg.segment_id === id
                 ? { ...seg, status: seg.status === "active" ? "inactive" : "active" }
                 : seg
         );
         localStorage.setItem("segments", JSON.stringify(updated));
     };
 
-
     useEffect(() => {
         try {
-            const storedSegments = JSON.parse(localStorage.getItem("segments") || "[]") as Segment[];
-            const combinedSegments = [...segments];
-            storedSegments.forEach((s) => {
-                if (!combinedSegments.some((seg) => seg.id === s.id)) {
-                    combinedSegments.push(s);
+            axiosPrivate.post('/segment/get-all-by-user', { user_id: user.user_id }, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
                 }
-            });
-            setLocalSegments(combinedSegments);
+            })
+                .then((response) => {
+                    if (response.data.status === 200) {
+                        toast.success(response.data.message)
+                    }
+                    setSegmentList(response.data.data)
+                })
+                .catch((error) => {
+                    console.error(error)
+                    toast.error('have a error when get segment list: ', error)
+                })
         } catch (error) {
             console.error("Error loading segments from localStorage:", error);
         }
     }, [segments]);
-
-    const filteredSegments = localSegments.filter((segment) =>
-        segment.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        segment.dataset.toLowerCase().includes(searchTerm.toLowerCase())
-    );
 
     const handleRowClick = (segment: Segment) => {
         if (onEditSegment) {
@@ -93,43 +98,46 @@ const SegmentsList: React.FC<SegmentsListProps> = ({ segments = [], onCreateSegm
 
             <Card>
                 <Table className="w-full ">
-                    <TableHead className="table-header-group">
+                    <TableHeader>
                         <TableRow className="w-full">
-                            <TableCell className="w-2/6 px-4 text-left">Name</TableCell>
-                            <TableCell className="w-1/6 px-4 text-center">Dataset</TableCell>
-                            <TableCell className="w-1/6 px-4 text-center">Last Updated</TableCell>
-                            <TableCell className="w-1/6 px-4 text-center">Size</TableCell>
-                            <TableCell className="w-1/6 px-4 text-center">Status</TableCell>
-                            <TableCell className="w-1/6 px-4 text-center">Action</TableCell>
+                            <TableHead className="w-2/6 px-4 text-left">ID</TableHead>
+                            <TableHead className="w-1/6 px-4 text-left">Name</TableHead>
+                            <TableHead className="w-1/6 px-4 text-center">Dataset</TableHead>
+                            <TableHead className="w-1/6 px-4 text-center">Last Updated</TableHead>
+                            <TableHead className="w-1/6 px-4 text-center">Size</TableHead>
+                            <TableHead className="w-1/6 px-4 text-center">Status</TableHead>
+                            <TableHead className="w-1/6 px-4 text-center">Action</TableHead>
                         </TableRow>
-                    </TableHead>
+                    </TableHeader>
 
                     <TableBody className="px-4">
-                        {filteredSegments.length > 0 ? (
-                            filteredSegments.map((segment) => (
-                                <TableRow key={segment.id} className="cursor-pointer hover:bg-gray-100">
+                        {segmentList.length > 0 ? (
+                            segmentList.map((segment) => (
+                                <TableRow key={segment.segment_id} className="cursor-pointer hover:bg-gray-100">
                                     <TableCell className="px-4 text-left" onClick={() => handleRowClick(segment)}>
-                                        {segment.name}
+                                        {segment.segment_id}
+                                    </TableCell>
+                                    <TableCell className="px-4 text-left" onClick={() => handleRowClick(segment)}>
+                                        {segment.segment_name}
                                     </TableCell>
                                     <TableCell className="px-4 text-center" onClick={() => handleRowClick(segment)}>{segment.dataset}</TableCell>
-                                    <TableCell className="px-4 text-center" onClick={() => handleRowClick(segment)}>{new Date(segment.last_updated).toLocaleDateString()}</TableCell>
-                                    <TableCell className="px-4 text-center" onClick={() => handleRowClick(segment)}>{segment.size.toLocaleString()}</TableCell>
+                                    <TableCell className="px-4 text-center" onClick={() => handleRowClick(segment)}>{new Date(segment.created_at).toLocaleString()}</TableCell>
+                                    <TableCell className="px-4 text-center" onClick={() => handleRowClick(segment)}>{new Date(segment.updated_at).toLocaleString()}</TableCell>
+                                    <TableCell className="px-4 text-center" onClick={() => handleRowClick(segment)}>{segment.filter_criteria.size.toLocaleString()}</TableCell>
                                     <TableCell className="px-4 text-center" onClick={() => handleRowClick(segment)}>
                                         <Badge className={`${segment.status === "active" ? "bg-primary" : "bg-error"} text-secondary`}>
                                             {segment.status}
                                         </Badge>
                                     </TableCell>
-                                    <TableCell className="flex justify-center relative">
+                                    <TableCell className="px-4">
                                         <DropdownMenu>
                                             <DropdownMenuTrigger>
-                                                <MoreHorizontal size={16} className="absolute cursor-pointer hover:bg-gray-300 rounded-xl w-6 h-4" />
+                                                <MoreHorizontal size={18} className=" cursor-pointer hover:bg-gray-300 rounded-xl  w-6 h-4" />
                                             </DropdownMenuTrigger>
                                             <DropdownMenuContent className="mr-4 bg-card">
-                                                <DropdownMenuLabel>Action</DropdownMenuLabel>
-                                                <DropdownMenuSeparator />
                                                 <DropdownMenuItem
                                                     className="hover:bg-gray-100"
-                                                    onClick={() => handleToggleStatus(segment.id)}
+                                                    onClick={() => handleToggleStatus(segment.segment_id)}
                                                 >
                                                     {segment.status === "active" ? "Disable" : "Enable"}
                                                 </DropdownMenuItem>

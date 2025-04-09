@@ -81,7 +81,7 @@ const EventCondition: React.FC<EventConditionProps> = ({
 
       {/* Occurrence Conditions */}
       {!["first_time", "last_time"].includes(condition.eventType) ? (
-        <CardContent className="flex items-center flex-wrap space-y-4">
+        <CardContent className="flex items-center flex-wrap gap-4">
           <div className="flex items-center gap-4">
             <Label className="font-medium text-sm w-20">Occurring</Label>
             <Select value={condition.frequency || "at_least"} onValueChange={(value) => updateCondition("frequency", value)}>

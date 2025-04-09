@@ -2,16 +2,20 @@
 
 /** Định nghĩa kiểu dữ liệu cho một segment */
 export interface Segment {
-    id: string;
-    name: string;
+    segment_id: string;
+    segment_name: string;
+    created_by_user_id: string;
     dataset: string;
-    last_updated: string;
-    size: number;
+    description: string;
+    created_at: string;
+    updated_at: string;
     status: string;
-    description?: string;
-    rootOperator: string;
-    conditions: any[]; 
-    conditionGroups: any[]; 
+    filter_criteria: {
+        size: number;
+        conditions: any[];
+        conditionGroups: any[];
+        rootOperator: string;
+    };
 }
 
 // /** Định nghĩa kiểu dữ liệu cho một segment */
@@ -19,7 +23,7 @@ export interface Segment {
 //     id: string;
 //     name: string;
 //     dataset: string;
-//     last_updated: string;
+//     updated_at: string;
 //     size: number;
 //     status: string;
 //   }

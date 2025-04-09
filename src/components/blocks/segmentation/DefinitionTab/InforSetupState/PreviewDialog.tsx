@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogFooter } from "@/components/ui/dialog";
+import { useEffect, useState } from "react";
+import { Dialog, DialogContent, DialogHeader, DialogFooter, DialogTitle } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -17,7 +17,7 @@ const PreviewDialog: React.FC<PreviewDialogProps> = ({
     generateSQLPreview,
 }) => {
     const { setPreviewOpen, previewOpen, previewLoading } = useSegmentToggle();
-    const { previewData} = useSegmentData();
+    const { previewData } = useSegmentData();
 
     const formatCellValue = (value) => {
         if (value === null || value === undefined) return '-';
@@ -47,18 +47,16 @@ const PreviewDialog: React.FC<PreviewDialogProps> = ({
     return (
         <>
             <Dialog open={previewOpen} onOpenChange={handleClosePreview}>
-                <DialogContent className="fixed p-4 bg-white w-full max-w-2xl rounded-lg shadow-lg overflow-hidden">
+                <DialogContent className="fixed p-4 bg-white w-full max-w-fit rounded-lg shadow-lg overflow-hidden">
                     <DialogHeader>
-                        <div className="flex justify-between items-center p-4 border-b">
-                            <h3 className="text-lg font-semibold">Preview Results</h3>
-                            <small className="text-muted-foreground">
-                                {previewData.length > 0
-                                    ? `Showing ${previewData.length} records`
-                                    : previewLoading
-                                        ? "Loading..."
-                                        : "No records found"}
-                            </small>
-                        </div>
+                        <DialogTitle className="text-lg font-semibold">Preview Results</DialogTitle>
+                        <small className="text-muted-foreground">
+                            {previewData.length > 0
+                                ? `Showing ${previewData.length} records`
+                                : previewLoading
+                                    ? "Loading..."
+                                    : "No records found"}
+                        </small>
                     </DialogHeader>
 
                     <div className="overflow-hidden p-4">

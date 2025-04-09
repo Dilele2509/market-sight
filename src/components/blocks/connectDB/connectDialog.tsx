@@ -38,6 +38,45 @@ export default function ConnectionDialog() {
         }
     };
 
+    const testConnection = async () => {
+        if (!connectionUrl.trim()) {
+            toast.error('Please provide a connection URL');
+            return;
+        }
+
+        try {
+            setLoading(true);
+
+            // Basic validation of URL format
+            if (!connectionUrl.startsWith('postgresql://')) {
+                toast.error('Connection URL must start with postgresql://');
+                return;
+            }
+
+            // Log the request data
+            console.log(connectionUrl);
+
+            const response = await axiosPrivate.post(`/data/test-connection`, {
+                connection_url: connectionUrl
+            }, {
+                headers: { Authorization: `Bearer ${token}` },
+            });
+
+            console.log('Connection test response:', response.data);
+
+            if (response.data.success) {
+                toast.success('Connection successful!');
+            }
+        } catch (err) {
+            console.error('Connection test error:', err);
+            console.error('Error response:', err.response?.data);
+            const errorMessage = err.response?.data?.detail || 'Connection test failed';
+            toast.error(errorMessage);
+        } finally {
+            setLoading(false);
+        }
+    };
+
     const handleConnectionSubmit = () => {
         if (!connectionUrl.trim()) {
             toast.error('Please provide a connection URL');
@@ -88,7 +127,7 @@ export default function ConnectionDialog() {
                         <Input
                             type={showPassword ? "text" : "password"}
                             placeholder="PostgreSQL Connection URL"
-                            value={connectionUrl}
+                            value={connectionUrl || ''}
                             onChange={(e) => setConnectionUrl(e.target.value)}
                             className="pr-10 py-2 w-full"
                         />
@@ -110,7 +149,7 @@ export default function ConnectionDialog() {
                 </div>
                 <DialogFooter>
                     <Button variant="ghost" onClick={() => setConnectionDialog(!connectionDialog)}>Cancel</Button>
-                    <Button variant="outline" onClick={() => toast.loading("Testing connection...")} disabled={!connectionUrl || loading}>
+                    <Button variant="outline" onClick={testConnection} disabled={!connectionUrl || loading}>
                         {loading ? <Loader2 className="animate-spin" size={18} /> : "Test Connection"}
                     </Button>
                     <Button onClick={handleConnectionSubmit} disabled={!connectionUrl || loading}>

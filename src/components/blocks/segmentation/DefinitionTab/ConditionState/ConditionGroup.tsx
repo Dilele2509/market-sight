@@ -88,6 +88,7 @@ const ConditionGroup: React.FC<ConditionGroupProps> = ({
                 <span className="font-medium text-base mr-2">Group of conditions</span>
                 <ToggleGroup
                     type="single"
+                    defaultValue="AND"
                     value={group.operator}
                     onValueChange={(newValue) => {
                         if (newValue) {

@@ -212,6 +212,7 @@ export default function SQLDialog() {
 
             // Update conditions state
             setConditions(newConditions);
+            //console.log("New Conditions:", newConditions);
 
             // Clear condition groups to avoid conflicts
             setConditionGroups([]);

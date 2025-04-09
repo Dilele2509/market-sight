@@ -1,4 +1,5 @@
-import React, { createContext, useState, useContext, ReactNode } from "react";
+import { Segment } from "@/types/segmentTypes";
+import React, { createContext, useState, useContext, ReactNode, useEffect } from "react";
 
 interface SegmentDataContextProps {
     segmentName: string;
@@ -66,33 +67,29 @@ interface SegmentDataContextProps {
     setFile: React.Dispatch<React.SetStateAction<any>>;
     displayUrl: string
     setDisplayUrl: React.Dispatch<React.SetStateAction<string>>;
+    editSegment: Segment;
+    setEditSegment: React.Dispatch<React.SetStateAction<Segment>>;
 }
 
 const SegmentDataContext = createContext<SegmentDataContextProps | undefined>(undefined);
 
-export const SegmentDataProvider: React.FC<{ children: ReactNode; editSegment?: any }> = ({ children, editSegment }) => {
-    const isEditMode = !!editSegment;
-    const [segmentName, setSegmentName] = useState<string>(editSegment?.name || "High Value Users (new)");
-    const [segmentId, setSegmentId] = useState<string>(editSegment?.id || "segment:high-value-users-new");
-    const [attributes, setAttributes] = useState<any[]>([]);
-    const [selectedDataset, setSelectedDataset] = useState<string>(editSegment?.dataset || {
-        name: "customers",
-        fields: [
-            "customer_id",
-            "first_name",
-            "last_name",
-            "email",
-            "phone",
-            "gender",
-            "birth_date",
-            "registration_date",
-            "address",
-            "city"
-        ],
-        description: "Customer information",
-        schema: "public"
-    });
-    // const [selectedDataset, setSelectedDataset] = useState<string>(editSegment?.dataset || 'Customer Profile');
+const defineDatasetName = (value: string) => {
+    switch (value.toLowerCase()) {
+        case 'customers':
+            return 'Customer Profile';
+        case 'transactions':
+            return 'Transactions';
+        case 'stores':
+            return 'Stores';
+        case 'product_lines':
+            return 'Product Line';
+        default:
+            // return value.charAt(0).toUpperCase + value.slice(1);
+            return 'Customer Profile';
+    }
+}
+
+export const SegmentDataProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
     const [datasets, setDatasets] = useState<Record<string, any>>({
         "Customer Profile": {
             name: "customers", description: "Customer information", fields: [
@@ -143,21 +140,60 @@ export const SegmentDataProvider: React.FC<{ children: ReactNode; editSegment?: 
             ], schema: "public"
         },
     });
+    const [editSegment, setEditSegment] = useState(null);
+    useEffect(() => {
+        if (editSegment) {
+            setSegmentName(editSegment.segment_name || "High Value Users (new)");
+            setSegmentId(editSegment.segment_id || "segment:high-value-users-new");
+            setSelectedDataset(datasets[defineDatasetName(editSegment.dataset)] || datasets[defineDatasetName('customer')]);
+            setRootOperator(editSegment?.filter_criteria.rootOperator || "AND");
+            setConditions(editSegment?.filter_criteria.conditions || [
+                { id: 1, type: "attribute", field: "email", operator: "is_not_null", value: null }
+            ]);
+            setConditionGroups(editSegment?.filter_criteria.conditionGroups || [
+                { id: 2, type: "group", operator: "AND", conditions: [{ id: 3, type: "event", eventType: "performed", eventName: "New Canvas", frequency: "at_least", count: 3, timePeriod: "days", timeValue: 90 }] }
+            ]);
+            setDescription(editSegment?.description || "");
+            setEstimatedSize(
+                editSegment
+                    ? { count: editSegment.filter_criteria.size, percentage: Math.round((editSegment.filter_criteria.size / 400) * 100) }
+                    : { count: 88, percentage: 22 }
+            );
+        }
+    }, [editSegment]);
+
+
+    const [segmentName, setSegmentName] = useState<string>("High Value Users (new)");
+    const [segmentId, setSegmentId] = useState<string>("segment:high-value-users-new");
+    const [attributes, setAttributes] = useState<any[]>([]);
+    const [selectedDataset, setSelectedDataset] = useState<any>({
+        name: "customers",
+        fields: [
+            "customer_id",
+            "first_name",
+            "last_name",
+            "email",
+            "phone",
+            "gender",
+            "birth_date",
+            "registration_date",
+            "address",
+            "city"
+        ],
+        description: "Customer information",
+        schema: "public"
+    });
 
     const [previewData, setPreviewData] = useState<any[]>([]);
-    const [rootOperator, setRootOperator] = useState<string>(editSegment?.rootOperator || "AND");
-    const [conditions, setConditions] = useState<any[]>(editSegment?.conditions || [
+    const [rootOperator, setRootOperator] = useState<string>("AND");
+    const [conditions, setConditions] = useState<any[]>([
         { id: 1, type: "attribute", field: "email", operator: "is_not_null", value: null }
     ]);
-    const [conditionGroups, setConditionGroups] = useState<any[]>(editSegment?.conditionGroups || [
+    const [conditionGroups, setConditionGroups] = useState<any[]>([
         { id: 2, type: "group", operator: "AND", conditions: [{ id: 3, type: "event", eventType: "performed", eventName: "New Canvas", frequency: "at_least", count: 3, timePeriod: "days", timeValue: 90 }] }
     ]);
-    const [description, setDescription] = useState<string>(editSegment?.description || "");
-    const [estimatedSize, setEstimatedSize] = useState<any>(
-        editSegment
-            ? { count: editSegment.size, percentage: Math.round((editSegment.size / 400) * 100) }
-            : { count: 88, percentage: 22 }
-    );
+    const [description, setDescription] = useState<string>('');
+    const [estimatedSize, setEstimatedSize] = useState<any>({ count: 88, percentage: 22 });
 
     const [editableSql, setEditableSql] = useState<string>("");
     const [sqlError, setSqlError] = useState<any>(null);
@@ -268,7 +304,9 @@ export const SegmentDataProvider: React.FC<{ children: ReactNode; editSegment?: 
                 file,
                 setFile,
                 displayUrl,
-                setDisplayUrl
+                setDisplayUrl,
+                editSegment,
+                setEditSegment
             }}
         >
             {children}

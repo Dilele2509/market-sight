@@ -1,15 +1,16 @@
-import { useState, useEffect, useCallback } from "react";
+import { useEffect, useContext } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import axios from "@/API/axios";
-import { ArrowLeft, Code, EllipsisVertical } from "lucide-react";
+import axios, { axiosPrivate } from "@/API/axios";
+import { ArrowLeft, Code, EllipsisVertical, Section } from "lucide-react";
 import { SegmentBuilderProps } from "@/types/segmentTypes"
 import { generateSQLPreview } from "./DefinitionTab/SQLState/SQLPreview";
 import RenderDefinition from "./DefinitionTab/RenderDefinition";
 import { useSegmentToggle } from "@/context/SegmentToggleContext";
 import { useSegmentData } from "@/context/SegmentDataContext";
+import AuthContext from "@/context/AuthContext";
 
 
 export default function SegmentBuilder({ onBack, editSegment }: SegmentBuilderProps) {
@@ -27,25 +28,48 @@ export default function SegmentBuilder({ onBack, editSegment }: SegmentBuilderPr
         estimatedSize,
         conditionGroups,
         setEditableSql,
-        setSqlError } = useSegmentData();
-
-    const { 
+        setSqlError,
+        CONNECTION_STORAGE_KEY,
+        initialConditions,
+        initialConditionGroups,
+        initialRootOperator,
+        initialSegmentName,
+        initialDescription,
+        setEditSegment } = useSegmentData();
+    const { token, user } = useContext(AuthContext);
+    const {
         setSqlDialogOpen,
         setPreviewLoading,
         setPreviewOpen,
         hasUnsavedChanges,
         setHasUnsavedChanges,
         previewLoading,
-        previewOpen,
-        sqlDialogOpen,
-        discardConfirmOpen,
         setDiscardConfirmOpen } = useSegmentToggle();
-
 
     useEffect(() => {
         const slug = segmentName.toLowerCase().replace(/[^\w\s-]/g, "").replace(/\s+/g, "-").replace(/-+/g, "-");
         setSegmentId(`segment:${slug}`);
     }, [segmentName]);
+
+    useEffect(() => {
+        setEditSegment(editSegment)
+    },[])
+
+    //dùng để set trạng thái unchange
+    useEffect(() => {
+        const hasChanged = [
+            [conditions, initialConditions],
+            [conditionGroups, initialConditionGroups]
+        ].some(([a, b]) => JSON.stringify(a) !== JSON.stringify(b)) ||
+            rootOperator !== initialRootOperator ||
+            segmentName !== initialSegmentName ||
+            description !== initialDescription;
+
+        setHasUnsavedChanges(hasChanged);
+    }, [
+        conditions, conditionGroups, rootOperator, segmentName, description,
+        initialConditions, initialConditionGroups, initialRootOperator, initialSegmentName, initialDescription
+    ]);
 
     //SQL Preview
     const generateSQL = () => {
@@ -66,8 +90,10 @@ export default function SegmentBuilder({ onBack, editSegment }: SegmentBuilderPr
         try {
             const sqlQuery = generateSQLPreview(selectedDataset, conditions, attributes, rootOperator);
 
-            // Get connection URL from localStorage
-            const connectionUrl = localStorage.getItem('postgres_connection');
+            console.log('condition: ', conditions, ' sql query: ', sqlQuery);
+
+            const connectionUrl = localStorage.getItem(CONNECTION_STORAGE_KEY)
+            console.log('connection: ', connectionUrl);
 
             if (!connectionUrl) {
                 toast.error("Connection URL not configured. Please set the connection URL first.");
@@ -91,6 +117,7 @@ export default function SegmentBuilder({ onBack, editSegment }: SegmentBuilderPr
                     table: selectedDataset.name,
                     query: sqlQuery,
                     connection_details: {
+                        url,
                         host,
                         port,
                         database,
@@ -104,6 +131,7 @@ export default function SegmentBuilder({ onBack, editSegment }: SegmentBuilderPr
                     table: requestData.table,
                     query: requestData.query,
                     connection_details: {
+                        url: requestData.connection_details.url,
                         host: requestData.connection_details.host,
                         port: requestData.connection_details.port,
                         database: requestData.connection_details.database,
@@ -113,10 +141,12 @@ export default function SegmentBuilder({ onBack, editSegment }: SegmentBuilderPr
                 });
 
                 // Call the API endpoint
-                const response = await axios.post(`/query`, requestData);
+                const response = await axiosPrivate.post(`/data/query`, requestData, {
+                    headers: { Authorization: `Bearer ${token}` },
+                });
 
                 // Only log the success status, not the full response which might contain sensitive data
-                console.log(`Query executed successfully. Status: ${response.status}, Records: ${response.data?.data?.length || 0}`);
+                console.log(`Query executed successfully. Status: ${response}, Records: ${response.data?.data?.length || 0}`);
 
                 // Process the response as before
                 if (response.data && response.data.success) {
@@ -173,71 +203,50 @@ export default function SegmentBuilder({ onBack, editSegment }: SegmentBuilderPr
         setDiscardConfirmOpen(true);
     };
 
-    // create nếu chưa có, update nếu có
-    const handleSaveSegment = () => {
+    const handleSaveSegment = async () => {
         try {
-            console.log('💾 [SegmentBuilder] Saving segment, edit mode:', !!editSegment);
+            console.log('id: ', editSegment ? editSegment.segment_id : segmentId);
 
-            // Create the segment object with all the current form values
             const segment = {
-                id: segmentId,
-                name: segmentName,
+                segment_id: segmentId,
+                segment_name: segmentName,
+                created_by_user_id: user.user_id,
                 dataset: selectedDataset.name,
                 description: description,
-                last_updated: new Date().toISOString(),
-                size: estimatedSize.count,
-                status: 'active',
-                conditions: conditions,
-                conditionGroups: conditionGroups,
-                rootOperator: rootOperator
+                created_at: editSegment ? editSegment.created_at : new Date().toISOString(),
+                updated_at: new Date().toISOString(),
+                status: editSegment ? editSegment.status : 'active',
+                filter_criteria: {
+                    size: estimatedSize.count,
+                    conditions: conditions,
+                    conditionGroups: conditionGroups,
+                    rootOperator: rootOperator
+                }
             };
 
-            console.log('📝 [SegmentBuilder] Saving segment:', segment);
+            console.log('[SegmentBuilder] Sending segment to API:', segment);
 
-            const storedSegments = JSON.parse(localStorage.getItem('segments') || '[]'); //lưu tạm vào localStorage -> nên chuyển qua table db
-
-            if (editSegment) {
-                const existingIndex = storedSegments.findIndex(s => s.id === segment.id);
-
-                if (existingIndex >= 0) {
-                    storedSegments[existingIndex] = {
-                        ...storedSegments[existingIndex],
-                        ...segment,
-                        last_updated: new Date().toISOString()
-                    };
-
-                    console.log('✅ [SegmentBuilder] Updated existing segment in localStorage');
-                } else {
-                    // Add if it wasn't found (shouldn't happen for edits but just in case)
-                    storedSegments.push(segment);
-                    console.log('✅ [SegmentBuilder] Added new segment to localStorage (edit not found)');
+            await axiosPrivate.post('/segment/save-segment', segment, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
                 }
-            } else {
-                // This is a new segment, just add it
-                storedSegments.push(segment);
-                console.log('✅ [SegmentBuilder] Added new segment to localStorage');
-            }
-
-            // Save back to localStorage
-            localStorage.setItem('segments', JSON.stringify(storedSegments));
+            });
 
             toast.success(`Segment ${editSegment ? 'updated' : 'created'} successfully!`);
-
-            // Reset unsaved changes flag
             setHasUnsavedChanges(false);
 
-            // Send the segment back to the parent component
-            console.log('🔄 [SegmentBuilder] Calling onBack with segment:', segment);
+            console.log('[SegmentBuilder] Calling onBack with segment:', segment);
             if (onBack) {
                 onBack(segment);
             } else {
-                console.warn('⚠️ [SegmentBuilder] onBack function is not provided');
+                console.warn('[SegmentBuilder] onBack function is not provided');
             }
         } catch (error) {
-            console.error('❌ [SegmentBuilder] Error saving segment:', error);
+            console.error('[SegmentBuilder] Error saving segment:', error);
             toast.error('Failed to save segment. Please try again.');
         }
     };
+
 
     return (
         <div className="p-4 space-y-4">
@@ -282,7 +291,7 @@ export default function SegmentBuilder({ onBack, editSegment }: SegmentBuilderPr
                         variant="default"
                         className="mx-1"
                         onClick={handleSaveSegment}
-                        disabled={hasUnsavedChanges || !segmentName.trim()}
+                        disabled={!hasUnsavedChanges || !segmentName.trim()}
                     >
                         Save Segment
                     </Button>

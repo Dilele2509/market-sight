@@ -22,7 +22,6 @@ import { SQLDialog, SQLPreview } from "./SQLState";
 import { DiscardConfirmDialog, PreviewDialog } from "./InforSetupState";
 import { useSegmentToggle } from "@/context/SegmentToggleContext";
 import { useSegmentData } from "@/context/SegmentDataContext";
-import AuthContext from "@/context/AuthContext";
 
 
 interface SegmentDefinitionProps {
@@ -34,7 +33,6 @@ const RenderDefinition: React.FC<SegmentDefinitionProps> = ({
     generateSQLPreview,
 }) => {
     const { datasets,
-        setDatasets,
         segmentName,
         setSegmentName,
         setSegmentId,
@@ -62,14 +60,14 @@ const RenderDefinition: React.FC<SegmentDefinitionProps> = ({
         showDescriptionField,
         setShowDescriptionField } = useSegmentToggle();
 
-        useEffect(()=>{
-            fetchAttributes(selectedDataset)
-        },[selectedDataset])
+    useEffect(() => {
+        fetchAttributes(selectedDataset)
+    }, [selectedDataset])
 
     const fetchAttributes = async (dataset: any, showToast = true) => {
         try {
             setLoading(true);
-            console.log('run fetch attributes with: ', dataset);
+            //console.log('run fetch attributes with: ', dataset);
 
             if (!dataset) {
                 if (showToast) {
@@ -89,20 +87,21 @@ const RenderDefinition: React.FC<SegmentDefinitionProps> = ({
                 setAttributes(formattedAttributes);
                 setLoading(false);
                 return;
-            }else{
+            } else {
                 toast.error('can not fetch attribute, please check database connection')
             }
 
             setAttributes(dataset.field)
             return dataset.fields;
-        }catch{
+        } catch {
             toast.error('can not run fetch attribute function')
         }
     };
 
-    // useEffect(()=>{
-    //     console.log(selectedDataset);
-    // })
+    // useEffect(() => {
+    //     console.log("✅ Updated conditions:", conditions);
+    //   }, [conditions]);
+
 
     //function define type
     const determineFieldType = (fieldName: string, dataType = null) => {
@@ -149,7 +148,7 @@ const RenderDefinition: React.FC<SegmentDefinitionProps> = ({
         setSegmentId(`segment:${slug}`);
     }, [segmentName]);
 
-    const defineDatasetName = (value : string) => {
+    const defineDatasetName = (value: string) => {
         switch (value.toLowerCase()) {
             case 'customers':
                 return 'Customer Profile';
@@ -308,12 +307,14 @@ const RenderDefinition: React.FC<SegmentDefinitionProps> = ({
         setConditions(conditions.filter(condition => condition.id !== id));
     };
     const handleUpdateCondition = (id, field, value) => {
-        setConditions(conditions.map(condition => {
-            if (condition.id === id) {
-                return { ...condition, [field]: value };
-            }
-            return condition;
-        }));
+        setConditions(prevConditions =>
+            prevConditions.map(condition => {
+                if (condition.id === id) {
+                    return { ...condition, [field]: value };
+                }
+                return condition;
+            })
+        );
     };
 
     //render function
@@ -473,6 +474,7 @@ const RenderDefinition: React.FC<SegmentDefinitionProps> = ({
                             <ToggleGroup
                                 value={rootOperator}
                                 onValueChange={handleRootOperatorChange}
+                                defaultValue="AND"
                                 type="single"
                                 size="sm"
                                 className="flex gap-2"

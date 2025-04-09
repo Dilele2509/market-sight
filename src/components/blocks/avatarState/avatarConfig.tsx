@@ -13,9 +13,11 @@ import {
     DropdownMenuShortcut,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { useContext, useEffect, useState } from "react";
+import { useContext, useState } from "react";
 import AuthContext from "@/context/AuthContext";
 import ProfileDialog from "./profileDialog";
+import { useShortcutListener } from "@/hooks/use-shortcut";
+import { formatShortcut } from "@/components/utils/shortcutFormatter.ts";
 
 interface AvatarConfigProps {
     className?: string;
@@ -25,42 +27,36 @@ const AvatarConfig: React.FC<AvatarConfigProps> = ({ className = "" }) => {
     const { user, logout } = useContext(AuthContext)
     const [openProfileDialog, setOpenProfileDialog] = useState(false)
 
-    // useEffect(() => {
-    //     console.log("User updated:", user);
-    // }, [user]);
-
     const configAvaFromName = () => {
         if (!user || !user.first_name || !user.last_name) return "??"; // Trường hợp thiếu dữ liệu
-
         const firstChar = user.first_name.charAt(0).toUpperCase();
         const lastChar = user.last_name.charAt(0).toUpperCase();
-
         return firstChar + lastChar;
     };
 
+    // Menu items
     const menuItems = [
         {
             name: "Profile",
             shortcut: "⇧⌘P",
-            onClick: () => { setOpenProfileDialog(!openProfileDialog)},
+            onClick: () => setOpenProfileDialog(!openProfileDialog),
         },
         {
             name: "Business",
             shortcut: "⌘B",
-            onClick: () => {
-                console.log("Navigating to Business");
-                // Điều hướng tới trang kinh doanh
-            },
+            onClick: () => console.log("Navigating to Business"),
         },
         {
             name: "Keyboard Shortcuts",
             shortcut: "⌘K",
-            onClick: () => {
-                console.log("Navigating to Keyboard Shortcuts");
-                // Điều hướng đến trang phím tắt
-            },
+            onClick: () => console.log("Navigating to Keyboard Shortcuts"),
         },
     ];
+    menuItems.forEach(item => {
+        useShortcutListener(item.shortcut, item.onClick);
+    });
+    useShortcutListener('⇧⌘L', ()=> logout())
+
     return (
         <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -77,16 +73,20 @@ const AvatarConfig: React.FC<AvatarConfigProps> = ({ className = "" }) => {
                 <DropdownMenuSeparator />
                 <DropdownMenuGroup>
                     {menuItems.map((item, index) => (
-                        <DropdownMenuItem className="hover:bg-gray-100 hover:rounded-md cursor-pointer" key={index} onClick={item.onClick}>
+                        <DropdownMenuItem
+                            className="hover:bg-gray-100 hover:rounded-md cursor-pointer"
+                            key={index}
+                            onClick={item.onClick}
+                        >
                             {item.name}
-                            <DropdownMenuShortcut>{item.shortcut}</DropdownMenuShortcut>
+                            <DropdownMenuShortcut>{formatShortcut(item.shortcut)}</DropdownMenuShortcut>
                         </DropdownMenuItem>
                     ))}
                 </DropdownMenuGroup>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={()=> logout()} className="hover:bg-error hover:text-secondary hover:rounded-md cursor-pointer">
+                <DropdownMenuItem onClick={() => logout()} className="hover:bg-error hover:text-secondary hover:rounded-md cursor-pointer">
                     Log out
-                    <DropdownMenuShortcut>⇧⌘Q</DropdownMenuShortcut>
+                    <DropdownMenuShortcut>{formatShortcut('⇧⌘L')}</DropdownMenuShortcut>
                 </DropdownMenuItem>
             </DropdownMenuContent>
             <ProfileDialog
