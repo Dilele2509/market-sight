@@ -6,57 +6,138 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { useState } from "react";
+import { useState, useEffect, useContext } from "react";
+import { axiosPrivate } from "@/API/axios";
+import AuthContext from "@/context/AuthContext";
+import { Loader2 } from "lucide-react";
+import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
+import CodeMirror from '@uiw/react-codemirror';
+import { sql } from '@codemirror/lang-sql';
+import { useSegmentData } from "@/context/SegmentDataContext";
+import { useSegmentToggle } from "@/context/SegmentToggleContext";
+import { formatCellValue } from "@/components/blocks/segmentation/DefinitionTab/InforSetupState/PreviewDialog";
 
-// Mock data - replace with actual data from your backend
-const tables = [
-  {
-    name: "customers",
-    schema: `
-type Customer {
-  id: UUID
-  firstName: String
-  lastName: String
-  email: String
-  lastPurchaseDate: DateTime
-  totalOrders: Int
-  totalSpent: Decimal
-  createdAt: DateTime
-}`,
-    fields: [
-      { name: "id", type: "UUID", description: "Unique identifier" },
-      { name: "firstName", type: "String", description: "Customer's first name" },
-      { name: "lastName", type: "String", description: "Customer's last name" },
-      { name: "email", type: "String", description: "Email address" },
-      { name: "lastPurchaseDate", type: "DateTime", description: "Date of last purchase" },
-      { name: "totalOrders", type: "Int", description: "Total number of orders" },
-      { name: "totalSpent", type: "Decimal", description: "Total amount spent" },
-      { name: "createdAt", type: "DateTime", description: "Account creation date" },
-    ]
-  },
-  {
-    name: "orders",
-    schema: `
-type Order {
-  id: UUID
-  customerId: UUID
-  orderDate: DateTime
-  totalAmount: Decimal
-  status: String
-  items: OrderItem[]
-}`,
-    fields: [
-      { name: "id", type: "UUID", description: "Unique identifier" },
-      { name: "customerId", type: "UUID", description: "Reference to customer" },
-      { name: "orderDate", type: "DateTime", description: "Date of order" },
-      { name: "totalAmount", type: "Decimal", description: "Total order amount" },
-      { name: "status", type: "String", description: "Order status" },
-    ]
-  }
-];
 
 export default function DataModeling() {
-  const [selectedTable, setSelectedTable] = useState(tables[0]);
+  const { token } = useContext(AuthContext)
+  const [tables, setTables] = useState<any>({});
+  const [selectedTable, setSelectedTable] = useState<any>({});
+  const [query, setQuery] = useState('');
+  const [results, setResults] = useState(null);
+
+  const { CONNECTION_EXPIRY_KEY, CONNECTION_STORAGE_KEY, setError } = useSegmentData();
+  const { setLoading, loading } = useSegmentToggle();
+
+  const generateSchemaPattern = (tableName: string) => {
+    return tableName ? `SELECT * FROM ${tableName} LIMIT 5;` : '';
+  };
+
+  useEffect(() => {
+    axiosPrivate.get('/data/tables', {
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    })
+      .then((response) => {
+        //console.log(response.data.data);
+        if (response.status === 200) {
+          toast.success(response.data.message)
+          setTables(response.data.data)
+          const firstTableName = Object.keys(response.data.data)[0];
+          setSelectedTable({
+            table: firstTableName,
+            fields: response.data.data[firstTableName]
+          });
+          setQuery(generateSchemaPattern(firstTableName));
+        } else {
+          toast.error(response.data.message)
+        }
+      })
+      .catch((error) => {
+        console.error(error)
+        toast.error(error)
+      })
+  }, [])
+
+  const handleExecuteQuery = async () => {
+    if (!selectedTable || !query) {
+      toast.error('Please select a table and enter a query');
+      return;
+    }
+
+    if (!CONNECTION_EXPIRY_KEY) {
+      toast.error('Please provide all database connection details');
+      return;
+    }
+
+    const connectionUrl = localStorage.getItem(CONNECTION_STORAGE_KEY);
+    if (!connectionUrl) {
+      toast.error('No database connection found');
+      return;
+    }
+
+    const url = new URL(connectionUrl);
+    const username = url.username;
+    const password = url.password;
+    const host = url.hostname;
+    const port = url.port;
+    const database = url.pathname.replace('/', '');
+
+    setLoading(true);
+    setError(null);
+
+    try {
+      const requestData = {
+        table: selectedTable.table,
+        query,
+        connection_details: {
+          host,
+          port,
+          database,
+          username,
+          password
+        }
+      };
+      //console.log('Sending request data:', requestData);
+
+
+      const response = await axiosPrivate.post(`/data/query`, requestData, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+
+      if (response.data.success) {
+        setResults({
+          data: response.data.data,
+          columns: response.data.columns,
+          row_count: response.data.row_count
+        });
+
+        if (response.data.inserted_count > 0) {
+          toast.success(
+            `Query executed successfully! Retrieved ${response.data.row_count} rows and inserted ${response.data.inserted_count} rows into data warehouse.`
+          );
+        } else {
+          toast.warning(
+            `Query executed successfully! Retrieved ${response.data.row_count} rows but could not insert into data warehouse.`
+          );
+        }
+      } else {
+        setError('Query executed but returned no results');
+        toast.warning('Query returned no results');
+      }
+    } catch (err: any) {
+      const errorMessage = err.response?.data?.message || err.message || 'Failed to execute query';
+      setError(errorMessage);
+      toast.error(`Query error: ${errorMessage}`);
+      console.error('Query execution failed:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <DashboardShell>
       <div className="flex flex-col gap-6">
@@ -82,17 +163,30 @@ export default function DataModeling() {
               </TabsList>
 
               <div className="mt-4 space-y-4">
-                <Select onValueChange={(value) => {
-                  const table = tables.find(t => t.name === value);
-                  if (table) setSelectedTable(table);
-                }}>
+                <Select
+                  defaultValue={tables && selectedTable > 0 ? selectedTable : ''}
+                  onValueChange={(value) => {
+                    const table = tables[value];
+                    if (table) {
+                      setSelectedTable({
+                        table: value,
+                        fields: table
+                      });
+                      setQuery(generateSchemaPattern(value));
+                    }
+                  }}
+                >
                   <SelectTrigger>
-                    <SelectValue placeholder="Select a table" />
+                    <SelectValue placeholder={tables && Object.keys(tables).length > 0 ? Object.keys(tables)[0] : ''} />
                   </SelectTrigger>
                   <SelectContent className="bg-card border-[0.5px] border-card-foreground shadow-lg rounded-md z-50">
-                    {tables.map((table) => (
-                      <SelectItem className="hover:bg-background hover:rounded-md cursor-pointer" key={table.name} value={table.name}>
-                        {table.name}
+                    {tables && Object.entries(tables).map(([tableName]) => (
+                      <SelectItem
+                        className="hover:bg-background hover:rounded-md cursor-pointer"
+                        key={tableName}
+                        value={tableName}
+                      >
+                        {tableName}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -105,92 +199,118 @@ export default function DataModeling() {
                         <TableHeader>
                           <TableRow>
                             <TableHead>Field Name</TableHead>
-                            <TableHead>Type</TableHead>
-                            <TableHead>Description</TableHead>
+                            <TableHead>Datatype</TableHead>
                           </TableRow>
                         </TableHeader>
                         <TableBody>
-                          {selectedTable.fields.map((field) => (
-                            <TableRow key={field.name}>
-                              <TableCell className="font-medium">{field.name}</TableCell>
-                              <TableCell>
-                                <Badge className="text-black" variant="secondary">{field.type}</Badge>
-                              </TableCell>
-                              <TableCell className="text-muted-foreground">
-                                {field.description}
-                              </TableCell>
-                            </TableRow>
-                          ))}
+                          {selectedTable && selectedTable.fields
+                            ? Object.entries(selectedTable.fields).map(([fieldName, fieldType]) => (
+                              <TableRow key={fieldName}>
+                                <TableCell>{String(fieldName)}</TableCell>
+                                <TableCell>
+                                  <Badge className="w-fit pl-3 pr-3 bg-primary text-secondary-light rounded-xl">
+                                    {String(fieldType)}
+                                  </Badge>
+                                </TableCell>
+                              </TableRow>
+                            ))
+                            : (
+                              <TableRow>
+                                <TableCell colSpan={2}>No available fields</TableCell>
+                              </TableRow>
+                            )
+                          }
                         </TableBody>
                       </Table>
                     </ScrollArea>
                   </Card>
                 </TabsContent>
 
-                <TabsContent value="code">
+                <TabsContent className="space-y-4" value="code">
                   <Card className="bg-muted">
                     <ScrollArea className="h-[400px]">
-                      <pre className="p-4 text-sm">
-                        {selectedTable.schema}
-                      </pre>
+                      <div className="p-4">
+                        <div className="rounded-lg overflow-hidden border border-border focus-within:ring-0 focus-within:ring-transparent">
+                          <CodeMirror
+                            value={query}
+                            height="300px"
+                            extensions={[sql()]}
+                            theme="dark"
+                            onChange={(value) => setQuery(value)}
+                          />
+                        </div>
+                        <div className="mt-4 flex justify-end">
+                          <Button onClick={handleExecuteQuery} disabled={loading}>
+                            {loading ? (
+                              <>
+                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                Executing...
+                              </>
+                            ) : (
+                              'Execute Query'
+                            )}
+                          </Button>
+                        </div>
+                      </div>
                     </ScrollArea>
+
                   </Card>
+                  {selectedTable && (
+                    <div className="p-4 mb-4 border rounded-md bg-muted">
+                      <h2 className="text-lg font-semibold mb-1">
+                        Table Schema: {selectedTable.table}
+                      </h2>
+                      <p className="text-sm text-muted-foreground mb-2">Available fields:</p>
+                      <div className="flex flex-wrap gap-2">
+                        {selectedTable?.fields &&
+                          Object.keys(selectedTable.fields).map((field: string) => (
+                            <span
+                              key={field}
+                              className="border border-border rounded-full px-3 py-1 text-sm"
+                            >
+                              {field}
+                            </span>
+                          ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {results?.data && (
+                    <div className="mt-4 border rounded-md overflow-hidden">
+                      <div className="max-h-[440px] overflow-auto">
+                        <Table className="w-full text-sm">
+                          <TableHeader className="bg-muted">
+                            <TableRow>
+                              {results.columns.map((column: string) => (
+                                <TableHead key={column} className="font-semibold px-4 py-2 text-left">
+                                  {column}
+                                </TableHead>
+                              ))}
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {results.data.map((row: any, rowIndex: number) => (
+                              <TableRow key={rowIndex} className="hover:bg-muted/50">
+                                {results.columns.map((column: string) => (
+                                  <TableCell key={`${rowIndex}-${column}`} className="px-4 py-2">
+                                    {formatCellValue(row[column])}
+                                  </TableCell>
+                                ))}
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
+                      </div>
+                      <div className="border-t px-4 py-2 text-sm text-muted-foreground">
+                        Total rows: {results.row_count}
+                      </div>
+                    </div>
+                  )}
                 </TabsContent>
               </div>
             </Tabs>
           </CardContent>
         </Card>
-
-        <div className="grid gap-6 md:grid-cols-2">
-          <Card>
-            <CardHeader>
-              <CardTitle>Data Quality</CardTitle>
-              <CardDescription>
-                Overview of your data quality metrics
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-2">
-                <div className="flex justify-between items-center">
-                  <span>Completeness</span>
-                  <Badge variant="outline">98%</Badge>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span>Consistency</span>
-                  <Badge variant="outline">95%</Badge>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span>Validity</span>
-                  <Badge variant="outline">99%</Badge>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Relationships</CardTitle>
-              <CardDescription>
-                Table relationships and dependencies
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-2">
-                {tables.map((table) => (
-                  <div key={table.name} className="flex items-center gap-2">
-                    <Badge>{table.name}</Badge>
-                    <span className="text-muted-foreground">→</span>
-                    <span className="text-sm">
-                      {table.fields.filter(f => f.type === "UUID" && f.name !== "id")
-                        .map(f => f.name.replace("Id", ""))
-                        .join(", ")}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        </div>
       </div>
     </DashboardShell>
   );

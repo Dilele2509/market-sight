@@ -12,6 +12,19 @@ interface PreviewDialogProps {
     generateSQLPreview: () => string;
 }
 
+export const formatCellValue = (value) => {
+    if (value === null || value === undefined) return '-';
+    if (typeof value === 'object') {
+        try {
+            return JSON.stringify(value);
+        } catch (e) {
+            return String(value);
+        }
+    }
+    if (typeof value === 'boolean') return value ? 'Yes' : 'No';
+    return String(value);
+};
+
 const PreviewDialog: React.FC<PreviewDialogProps> = ({
     columns,
     generateSQLPreview,
@@ -19,18 +32,6 @@ const PreviewDialog: React.FC<PreviewDialogProps> = ({
     const { setPreviewOpen, previewOpen, previewLoading } = useSegmentToggle();
     const { previewData } = useSegmentData();
 
-    const formatCellValue = (value) => {
-        if (value === null || value === undefined) return '-';
-        if (typeof value === 'object') {
-            try {
-                return JSON.stringify(value);
-            } catch (e) {
-                return String(value);
-            }
-        }
-        if (typeof value === 'boolean') return value ? 'Yes' : 'No';
-        return String(value);
-    };
 
     const handleCopySQL = () => {
         const sql = generateSQLPreview();
