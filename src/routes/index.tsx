@@ -1,7 +1,6 @@
 //import pages
 import Index from "../pages/Index";
 import NotFound from "../pages/NotFound";
-import Customers from "../pages/Customers";
 import RFM from "../pages/MicroSegmentation/RFM";
 import Lifecycle from "../pages/MicroSegmentation/Lifecycle";
 import Settings from "../pages/Settings";
@@ -21,10 +20,9 @@ const publicRoutes = [
 
 const privateRoutes = [
     { path: "/", component: Index},
-    { path: "/customers", component: Customers},
-    { path: "/micro-segmentation", component: MicroSegmentation},
+    { path: "/customers-analysis", component: MicroSegmentation},
     { path: "/create-segmentation", component: CreateSegmentation},
-    { path: "/import-data", component: ImportData},
+    { path: "/connect-data", component: ImportData},
     { path: "/settings", component: Settings},
     { path: "/data-modeling", component:  DataModeling},
     { path: "*", component: NotFound}

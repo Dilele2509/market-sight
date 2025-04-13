@@ -99,7 +99,7 @@ const ConditionGroup: React.FC<ConditionGroupProps> = ({
             {/* Group conditions */}
             <div className="pl-10">
                 <div className="relative">
-                    {group.conditions.length > 0 && (<div className={`border-2 ${group.operator === "AND" ? 'border-yellow-400' : 'border-blue-600'} pl-2 w-5 border-r-0 rounded-xl rounded-r-none top-8 bottom-4 -left-5 absolute`}>
+                    {group.conditions.length > 0 && (<div className={`border-2 ${group.operator === "AND" ? 'border-yellow-400' : 'border-blue-600'} pl-2 w-5 border-r-0 rounded-xl rounded-r-none top-8 bottom-4 -left-5 absolute transition-colors duration-300`}>
                         <Select
                             value={group.operator}
                             onValueChange={(newValue) => {
@@ -110,7 +110,7 @@ const ConditionGroup: React.FC<ConditionGroupProps> = ({
                             defaultValue="AND"
                         >
                             <SelectTrigger
-                                className={`absolute min-w-fit top-1/2 -left-6 transform -translate-y-1/2 text-white text-[10px] px-1.5 py-0.5 rounded-md shadow-sm ${group.operator === "AND" ? 'bg-yellow-400 text-black' : 'bg-blue-600'}`}>
+                                className={`absolute min-w-fit top-1/2 -left-6 transform -translate-y-1/2 text-white text-[10px] px-1.5 py-0.5 rounded-md shadow-sm transition-colors duration-300 ${group.operator === "AND" ? 'bg-yellow-400 text-black' : 'bg-blue-600'}`}>
                                 {group.operator}
                             </SelectTrigger>
                             <SelectContent className="bg-card border-[0.5px] border-card-foreground shadow-lg rounded-md z-50">

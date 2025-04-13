@@ -1,5 +1,5 @@
 
-import { Home, Users, PieChart, RefreshCcwDot, Layers, Settings, Database, Moon, Sun, ChevronLeft, ChevronRight, Table } from "lucide-react";
+import { LayoutDashboard, ChartNoAxesCombined, Cable, Settings, Moon, Sun, ChevronLeft, ChevronRight, Database, Filter } from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
@@ -18,33 +18,28 @@ import { useTheme } from "@/components/dark-mode/ThemeProvider";
 const menuItems = [
   {
     title: "Dashboard",
-    icon: Home,
+    icon: LayoutDashboard,
     path: "/",
   },
   {
     title: "Customer Analysis",
-    icon: Users,
-    path: "/customers",
-  },
-  {
-    title: "Micro Segmentation",
-    icon: PieChart,
-    path: "/micro-segmentation",
+    icon: ChartNoAxesCombined,
+    path: "/customers-analysis",
   },
   {
     title: "Create Segmentation",
-    icon: Layers,
+    icon: Filter,
     path: "/create-segmentation",
   },
   {
     title: "Data Modeling",
-    icon: Table,
+    icon: Database,
     path: "/data-modeling",
   },
   {
-    title: "Import Data",
-    icon: Database,
-    path: "/import-data",
+    title: "Connect Data",
+    icon: Cable,
+    path: "/connect-data",
   },
   {
     title: "Settings",

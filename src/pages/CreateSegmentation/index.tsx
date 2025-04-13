@@ -21,7 +21,7 @@ export default function CreateSegmentation() {
                             No data has been imported. Please navigate to the Import Data page to connect to your database.
                         </AlertDescription>
                     </Alert>
-                    <Button onClick={() => navigate("/import-data")} className="mt-4">
+                    <Button onClick={() => navigate("/connect-data")} className="mt-4">
                         Go to Import Data
                     </Button>
                 </div>

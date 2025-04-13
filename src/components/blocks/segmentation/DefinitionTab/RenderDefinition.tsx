@@ -473,13 +473,13 @@ const RenderDefinition: React.FC<SegmentDefinitionProps> = ({
 
                         {/* Individual conditions */}
                         <div className="relative">
-                            {conditions.length > 0 && (<div className={`border-2 ${rootOperator === "AND" ? 'border-red-400' : 'border-primary'} pl-2 w-6 border-r-0 rounded-xl rounded-r-none top-8 bottom-14 -left-6 absolute`}>
+                            {conditions.length > 0 && (<div className={`border-2 ${rootOperator === "AND" ? 'border-red-400' : 'border-primary'} pl-2 w-6 border-r-0 rounded-xl rounded-r-none top-8 bottom-14 -left-6 absolute transition-colors duration-300`}>
                                 <Select
                                     value={rootOperator}
                                     onValueChange={handleRootOperatorChange}
                                     defaultValue="AND"
                                 >
-                                    <SelectTrigger className={`absolute top-1/2 -left-6 min-w-fit transform -translate-y-1/2 text-white text-[10px] px-1.5 py-0.5 rounded-md shadow-sm border ${rootOperator === "AND" ? "bg-red-500" : "bg-primary"}`}>
+                                    <SelectTrigger className={`absolute top-1/2 -left-6 min-w-fit transform -translate-y-1/2 text-white text-[10px] px-1.5 py-0.5 rounded-md shadow-sm border transition-colors duration-300 ${rootOperator === "AND" ? "bg-red-500" : "bg-primary"}`}>
                                         {rootOperator}
                                     </SelectTrigger>
                                     <SelectContent className="bg-card border-[0.5px] border-card-foreground shadow-lg rounded-md z-50">

@@ -73,7 +73,7 @@ export default function SegmentBuilder({ onBack, editSegment }: SegmentBuilderPr
 
     //SQL Preview
     const generateSQL = () => {
-        return generateSQLPreview(selectedDataset, conditions, attributes, rootOperator)
+        return generateSQLPreview(selectedDataset, conditions, conditionGroups, attributes, rootOperator)
     }
     // Function to open SQL dialog
     const handleOpenSqlDialog = () => {
@@ -88,7 +88,7 @@ export default function SegmentBuilder({ onBack, editSegment }: SegmentBuilderPr
         setPreviewOpen(true); // Open dialog immediately to show loading state
 
         try {
-            const sqlQuery = generateSQLPreview(selectedDataset, conditions, attributes, rootOperator);
+            const sqlQuery = generateSQLPreview(selectedDataset, conditions, conditionGroups, attributes, rootOperator);
 
             console.log('condition: ', conditions, ' sql query: ', sqlQuery);
 

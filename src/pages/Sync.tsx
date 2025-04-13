@@ -30,7 +30,7 @@ export default function ImportData() {
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">Data Sources</h1>
           <p className="text-muted-foreground">
-            Connect and sync your data from various sources to power your analytics
+            Connect your data from various sources to power your analytics
           </p>
         </div>
 
@@ -69,12 +69,12 @@ export default function ImportData() {
 
         <Card className="mt-6">
           <CardHeader>
-            <CardTitle>Sync History</CardTitle>
-            <CardDescription>View your recent data synchronization activities</CardDescription>
+            <CardTitle>Connection History</CardTitle>
+            <CardDescription>View your recent database connection activities</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="text-sm text-muted-foreground text-center py-8">
-              No sync history available. Connect a data source to get started.
+              No connection history available. Connect a data source to get started.
             </div>
           </CardContent>
         </Card>

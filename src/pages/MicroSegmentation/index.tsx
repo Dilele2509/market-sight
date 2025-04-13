@@ -47,16 +47,16 @@ export default function MicroSegmentation() {
                             No data has been imported. Please navigate to the Import Data page to connect to your database.
                         </AlertDescription>
                     </Alert>
-                    <Button onClick={() => navigate("/import-data")} className="mt-4">
+                    <Button onClick={() => navigate("/connect-data")} className="mt-4">
                         Go to Import Data
                     </Button>
                 </div>
             ) : (<div className="flex flex-col gap-6">
-                <h1 className="text-3xl font-bold tracking-tight">Micro Segmentation</h1>
+                <h1 className="text-3xl font-bold tracking-tight">Customer Analysis</h1>
                 <Tabs
                     defaultValue="rfm"
                     value={["rfm", "lifecycle"].includes(location.pathname.split("/").pop()) ? location.pathname.split("/").pop() : "rfm"}
-                    onValueChange={(value) => navigate(`/micro-segmentation/${value}`)}
+                    onValueChange={(value) => navigate(`/customers-analysis/${value}`)}
                 >
                     <TabsList className="bg-card-foreground">
                         <TabsTrigger className="text-card" value="rfm">RFM Analysis</TabsTrigger>

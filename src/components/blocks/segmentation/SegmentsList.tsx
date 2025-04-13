@@ -103,6 +103,7 @@ const SegmentsList: React.FC<SegmentsListProps> = ({ segments = [], onCreateSegm
                             <TableHead className="w-2/6 px-4 text-left">ID</TableHead>
                             <TableHead className="w-1/6 px-4 text-left">Name</TableHead>
                             <TableHead className="w-1/6 px-4 text-center">Dataset</TableHead>
+                            <TableHead className="w-1/6 px-4 text-center">Created at</TableHead>
                             <TableHead className="w-1/6 px-4 text-center">Last Updated</TableHead>
                             <TableHead className="w-1/6 px-4 text-center">Size</TableHead>
                             <TableHead className="w-1/6 px-4 text-center">Status</TableHead>
