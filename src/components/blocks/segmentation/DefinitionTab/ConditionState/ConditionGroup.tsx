@@ -1,6 +1,7 @@
 import { Trash, SlidersHorizontal, Calendar, Link } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useSegmentData } from "@/context/SegmentDataContext";
 
 interface Condition {
@@ -86,40 +87,6 @@ const ConditionGroup: React.FC<ConditionGroupProps> = ({
         <div className="mb-3 mt-2 border border-gray-300 rounded p-2">
             <div className="flex items-center mb-2">
                 <span className="font-medium text-base mr-2">Group of conditions</span>
-                <ToggleGroup
-                    type="single"
-                    defaultValue="AND"
-                    value={group.operator}
-                    onValueChange={(newValue) => {
-                        if (newValue) {
-                            handleUpdateGroupOperator(group.id, newValue as "AND" | "OR");
-                        }
-                    }}
-                    className="mr-auto flex gap-1"
-                >
-                    <ToggleGroupItem
-                        value="AND"
-                        className={`px-3 text-xs rounded-md transition-all 
-                        ${group.operator === "AND"
-                                ? "bg-blue-500 text-white shadow-md scale-100"
-                                : "bg-gray-200 text-gray-800 hover:bg-gray-300 active:scale-95"
-                            }`}
-                    >
-                        AND
-                    </ToggleGroupItem>
-
-                    <ToggleGroupItem
-                        value="OR"
-                        className={`px-3 text-xs rounded-md transition-all 
-                        ${group.operator === "OR"
-                                ? "bg-red-500 text-white shadow-md scale-100"
-                                : "bg-gray-200 text-gray-800 hover:bg-gray-300 active:scale-95"
-                            }`}
-                    >
-                        OR
-                    </ToggleGroupItem>
-                </ToggleGroup>
-
                 <Button
                     size="icon"
                     variant="ghost"
@@ -130,49 +97,71 @@ const ConditionGroup: React.FC<ConditionGroupProps> = ({
             </div>
 
             {/* Group conditions */}
-            <div className="pl-2 border-l-4 border-gray-300">
-                {group.conditions.map((condition) => {
-                    if (condition.type === "attribute") {
-                        return renderAttributeCondition(condition, true, group.id);
-                    } else if (condition.type === "event") {
-                        return renderEventCondition(condition, true, group.id);
-                    } else if (condition.type === "related") {
-                        return renderRelatedDatasetCondition(condition, true, group.id);
-                    }
-                    return null;
-                })}
+            <div className="pl-10">
+                <div className="relative">
+                    {group.conditions.length > 0 && (<div className={`border-2 ${group.operator === "AND" ? 'border-yellow-400' : 'border-blue-600'} pl-2 w-5 border-r-0 rounded-xl rounded-r-none top-8 bottom-4 -left-5 absolute`}>
+                        <Select
+                            value={group.operator}
+                            onValueChange={(newValue) => {
+                                if (newValue) {
+                                    handleUpdateGroupOperator(group.id, newValue as "AND" | "OR");
+                                }
+                            }}
+                            defaultValue="AND"
+                        >
+                            <SelectTrigger
+                                className={`absolute min-w-fit top-1/2 -left-6 transform -translate-y-1/2 text-white text-[10px] px-1.5 py-0.5 rounded-md shadow-sm ${group.operator === "AND" ? 'bg-yellow-400 text-black' : 'bg-blue-600'}`}>
+                                {group.operator}
+                            </SelectTrigger>
+                            <SelectContent className="bg-card border-[0.5px] border-card-foreground shadow-lg rounded-md z-50">
+                                <SelectItem value="AND" className="hover:bg-background hover:rounded-md cursor-pointer">AND</SelectItem>
+                                <SelectItem value="OR" className="hover:bg-background hover:rounded-md cursor-pointer">OR</SelectItem>
+                            </SelectContent>
+                        </Select>
+                    </div>)}
+                    {group.conditions.map((condition) => {
+                        if (condition.type === "attribute") {
+                            return renderAttributeCondition(condition, true, group.id);
+                        } else if (condition.type === "event") {
+                            return renderEventCondition(condition, true, group.id);
+                        } else if (condition.type === "related") {
+                            return renderRelatedDatasetCondition(condition, true, group.id);
+                        }
+                        return null;
+                    })}
 
-                {group.conditions.length === 0 && (
-                    <p className="italic text-gray-500 text-sm mb-2">
-                        No conditions in this group yet. Add conditions below.
-                    </p>
-                )}
+                    {group.conditions.length === 0 && (
+                        <p className="italic text-gray-500 text-sm mb-2">
+                            No conditions in this group yet. Add conditions below.
+                        </p>
+                    )}
 
-                <div className="flex gap-2 mt-2">
-                    <Button
-                        variant="outline"
-                        size="sm"
-                        className="h-8 px-2 text-xs"
-                        onClick={() => handleAddConditionToGroup(group.id, "attribute")}
-                    >
-                        <SlidersHorizontal className="w-3 h-3 mr-1" /> Add attribute
-                    </Button>
-                    <Button
-                        variant="outline"
-                        size="sm"
-                        className="h-8 px-2 text-xs"
-                        onClick={() => handleAddConditionToGroup(group.id, "event")}
-                    >
-                        <Calendar className="w-3 h-3 mr-1" /> Add event
-                    </Button>
-                    <Button
-                        variant="outline"
-                        size="sm"
-                        className="h-8 px-2 text-xs"
-                        onClick={() => handleAddConditionToGroup(group.id, "related")}
-                    >
-                        <Link className="w-3 h-3 mr-1" /> Add related
-                    </Button>
+                    <div className="flex gap-2 mt-2">
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            className="h-8 px-2 text-xs"
+                            onClick={() => handleAddConditionToGroup(group.id, "attribute")}
+                        >
+                            <SlidersHorizontal className="w-3 h-3 mr-1" /> Add attribute
+                        </Button>
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            className="h-8 px-2 text-xs"
+                            onClick={() => handleAddConditionToGroup(group.id, "event")}
+                        >
+                            <Calendar className="w-3 h-3 mr-1" /> Add event
+                        </Button>
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            className="h-8 px-2 text-xs"
+                            onClick={() => handleAddConditionToGroup(group.id, "related")}
+                        >
+                            <Link className="w-3 h-3 mr-1" /> Add related
+                        </Button>
+                    </div>
                 </div>
             </div>
         </div>

@@ -11,7 +11,6 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Card, CardContent } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 
 import { OPERATORS } from "@/types/constant";
 
@@ -470,82 +469,75 @@ const RenderDefinition: React.FC<SegmentDefinitionProps> = ({
                         {/* Condition builder header */}
                         <div className="flex items-center justify-between mb-2">
                             <h2 className="text-lg font-semibold">Conditions</h2>
-                            <ToggleGroup
-                                value={rootOperator}
-                                onValueChange={handleRootOperatorChange}
-                                defaultValue="AND"
-                                type="single"
-                                size="sm"
-                                className="flex gap-2"
-                            >
-                                <ToggleGroupItem
-                                    value="AND"
-                                    className={`px-4 py-1 rounded-lg transition-all ${rootOperator === "AND" ? "bg-blue-500 text-white" : "bg-gray-200 text-gray-800"
-                                        }`}
-                                >
-                                    AND
-                                </ToggleGroupItem>
-
-                                <ToggleGroupItem
-                                    value="OR"
-                                    className={`px-4 py-2 rounded-lg transition-all ${rootOperator === "OR" ? "bg-blue-500 text-white" : "bg-gray-200 text-gray-800"
-                                        }`}
-                                >
-                                    OR
-                                </ToggleGroupItem>
-                            </ToggleGroup>
                         </div>
 
                         {/* Individual conditions */}
-                        <div className="space-y-4">
-                            <ReactSortable list={conditions} setList={setConditions} animation={200} className="space-y-2">
-                                {conditions.map((condition) => {
-                                    if (condition.type === "attribute") return renderAttributeCondition(condition);
-                                    if (condition.type === "event") return renderEventCondition(condition);
-                                    if (condition.type === "related") return renderRelatedDatasetCondition(condition);
-                                    return null;
-                                })}
-                            </ReactSortable>
-                        </div>
+                        <div className="relative">
+                            {conditions.length > 0 && (<div className={`border-2 ${rootOperator === "AND" ? 'border-red-400' : 'border-primary'} pl-2 w-6 border-r-0 rounded-xl rounded-r-none top-8 bottom-14 -left-6 absolute`}>
+                                <Select
+                                    value={rootOperator}
+                                    onValueChange={handleRootOperatorChange}
+                                    defaultValue="AND"
+                                >
+                                    <SelectTrigger className={`absolute top-1/2 -left-6 min-w-fit transform -translate-y-1/2 text-white text-[10px] px-1.5 py-0.5 rounded-md shadow-sm border ${rootOperator === "AND" ? "bg-red-500" : "bg-primary"}`}>
+                                        {rootOperator}
+                                    </SelectTrigger>
+                                    <SelectContent className="bg-card border-[0.5px] border-card-foreground shadow-lg rounded-md z-50">
+                                        <SelectItem value="AND" className="hover:bg-background hover:rounded-md cursor-pointer">AND</SelectItem>
+                                        <SelectItem value="OR" className="hover:bg-background hover:rounded-md cursor-pointer">OR</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </div>)}
+                            <div className="space-y-4">
+                                <ReactSortable list={conditions} setList={setConditions} animation={200} className="space-y-2">
+                                    {conditions.map((condition) => {
+                                        if (condition.type === "attribute") return renderAttributeCondition(condition);
+                                        if (condition.type === "event") return renderEventCondition(condition);
+                                        if (condition.type === "related") return renderRelatedDatasetCondition(condition);
+                                        return null;
+                                    })}
+                                </ReactSortable>
+                            </div>
 
 
-                        {/* Condition groups */}
-                        {conditionGroups.map((group) => renderConditionGroup(group))}
+                            {/* Condition groups */}
+                            {conditionGroups.map((group) => renderConditionGroup(group))}
 
-                        {/* Add buttons */}
-                        <div className="flex gap-2 mt-3 flex-wrap">
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                className="px-2 py-1 text-xs w-auto"
-                                onClick={() => handleAddCondition("attribute")}
-                            >
-                                <SlidersHorizontal className="w-3 h-3 mr-1" /> Add attribute condition
-                            </Button>
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                className="px-2 py-1 text-xs w-auto"
-                                onClick={() => handleAddCondition("event")}
-                            >
-                                <Calendar className="w-3 h-3 mr-1" /> Add event condition
-                            </Button>
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                className="px-2 py-1 text-xs w-auto"
-                                onClick={handleAddRelatedCondition}
-                            >
-                                <Link className="w-3 h-3 mr-1" /> Add related condition
-                            </Button>
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                className="px-2 py-1 text-xs w-auto"
-                                onClick={handleAddConditionGroup}
-                            >
-                                <Users className="w-3 h-3 mr-1" /> Add condition group
-                            </Button>
+                            {/* Add buttons */}
+                            <div className="flex gap-2 mt-3 flex-wrap">
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="px-2 py-1 text-xs w-auto"
+                                    onClick={() => handleAddCondition("attribute")}
+                                >
+                                    <SlidersHorizontal className="w-3 h-3 mr-1" /> Add attribute condition
+                                </Button>
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="px-2 py-1 text-xs w-auto"
+                                    onClick={() => handleAddCondition("event")}
+                                >
+                                    <Calendar className="w-3 h-3 mr-1" /> Add event condition
+                                </Button>
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="px-2 py-1 text-xs w-auto"
+                                    onClick={handleAddRelatedCondition}
+                                >
+                                    <Link className="w-3 h-3 mr-1" /> Add related condition
+                                </Button>
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="px-2 py-1 text-xs w-auto"
+                                    onClick={handleAddConditionGroup}
+                                >
+                                    <Users className="w-3 h-3 mr-1" /> Add condition group
+                                </Button>
+                            </div>
                         </div>
                     </CardContent>
                 </Card>
