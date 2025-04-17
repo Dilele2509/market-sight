@@ -4,6 +4,8 @@ interface SegmentToggleContextProps {
     isEditMode: boolean;
     loading: boolean;
     setLoading: React.Dispatch<React.SetStateAction<boolean>>;
+    isDisableRelatedAdd: boolean;
+    setIsDisableRelatedAdd: React.Dispatch<React.SetStateAction<boolean>>;
     previewLoading: boolean;
     setPreviewLoading: React.Dispatch<React.SetStateAction<boolean>>;
     previewOpen: boolean;
@@ -30,6 +32,8 @@ export const SegmentToggleProvider: React.FC<{ children: ReactNode; editSegment?
     const isEditMode = !!editSegment;
     const [loading, setLoading] = useState<boolean>(false);
 
+    const [isDisableRelatedAdd, setIsDisableRelatedAdd] = useState(false)
+
     const [previewLoading, setPreviewLoading] = useState<boolean>(false);
     const [previewOpen, setPreviewOpen] = useState<boolean>(false);
     const [hasUnsavedChanges, setHasUnsavedChanges] = useState<boolean>(false);
@@ -52,6 +56,8 @@ export const SegmentToggleProvider: React.FC<{ children: ReactNode; editSegment?
                 isEditMode,
                 loading,
                 setLoading,
+                isDisableRelatedAdd,
+                setIsDisableRelatedAdd,
                 previewLoading,
                 setPreviewLoading,
                 previewOpen,

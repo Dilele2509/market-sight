@@ -256,7 +256,7 @@ export default function SegmentBuilder({ onBack, editSegment }: SegmentBuilderPr
                         <ArrowLeft className="h-5 w-5" />
                     </Button>
                     {/* <h1 className="text-xl font-semibold">Segment Builder</h1> */}
-                    <Input className="w-auto" value={segmentName} onChange={(e) => setSegmentName(e.target.value)} placeholder="Segment Name" />
+                    <Input className="w-auto border-b-2 border-t-0 border-l-0 border-r-0 rounded-none border-primary-dark" value={segmentName} onChange={(e) => setSegmentName(e.target.value)} placeholder="Segment Name" />
 
                 </div>
                 <div className="flex flex-wrap items-center gap-2">

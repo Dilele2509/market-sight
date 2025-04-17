@@ -145,7 +145,7 @@ const AttributeCondition: React.FC<AttributeConditionProps> = ({
 
       {/* Delete button */}
       <Button variant="ghost" size="icon" className="ml-2" onClick={removeCondition}>
-        <Trash className="w-4 h-4" />
+        <Trash className="w-4 h-4" color={'#E11D48'} />
       </Button>
     </div>
   );

@@ -2,12 +2,12 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useState } from "react";
-import { SelectItem } from "@/components/ui/select";
+import { LoaderCircle } from "lucide-react";
 
 interface ProfileDialogProps {
     openProfileDialog: boolean;
     setOpenProfileDialog: (open: boolean) => void;
-    user: {
+    user?: {
         business_id: number;
         created_at: string;
         email: string;
@@ -68,103 +68,109 @@ const ProfileDialog: React.FC<ProfileDialogProps> = ({ openProfileDialog, setOpe
                     </DialogDescription>
                 </DialogHeader>
 
-                <div className="space-y-6">
-                    {/* Business ID */}
-                    <div className="flex justify-between items-center">
-                        <div className="font-semibold text-lg">Business ID:</div>
-                        <div className="text-gray-700">{user.business_id}</div>
-                    </div>
-
-                    {/* Email */}
-                    <div className="flex justify-between items-center">
-                        <div className="font-semibold text-lg">Email:</div>
-                        {isEditing ? (
-                            <Input
-                                type="email"
-                                value={editedUser.email}
-                                onChange={(e) => handleChange("email", e.target.value)}
-                                className="input input-bordered w-full max-w-xs"
-                            />
-                        ) : (
-                            <div className="text-gray-700">{user.email}</div>
-                        )}
-                    </div>
-
-                    {/* First Name */}
-                    <div className="flex justify-between items-center">
-                        <div className="font-semibold text-lg">First Name:</div>
-                        {isEditing ? (
-                            <Input
-                                type="text"
-                                value={editedUser.first_name}
-                                onChange={(e) => handleChange("first_name", e.target.value)}
-                                className="input input-bordered w-full max-w-xs"
-                            />
-                        ) : (
-                            <div className="text-gray-700">{user.first_name}</div>
-                        )}
-                    </div>
-
-                    {/* Last Name */}
-                    <div className="flex justify-between items-center">
-                        <div className="font-semibold text-lg">Last Name:</div>
-                        {isEditing ? (
-                            <Input
-                                type="text"
-                                value={editedUser.last_name}
-                                onChange={(e) => handleChange("last_name", e.target.value)}
-                                className="input input-bordered w-full max-w-xs"
-                            />
-                        ) : (
-                            <div className="text-gray-700">{user.last_name}</div>
-                        )}
-                    </div>
-
-                    {/* Role ID */}
-                    <div className="flex justify-between items-center">
-                        <div className="font-semibold text-lg">Role ID:</div>
-                        <div className="text-gray-700">
-                            {user.role_id} - {generateRoleName(user.role_id)}
+                {user ? (
+                    <div className="space-y-6">
+                        {/* Business ID */}
+                        <div className="flex justify-between items-center">
+                            <div className="font-semibold text-lg">Business ID:</div>
+                            <div className="text-gray-700">{user.business_id}</div>
                         </div>
+
+                        {/* Email */}
+                        <div className="flex justify-between items-center">
+                            <div className="font-semibold text-lg">Email:</div>
+                            {isEditing ? (
+                                <Input
+                                    type="email"
+                                    value={editedUser.email}
+                                    onChange={(e) => handleChange("email", e.target.value)}
+                                    className="input input-bordered w-full max-w-xs"
+                                />
+                            ) : (
+                                <div className="text-gray-700">{user.email}</div>
+                            )}
+                        </div>
+
+                        {/* First Name */}
+                        <div className="flex justify-between items-center">
+                            <div className="font-semibold text-lg">First Name:</div>
+                            {isEditing ? (
+                                <Input
+                                    type="text"
+                                    value={editedUser.first_name}
+                                    onChange={(e) => handleChange("first_name", e.target.value)}
+                                    className="input input-bordered w-full max-w-xs"
+                                />
+                            ) : (
+                                <div className="text-gray-700">{user.first_name}</div>
+                            )}
+                        </div>
+
+                        {/* Last Name */}
+                        <div className="flex justify-between items-center">
+                            <div className="font-semibold text-lg">Last Name:</div>
+                            {isEditing ? (
+                                <Input
+                                    type="text"
+                                    value={editedUser.last_name}
+                                    onChange={(e) => handleChange("last_name", e.target.value)}
+                                    className="input input-bordered w-full max-w-xs"
+                                />
+                            ) : (
+                                <div className="text-gray-700">{user.last_name}</div>
+                            )}
+                        </div>
+
+                        {/* Role ID */}
+                        <div className="flex justify-between items-center">
+                            <div className="font-semibold text-lg">Role ID:</div>
+                            <div className="text-gray-700">
+                                {user.role_id} - {generateRoleName(user.role_id)}
+                            </div>
+                        </div>
+
+                        {/* Created and Updated At */}
+                        <div className="flex justify-between items-center">
+                            <div className="font-semibold text-lg">Created At:</div>
+                            <div className="text-gray-700">{new Date(user.created_at).toLocaleString()}</div>
+                        </div>
+
+                        <div className="flex justify-between items-center">
+                            <div className="font-semibold text-lg">Updated At:</div>
+                            <div className="text-gray-700">{new Date(user.updated_at).toLocaleString()}</div>
+                        </div>
+
+                        {/* Action Buttons */}
+                        <DialogFooter>
+                            <Button variant="outline" onClick={closeDialog}>
+                                Close
+                            </Button>
+
+                            {/* Edit/Cancel Button */}
+                            <Button
+                                variant="outline"
+                                className={`${isEditing ? 'border-error text-error' : ''}`}
+                                onClick={handleEdit}
+                                disabled={isEditing && !hasChanges}
+                            >
+                                {isEditing ? "Cancel" : "Edit"}
+                            </Button>
+
+                            {/* Save Changes Button */}
+                            <Button
+                                className="bg-primary"
+                                onClick={handleUpdate}
+                                disabled={!hasChanges || !isEditing}
+                            >
+                                Save Changes
+                            </Button>
+                        </DialogFooter>
                     </div>
-
-                    {/* Created and Updated At */}
-                    <div className="flex justify-between items-center">
-                        <div className="font-semibold text-lg">Created At:</div>
-                        <div className="text-gray-700">{new Date(user.created_at).toLocaleString()}</div>
+                ) : (
+                    <div className="flex justify-center items-center py-10">
+                        <LoaderCircle className="h-8 w-8 animate-spin text-primary" />
                     </div>
-
-                    <div className="flex justify-between items-center">
-                        <div className="font-semibold text-lg">Updated At:</div>
-                        <div className="text-gray-700">{new Date(user.updated_at).toLocaleString()}</div>
-                    </div>
-
-                    {/* Action Buttons */}
-                    <DialogFooter>
-                        <Button variant="outline" onClick={closeDialog}>
-                            Close
-                        </Button>
-
-                        {/* Edit/Cancel Button */}
-                        <Button
-                            variant="outline"
-                            className={`${isEditing ? 'border-error text-error' : ''}`}
-                            onClick={handleEdit}
-                            disabled={isEditing && !hasChanges}
-                        >
-                            {isEditing ? "Cancel" : "Edit"}
-                        </Button>
-
-                        {/* Save Changes Button */}
-                        <Button
-                            className="bg-primary"
-                            onClick={handleUpdate}
-                            disabled={!hasChanges || !isEditing}
-                        >
-                            Save Changes
-                        </Button>
-                    </DialogFooter>
-                </div>
+                )}
             </DialogContent>
         </Dialog>
     );

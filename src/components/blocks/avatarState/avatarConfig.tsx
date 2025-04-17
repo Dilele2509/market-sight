@@ -18,6 +18,7 @@ import AuthContext from "@/context/AuthContext";
 import ProfileDialog from "./profileDialog";
 import { useShortcutListener } from "@/hooks/use-shortcut";
 import { formatShortcut } from "@/components/utils/shortcutFormatter.ts";
+import { LoaderCircle } from "lucide-react";
 
 interface AvatarConfigProps {
     className?: string;
@@ -55,45 +56,53 @@ const AvatarConfig: React.FC<AvatarConfigProps> = ({ className = "" }) => {
     menuItems.forEach(item => {
         useShortcutListener(item.shortcut, item.onClick);
     });
-    useShortcutListener('⇧⌘L', ()=> logout())
+    useShortcutListener('⇧⌘L', () => logout())
 
     return (
         <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-                <Button className="bg-transparent w-fit p-0 hover:bg-transparent">
-                    <Avatar
-                        className={`${className} hover:shadow-lg hover:border-2 hover:border-primary-light transition-all duration-300`}
-                    >
-                        <AvatarFallback className="bg-primary-dark text-secondary-light">{configAvaFromName()}</AvatarFallback>
-                    </Avatar>
-                </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent className="w-56 mr-4 bg-card border-[0.5px] border-card-foreground shadow-lg rounded-md z-50">
-                <DropdownMenuLabel>My Account</DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                <DropdownMenuGroup>
-                    {menuItems.map((item, index) => (
-                        <DropdownMenuItem
-                            className="hover:bg-gray-100 hover:rounded-md cursor-pointer"
-                            key={index}
-                            onClick={item.onClick}
-                        >
-                            {item.name}
-                            <DropdownMenuShortcut>{formatShortcut(item.shortcut)}</DropdownMenuShortcut>
+            {user ? (
+                <>
+                    <DropdownMenuTrigger asChild>
+                        <Button className="bg-transparent w-fit p-0 hover:bg-transparent">
+                            <Avatar
+                                className={`${className} hover:shadow-lg hover:border-2 hover:border-primary-light transition-all duration-300`}
+                            >
+                                <AvatarFallback className="bg-primary-dark text-secondary-light">{configAvaFromName()}</AvatarFallback>
+                            </Avatar>
+                        </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent className="w-56 mr-4 bg-card border-[0.5px] border-card-foreground shadow-lg rounded-md z-50">
+                        <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuGroup>
+                            {menuItems.map((item, index) => (
+                                <DropdownMenuItem
+                                    className="hover:bg-gray-100 hover:rounded-md cursor-pointer"
+                                    key={index}
+                                    onClick={item.onClick}
+                                >
+                                    {item.name}
+                                    <DropdownMenuShortcut>{formatShortcut(item.shortcut)}</DropdownMenuShortcut>
+                                </DropdownMenuItem>
+                            ))}
+                        </DropdownMenuGroup>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem onClick={() => logout()} className="hover:bg-error hover:text-secondary hover:rounded-md cursor-pointer">
+                            Log out
+                            <DropdownMenuShortcut>{formatShortcut('⇧⌘L')}</DropdownMenuShortcut>
                         </DropdownMenuItem>
-                    ))}
-                </DropdownMenuGroup>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => logout()} className="hover:bg-error hover:text-secondary hover:rounded-md cursor-pointer">
-                    Log out
-                    <DropdownMenuShortcut>{formatShortcut('⇧⌘L')}</DropdownMenuShortcut>
-                </DropdownMenuItem>
-            </DropdownMenuContent>
-            <ProfileDialog
-                openProfileDialog={openProfileDialog}
-                setOpenProfileDialog={setOpenProfileDialog}
-                user={user}
-            />
+                    </DropdownMenuContent>
+                    <ProfileDialog
+                        openProfileDialog={openProfileDialog}
+                        setOpenProfileDialog={setOpenProfileDialog}
+                        user={user}
+                    />
+                </>
+            ) : (
+                <div className="flex justify-center items-center py-10">
+                    <LoaderCircle className="h-8 w-8 animate-spin text-primary" />
+                </div>
+            )}
         </DropdownMenu>
     )
 }

@@ -20,13 +20,13 @@ const App = () => (
         <Sonner />
         <SegmentToggleProvider>
           <SegmentDataProvider>
-            <MicroSegmentationProvider>
-              <BrowserRouter>
-                <AuthProvider>
-                  <ProtectedRoutes />
-                </AuthProvider>
-              </BrowserRouter>
-            </MicroSegmentationProvider>
+              <MicroSegmentationProvider>
+                <BrowserRouter>
+                  <AuthProvider>
+                    <ProtectedRoutes />
+                  </AuthProvider>
+                </BrowserRouter>
+              </MicroSegmentationProvider>
           </SegmentDataProvider>
         </SegmentToggleProvider>
       </TooltipProvider>

@@ -1,3 +1,4 @@
+import { axiosPrivate } from "@/API/axios";
 import { Segment } from "@/types/segmentTypes";
 import React, { createContext, useState, useContext, ReactNode, useEffect } from "react";
 
@@ -18,6 +19,8 @@ interface SegmentDataContextProps {
     setRootOperator: React.Dispatch<React.SetStateAction<string>>;
     conditions: any[];
     setConditions: React.Dispatch<React.SetStateAction<any[]>>;
+    relatedConditions: any[],
+    setRelatedConditions: React.Dispatch<React.SetStateAction<any[]>>;
     conditionGroups: any[];
     setConditionGroups: React.Dispatch<React.SetStateAction<any[]>>;
     description: string;
@@ -38,8 +41,10 @@ interface SegmentDataContextProps {
     setInitialSegmentName: React.Dispatch<React.SetStateAction<string>>;
     initialDescription: string;
     setInitialDescription: React.Dispatch<React.SetStateAction<string>>;
-    relatedDatasets: any;
-    setRelatedDatasets: React.Dispatch<React.SetStateAction<any>>;
+    relatedDatasetNames: any;
+    setRelatedDatasetNames: React.Dispatch<React.SetStateAction<any>>;
+    selectRelatedDataset: any;
+    setSelectRelatedDataset: React.Dispatch<React.SetStateAction<any>>;
     inclusions: any[];
     setInclusions: React.Dispatch<React.SetStateAction<any[]>>;
     exclusions: any[];
@@ -73,7 +78,7 @@ interface SegmentDataContextProps {
 
 const SegmentDataContext = createContext<SegmentDataContextProps | undefined>(undefined);
 
-const defineDatasetName = (value: string) => {
+export const defineDatasetName = (value: string) => {
     switch (value.toLowerCase()) {
         case 'customers':
             return 'Customer Profile';
@@ -88,84 +93,39 @@ const defineDatasetName = (value: string) => {
             return 'Customer Profile';
     }
 }
-
-export const SegmentDataProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-    const [datasets, setDatasets] = useState<Record<string, any>>({
+const formattedData = async (inputData: any) => {
+    return {
         "Customer Profile": {
-            name: "customers", description: "Customer information", fields: [
-                "customer_id",
-                "first_name",
-                "last_name",
-                "email",
-                "phone",
-                "gender",
-                "birth_date",
-                "registration_date",
-                "address",
-                "city"
-            ], schema: "public"
+            name: "customers",
+            description: "Customer information",
+            fields: Object.keys(inputData.customers).filter(key => key !== "business_id"),
+            schema: "public"
         },
         "Transactions": {
-            name: "transactions", description: "Transaction records", fields: [
-                "transaction_id",
-                "customer_id",
-                "store_id",
-                "transaction_date",
-                "total_amount",
-                "payment_method",
-                "product_line_id",
-                "quantity",
-                "unit_price"
-            ], schema: "public"
+            name: "transactions",
+            description: "Transaction records",
+            fields: Object.keys(inputData.transactions).filter(key => key !== "business_id"),
+            schema: "public"
         },
         "Stores": {
-            name: "stores", description: "Store information", fields: [
-                "store_id",
-                "store_name",
-                "address",
-                "city",
-                "store_type",
-                "opening_date",
-                "region"
-            ], schema: "public"
+            name: "stores",
+            description: "Store information",
+            fields: Object.keys(inputData.stores).filter(key => key !== "business_id"),
+            schema: "public"
         },
         "Product Line": {
-            name: "product_lines", description: "Product information", fields: [
-                "product_line_id",
-                "name",
-                "category",
-                "subcategory",
-                "brand",
-                "unit_cost"
-            ], schema: "public"
-        },
-    });
-    const [editSegment, setEditSegment] = useState(null);
-    useEffect(() => {
-        if (editSegment) {
-            setSegmentName(editSegment.segment_name || "High Value Users (new)");
-            setSegmentId(editSegment.segment_id || "segment:high-value-users-new");
-            setSelectedDataset(datasets[defineDatasetName(editSegment.dataset)] || datasets[defineDatasetName('customer')]);
-            setRootOperator(editSegment?.filter_criteria.rootOperator || "AND");
-            setConditions(editSegment?.filter_criteria.conditions || [
-                { id: 1, type: "attribute", field: "email", operator: "is_not_null", value: null }
-            ]);
-            setConditionGroups(editSegment?.filter_criteria.conditionGroups || [
-                { id: 2, type: "group", operator: "AND", conditions: [{ id: 3, type: "event", eventType: "performed", eventName: "New Canvas", frequency: "at_least", count: 3, timePeriod: "days", timeValue: 90 }] }
-            ]);
-            setDescription(editSegment?.description || "");
-            setEstimatedSize(
-                editSegment
-                    ? { count: editSegment.filter_criteria.size, percentage: Math.round((editSegment.filter_criteria.size / 400) * 100) }
-                    : { count: 88, percentage: 22 }
-            );
+            name: "product_lines",
+            description: "Product information",
+            fields: Object.keys(inputData.product_lines),
+            schema: "public"
         }
-    }, [editSegment]);
+    };
+};
 
 
-    const [segmentName, setSegmentName] = useState<string>("High Value Users (new)");
-    const [segmentId, setSegmentId] = useState<string>("segment:high-value-users-new");
-    const [attributes, setAttributes] = useState<any[]>([]);
+
+export const SegmentDataProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+    const [datasets, setDatasets] = useState<Record<string, any>>({});
     const [selectedDataset, setSelectedDataset] = useState<any>({
         name: "customers",
         fields: [
@@ -183,15 +143,91 @@ export const SegmentDataProvider: React.FC<{ children: ReactNode }> = ({ childre
         description: "Customer information",
         schema: "public"
     });
+    const [editSegment, setEditSegment] = useState(null);
+    //fetch 4 tables of dataset
+    useEffect(() => {
+        const fetchTables = async () => {
+            try {
+                const tables = await axiosPrivate.get('/data/tables');
+
+                if (tables.status === 200) {
+                    const formatted = await formattedData(tables.data.data);
+                    setDatasets(formatted);
+                }
+            } catch (error) {
+                console.error("Failed to fetch tables:", error);
+            }
+        };
+        fetchTables();
+    }, []);
+    //fetch info if had editSegment
+    useEffect(() => {
+        if (editSegment) {
+            setSegmentName(editSegment.segment_name || "High Value Users (new)");
+            setSegmentId(editSegment.segment_id || "segment:high-value-users-new");
+            setSelectedDataset(datasets[defineDatasetName(editSegment.dataset)] || datasets[defineDatasetName('customer')]);
+            setRootOperator(editSegment?.filter_criteria.rootOperator || "AND");
+            setConditions(editSegment?.filter_criteria.conditions || []);
+            setConditionGroups(editSegment?.filter_criteria.conditionGroups || []);
+            setDescription(editSegment?.description || "");
+            setEstimatedSize(
+                editSegment
+                    ? { count: editSegment.filter_criteria.size, percentage: Math.round((editSegment.filter_criteria.size / 400) * 100) }
+                    : { count: 88, percentage: 22 }
+            );
+        }
+    }, [editSegment]);
+    useEffect(() => {
+        const fetchRelated = async () => {
+            try {
+                const res = await axiosPrivate.post('/data/related-tables', { tableName: 'transactions' });
+
+                if (res.status === 200 && res.data.data) {
+                    console.log('Related tables data:', res.data.data);
+                    setRelatedDatasetNames(res.data.data);
+
+                    const firstValidData = res.data.data.find((data) => data.trim() !== 'customers');
+
+                    if (firstValidData) {
+                        const datasetKey = defineDatasetName(firstValidData);
+                        const dataset = datasets[datasetKey];
+
+                        console.log('Trying to select dataset key:', datasetKey);
+                        console.log('Dataset selected:', dataset);
+
+                        if (dataset) {
+                            setSelectRelatedDataset(dataset);
+                        } else {
+                            console.warn('Dataset not found in datasets object');
+                            setSelectRelatedDataset(undefined);
+                        }
+                    } else {
+                        console.warn('No valid related dataset found');
+                        setSelectRelatedDataset(undefined);
+                    }
+                } else {
+                    console.error('Error when fetching related tables');
+                }
+            } catch (error) {
+                console.error(error);
+            }
+        };
+
+        if (Object.keys(datasets).length > 0) {
+            fetchRelated();
+        }
+    }, [datasets]);
+
+
+    const [segmentName, setSegmentName] = useState<string>("High Value Users (new)");
+    const [segmentId, setSegmentId] = useState<string>("segment:high-value-users-new");
+    const [attributes, setAttributes] = useState<any[]>([]);
 
     const [previewData, setPreviewData] = useState<any[]>([]);
     const [rootOperator, setRootOperator] = useState<string>("AND");
-    const [conditions, setConditions] = useState<any[]>([
-        { id: 1, type: "attribute", field: "email", operator: "is_not_null", value: null }
-    ]);
-    const [conditionGroups, setConditionGroups] = useState<any[]>([
-        { id: 2, type: "group", operator: "AND", conditions: [{ id: 3, type: "event", eventType: "performed", eventName: "New Canvas", frequency: "at_least", count: 3, timePeriod: "days", timeValue: 90 }] }
-    ]);
+    const [conditions, setConditions] = useState<any[]>([]);
+    const [relatedConditions, setRelatedConditions] = useState<any[]>([]);
+    const [conditionGroups, setConditionGroups] = useState<any[]>([]);
     const [description, setDescription] = useState<string>('');
     const [estimatedSize, setEstimatedSize] = useState<any>({ count: 88, percentage: 22 });
 
@@ -205,12 +241,8 @@ export const SegmentDataProvider: React.FC<{ children: ReactNode }> = ({ childre
     const [initialDescription, setInitialDescription] = useState('');
 
     // General state
-    const [relatedDatasets, setRelatedDatasets] = useState({
-        "Customer Profile": ["Transactions", "Events"],
-        "Transactions": ["Customer Profile", "Stores", "Product Line"],
-        "Stores": ["Transactions"],
-        "Product Line": ["Transactions"]
-    });
+    const [relatedDatasetNames, setRelatedDatasetNames] = useState([]);
+    const [selectRelatedDataset, setSelectRelatedDataset] = useState<any>({})
 
     const [inclusions, setInclusions] = useState([]);
     const [exclusions, setExclusions] = useState([]);
@@ -256,6 +288,8 @@ export const SegmentDataProvider: React.FC<{ children: ReactNode }> = ({ childre
                 setRootOperator,
                 conditions,
                 setConditions,
+                relatedConditions,
+                setRelatedConditions,
                 conditionGroups,
                 setConditionGroups,
                 description,
@@ -276,8 +310,6 @@ export const SegmentDataProvider: React.FC<{ children: ReactNode }> = ({ childre
                 setInitialSegmentName,
                 initialDescription,
                 setInitialDescription,
-                relatedDatasets,
-                setRelatedDatasets,
                 inclusions,
                 setInclusions,
                 exclusions,
@@ -306,7 +338,11 @@ export const SegmentDataProvider: React.FC<{ children: ReactNode }> = ({ childre
                 displayUrl,
                 setDisplayUrl,
                 editSegment,
-                setEditSegment
+                setEditSegment,
+                relatedDatasetNames,
+                setRelatedDatasetNames,
+                selectRelatedDataset,
+                setSelectRelatedDataset
             }}
         >
             {children}

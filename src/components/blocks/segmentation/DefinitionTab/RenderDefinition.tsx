@@ -2,7 +2,7 @@ import { useEffect } from "react";
 import { toast } from "sonner";
 import { ReactSortable } from "react-sortablejs";
 
-import { Code, Check, Copy, Plus, RefreshCw, Calendar, Link, Users, SlidersHorizontal } from "lucide-react";
+import { Code, Check, Copy, Plus, RefreshCw, Calendar, Link, SlidersHorizontal, Group } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,7 +19,7 @@ import { InclusionExclusion, SegmentSelectorDialog } from "./InclusionExclusionS
 import { SQLDialog, SQLPreview } from "./SQLState";
 import { DiscardConfirmDialog, PreviewDialog } from "./InforSetupState";
 import { useSegmentToggle } from "@/context/SegmentToggleContext";
-import { useSegmentData } from "@/context/SegmentDataContext";
+import { defineDatasetName, useSegmentData } from "@/context/SegmentDataContext";
 
 
 interface SegmentDefinitionProps {
@@ -48,8 +48,7 @@ const RenderDefinition: React.FC<SegmentDefinitionProps> = ({
         setAttributes,
         setConditions,
         setRootOperator,
-        setConditionGroups,
-        relatedDatasets } = useSegmentData();
+        setConditionGroups } = useSegmentData();
 
     const { setLoading,
         loading,
@@ -96,11 +95,6 @@ const RenderDefinition: React.FC<SegmentDefinitionProps> = ({
         }
     };
 
-    // useEffect(() => {
-    //     console.log("✅ Updated conditions:", conditions);
-    //   }, [conditions]);
-
-
     //function define type
     const determineFieldType = (fieldName: string, dataType = null) => {
         // If we have the actual data type from PostgreSQL, use it
@@ -145,22 +139,6 @@ const RenderDefinition: React.FC<SegmentDefinitionProps> = ({
         const slug = segmentName.toLowerCase().replace(/[^\w\s-]/g, "").replace(/\s+/g, "-").replace(/-+/g, "-");
         setSegmentId(`segment:${slug}`);
     }, [segmentName]);
-
-    const defineDatasetName = (value: string) => {
-        switch (value.toLowerCase()) {
-            case 'customers':
-                return 'Customer Profile';
-            case 'transactions':
-                return 'Transactions';
-            case 'stores':
-                return 'Stores';
-            case 'product_lines':
-                return 'Product Line';
-            default:
-                // return value.charAt(0).toUpperCase + value.slice(1);
-                return 'Customer Profile';
-        }
-    }
 
 
     //handle changes
@@ -237,13 +215,16 @@ const RenderDefinition: React.FC<SegmentDefinitionProps> = ({
                 ...conditions,
                 {
                     id: newId,
+                    columnKey: '',
+                    relatedColKey: selectedDataset.fields[0],
                     type: 'event',
                     eventType: 'performed',
-                    eventName: '',
                     frequency: 'at_least',
                     count: 1,
                     timePeriod: 'days',
-                    timeValue: 30
+                    timeValue: 30,
+                    operator: 'AND',
+                    relatedConditions: []
                 }
             ]);
         }
@@ -258,20 +239,6 @@ const RenderDefinition: React.FC<SegmentDefinitionProps> = ({
                 type: 'group',
                 operator: 'AND',
                 conditions: []
-            }
-        ]);
-    };
-    const handleAddRelatedCondition = () => {
-        const newId = Math.max(...conditions.map(c => c.id), ...conditionGroups.map(g => g.id), 0) + 1;
-
-        setConditions([
-            ...conditions,
-            {
-                id: newId,
-                type: 'related',
-                relatedDataset: '',
-                relation: 'where',
-                nestedConditions: []
             }
         ]);
     };
@@ -322,59 +289,46 @@ const RenderDefinition: React.FC<SegmentDefinitionProps> = ({
         const operators = OPERATORS[attributeType] || OPERATORS.text;
 
         return (
-            // <ReactSortable list={conditions} setList={setConditions} animation={200} className="space-y-2">
-            //     {conditions.map((condition) => (
-            <AttributeCondition
-                key={condition.id}
-                condition={condition}
-                attributes={attributes}
-                operators={operators}
-                isInGroup={isInGroup}
-                groupId={groupId}
-                handleUpdateCondition={handleUpdateCondition}
-                handleUpdateGroupCondition={handleUpdateGroupCondition}
-                handleRemoveCondition={handleRemoveCondition}
-                handleRemoveGroupCondition={handleRemoveGroupCondition}
-            />
-            //     ))}
-            // </ReactSortable>
+            <div key={condition.id}>
+                <AttributeCondition
+                    condition={condition}
+                    attributes={attributes}
+                    operators={operators}
+                    isInGroup={isInGroup}
+                    groupId={groupId}
+                    handleUpdateCondition={handleUpdateCondition}
+                    handleUpdateGroupCondition={handleUpdateGroupCondition}
+                    handleRemoveCondition={handleRemoveCondition}
+                    handleRemoveGroupCondition={handleRemoveGroupCondition}
+                />
+            </div>
         );
     };
     const renderEventCondition = (condition, isInGroup = false, groupId = null) => {
-        return (<EventCondition
-            condition={condition}
-            isInGroup={isInGroup}
-            groupId={groupId}
-            handleUpdateCondition={handleUpdateCondition}
-            handleRemoveCondition={handleRemoveCondition}
-            handleUpdateGroupCondition={handleUpdateGroupCondition}
-            handleRemoveGroupCondition={handleRemoveGroupCondition}
-        />)
-    }
-    const renderRelatedDatasetCondition = (condition, isInGroup = false, groupId = null) => {
-        const relatedOptions = relatedDatasets[selectedDataset] || [];
-
         return (
-            <RelatedDatasetCondition
-                condition={condition}
-                isInGroup={isInGroup}
-                groupId={groupId}
-                relatedOptions={relatedOptions}
-                handleUpdateGroupCondition={handleUpdateGroupCondition}
-                handleUpdateCondition={handleUpdateCondition}
-                handleRemoveGroupCondition={handleRemoveGroupCondition}
-                handleRemoveCondition={handleRemoveCondition}
-            />
-        );
-    };
+            <div key={condition.id}>
+                <EventCondition
+                    condition={condition}
+                    isInGroup={isInGroup}
+                    groupId={groupId}
+                    handleUpdateCondition={handleUpdateCondition}
+                    handleRemoveCondition={handleRemoveCondition}
+                    handleUpdateGroupCondition={handleUpdateGroupCondition}
+                    handleRemoveGroupCondition={handleRemoveGroupCondition}
+                />
+            </div>
+        )
+    }
+
     const renderConditionGroup = (group) => {
         return (
-            <ConditionGroup
-                group={group}
-                renderAttributeCondition={renderAttributeCondition}
-                renderEventCondition={renderEventCondition}
-                renderRelatedDatasetCondition={renderRelatedDatasetCondition}
-            />
+            <div key={group.id}>
+                <ConditionGroup
+                    group={group}
+                    renderAttributeCondition={renderAttributeCondition}
+                    renderEventCondition={renderEventCondition}
+                />
+            </div>
         );
     };
     const renderPreviewDialog = () => {
@@ -426,21 +380,23 @@ const RenderDefinition: React.FC<SegmentDefinitionProps> = ({
                                     <SelectValue placeholder="Select dataset" />
                                 </SelectTrigger>
                                 <SelectContent className="z-[9999] bg-card border border-card-foreground shadow-lg rounded-md">
-                                    {Object.entries(datasets).map(([name, info]) => (
-                                        <SelectItem className="hover:bg-background hover:rounded-md cursor-pointer" key={name} value={name}>
-                                            <div className="flex items-center gap-2">
-                                                <span className="inline-flex items-center justify-center w-6 h-6 bg-gray-200 rounded-md text-gray-600">
-                                                    {name.charAt(0)}
-                                                </span>
-                                                <div>
-                                                    {name}
-                                                    {info.schema && info.schema !== "public" && (
-                                                        <span className="text-sm text-gray-500"> ({info.schema})</span>
-                                                    )}
+                                    {Object.entries(datasets)
+                                        .filter(([name]) => name === "Customer Profile")
+                                        .map(([name, info]) => (
+                                            <SelectItem className="hover:bg-background hover:rounded-md cursor-pointer" key={name} value={name}>
+                                                <div className="flex items-center gap-2">
+                                                    <span className="inline-flex items-center justify-center w-6 h-6 bg-gray-200 rounded-md text-gray-600">
+                                                        {name.charAt(0)}
+                                                    </span>
+                                                    <div>
+                                                        {name}
+                                                        {info.schema && info.schema !== "public" && (
+                                                            <span className="text-sm text-gray-500"> ({info.schema})</span>
+                                                        )}
+                                                    </div>
                                                 </div>
-                                            </div>
-                                        </SelectItem>
-                                    ))}
+                                            </SelectItem>
+                                        ))}
                                 </SelectContent>
                             </Select>
                         </div>
@@ -473,13 +429,13 @@ const RenderDefinition: React.FC<SegmentDefinitionProps> = ({
 
                         {/* Individual conditions */}
                         <div className="relative">
-                            {conditions.length > 0 && (<div className={`border-2 ${rootOperator === "AND" ? 'border-red-400' : 'border-primary'} pl-2 w-6 border-r-0 rounded-xl rounded-r-none top-8 bottom-14 -left-6 absolute transition-colors duration-300`}>
+                            {conditions.length > 1 && (<div className={`border-2 ${rootOperator === "AND" ? 'border-primary-dark' : 'border-red-400'} pl-2 w-6 border-r-0 rounded-xl rounded-r-none top-8 bottom-5 -left-6 absolute transition-colors duration-300`}>
                                 <Select
                                     value={rootOperator}
                                     onValueChange={handleRootOperatorChange}
                                     defaultValue="AND"
                                 >
-                                    <SelectTrigger className={`absolute top-1/2 -left-6 min-w-fit transform -translate-y-1/2 text-white text-[10px] px-1.5 py-0.5 rounded-md shadow-sm border transition-colors duration-300 ${rootOperator === "AND" ? "bg-red-500" : "bg-primary"}`}>
+                                    <SelectTrigger className={`z-10 absolute top-1/2 -left-6 min-w-fit transform -translate-y-1/2 text-white text-[10px] px-1.5 py-0.5 rounded-md shadow-sm border transition-colors duration-300 ${rootOperator === "AND" ? "bg-primary-dark" : "bg-red-500"}`}>
                                         {rootOperator}
                                     </SelectTrigger>
                                     <SelectContent className="bg-card border-[0.5px] border-card-foreground shadow-lg rounded-md z-50">
@@ -493,7 +449,6 @@ const RenderDefinition: React.FC<SegmentDefinitionProps> = ({
                                     {conditions.map((condition) => {
                                         if (condition.type === "attribute") return renderAttributeCondition(condition);
                                         if (condition.type === "event") return renderEventCondition(condition);
-                                        if (condition.type === "related") return renderRelatedDatasetCondition(condition);
                                         return null;
                                     })}
                                 </ReactSortable>
@@ -521,21 +476,21 @@ const RenderDefinition: React.FC<SegmentDefinitionProps> = ({
                                 >
                                     <Calendar className="w-3 h-3 mr-1" /> Add event condition
                                 </Button>
-                                <Button
+                                {/* <Button
                                     variant="outline"
                                     size="sm"
                                     className="px-2 py-1 text-xs w-auto"
                                     onClick={handleAddRelatedCondition}
                                 >
                                     <Link className="w-3 h-3 mr-1" /> Add related condition
-                                </Button>
+                                </Button> */}
                                 <Button
                                     variant="outline"
                                     size="sm"
                                     className="px-2 py-1 text-xs w-auto"
                                     onClick={handleAddConditionGroup}
                                 >
-                                    <Users className="w-3 h-3 mr-1" /> Add condition group
+                                    <Group className="w-3 h-3 mr-1" /> Add condition group
                                 </Button>
                             </div>
                         </div>
@@ -566,7 +521,7 @@ const RenderDefinition: React.FC<SegmentDefinitionProps> = ({
                 <DiscardConfirmDialog />
 
             </div >
-            <div className="col-span-3 space-y-4">
+            <div className="mt-4 col-span-3 space-y-4">
                 {/* Estimate */}
                 <Card className="p-4">
                     <CardContent>

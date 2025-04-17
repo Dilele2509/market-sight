@@ -17,14 +17,12 @@ interface ConditionGroupProps {
     };
     renderAttributeCondition: (condition: Condition, isInGroup: boolean, groupId: string) => JSX.Element | null;
     renderEventCondition: (condition: Condition, isInGroup: boolean, groupId: string) => JSX.Element | null;
-    renderRelatedDatasetCondition: (condition: Condition, isInGroup: boolean, groupId: string) => JSX.Element | null;
 }
 
 const ConditionGroup: React.FC<ConditionGroupProps> = ({
     group,
     renderAttributeCondition,
     renderEventCondition,
-    renderRelatedDatasetCondition
 }) => {
     const { setConditionGroups, conditionGroups, conditions } = useSegmentData()
 
@@ -92,14 +90,14 @@ const ConditionGroup: React.FC<ConditionGroupProps> = ({
                     variant="ghost"
                     onClick={() => handleRemoveConditionGroup(group.id)}
                 >
-                    <Trash className="w-4 h-4" />
+                    <Trash className="w-4 h-4" color={'#E11D48'}/>
                 </Button>
             </div>
 
             {/* Group conditions */}
             <div className="pl-10">
                 <div className="relative">
-                    {group.conditions.length > 0 && (<div className={`border-2 ${group.operator === "AND" ? 'border-yellow-400' : 'border-blue-600'} pl-2 w-5 border-r-0 rounded-xl rounded-r-none top-8 bottom-4 -left-5 absolute transition-colors duration-300`}>
+                    {group.conditions.length > 0 && (<div className={`border-2 ${group.operator === "AND" ? 'border-primary' : 'border-yellow-400'} pl-2 w-5 border-r-0 rounded-xl rounded-r-none top-8 bottom-4 -left-5 absolute transition-colors duration-300`}>
                         <Select
                             value={group.operator}
                             onValueChange={(newValue) => {
@@ -110,7 +108,7 @@ const ConditionGroup: React.FC<ConditionGroupProps> = ({
                             defaultValue="AND"
                         >
                             <SelectTrigger
-                                className={`absolute min-w-fit top-1/2 -left-6 transform -translate-y-1/2 text-white text-[10px] px-1.5 py-0.5 rounded-md shadow-sm transition-colors duration-300 ${group.operator === "AND" ? 'bg-yellow-400 text-black' : 'bg-blue-600'}`}>
+                                className={`absolute min-w-fit top-1/2 -left-6 transform -translate-y-1/2 text-white text-[10px] px-1.5 py-0.5 rounded-md shadow-sm transition-colors duration-300 ${group.operator === "AND" ? 'bg-primary' : 'bg-yellow-400'}`}>
                                 {group.operator}
                             </SelectTrigger>
                             <SelectContent className="bg-card border-[0.5px] border-card-foreground shadow-lg rounded-md z-50">
@@ -124,8 +122,6 @@ const ConditionGroup: React.FC<ConditionGroupProps> = ({
                             return renderAttributeCondition(condition, true, group.id);
                         } else if (condition.type === "event") {
                             return renderEventCondition(condition, true, group.id);
-                        } else if (condition.type === "related") {
-                            return renderRelatedDatasetCondition(condition, true, group.id);
                         }
                         return null;
                     })}

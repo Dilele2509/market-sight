@@ -52,7 +52,7 @@ export const AuthProvider = ({ children }) => {
 
       if (res.status === 200) {
         setUser(res.data);
-        localStorage.setItem("user", JSON.stringify(res.data)); // Lưu thông tin người dùng vào localStorage
+        localStorage.setItem("user", JSON.stringify(res.data));
       } else {
         logout();
       }
