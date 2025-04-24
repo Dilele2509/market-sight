@@ -24,27 +24,7 @@ const SegmentsList: React.FC<SegmentsListProps> = ({ segments = [], onCreateSegm
     const [searchTerm, setSearchTerm] = useState("");
     const { user, token } = useContext(AuthContext);
 
-
-    const handleToggleStatus = (id: string) => {
-        setLocalSegments((prev) =>
-            prev.map((seg) =>
-                seg.segment_id === id
-                    ? { ...seg, status: seg.status === "active" ? "inactive" : "active" }
-                    : seg
-            )
-        );
-
-        // Optional: update in localStorage if needed
-        const storedSegments = JSON.parse(localStorage.getItem("segments") || "[]");
-        const updated = storedSegments.map((seg: Segment) =>
-            seg.segment_id === id
-                ? { ...seg, status: seg.status === "active" ? "inactive" : "active" }
-                : seg
-        );
-        localStorage.setItem("segments", JSON.stringify(updated));
-    };
-
-    useEffect(() => {
+    const fetchSegments = () => {
         try {
             axiosPrivate.post('/segment/get-all-by-user', { user_id: user.user_id }, {
                 headers: {
@@ -64,6 +44,14 @@ const SegmentsList: React.FC<SegmentsListProps> = ({ segments = [], onCreateSegm
         } catch (error) {
             console.error("Error loading segments from localStorage:", error);
         }
+    }
+
+    useEffect(() => {
+        try {
+            fetchSegments();
+        } catch (error) {
+            console.error("Error loading segments:", error);
+        }
     }, [segments]);
 
     const handleRowClick = (segment: Segment) => {
@@ -71,6 +59,56 @@ const SegmentsList: React.FC<SegmentsListProps> = ({ segments = [], onCreateSegm
             onEditSegment(segment);
         }
     };
+
+    const handleUpdateSegmentStatus = (segment: Segment) => {
+        try {
+            axiosPrivate.put('/segment/update-status', {
+                segment_id: segment.segment_id,
+                status: segment.status
+            }, {
+                headers: {
+                    Authorization: `Bearer ${token}`
+                }
+            })
+                .then((res) => {
+                    if (res.status === 200) {
+                        toast.success(res.data.message);
+                        fetchSegments();
+                    }
+                    else toast.error(res.data.error)
+                })
+                .catch((err) => {
+                    toast.error(err.message)
+                })
+        } catch (error) {
+            toast.error(error.message)
+        }
+    }
+
+    const handleDeleteSegment = (segment: Segment) => {
+        try {
+            axiosPrivate.put('/segment/delete', {
+                segment_id: segment.segment_id
+            }, {
+                headers: {
+                    Authorization: `Bearer ${token}`
+                }
+            })
+                .then((res) => {
+                    if (res.status === 200) {
+                        toast.success(res.data.message);
+                        fetchSegments();
+                    }
+                    else toast.error(res.data.error)
+                })
+                .catch((err) => {
+                    toast.error(err.message)
+                })
+        } catch (error) {
+            toast.error(error.message)
+        }
+    }
+
 
     return (
         <div className="space-y-4">
@@ -114,7 +152,7 @@ const SegmentsList: React.FC<SegmentsListProps> = ({ segments = [], onCreateSegm
                     <TableBody className="px-4">
                         {segmentList.length > 0 ? (
                             segmentList.map((segment) => (
-                                <TableRow key={segment.segment_id} className="cursor-pointer hover:bg-gray-100">
+                                <TableRow key={segment.segment_id} className="cursor-pointer hover:bg-background overflow-hidden">
                                     <TableCell className="px-4 text-left" onClick={() => handleRowClick(segment)}>
                                         {segment.segment_id}
                                     </TableCell>
@@ -138,11 +176,13 @@ const SegmentsList: React.FC<SegmentsListProps> = ({ segments = [], onCreateSegm
                                             <DropdownMenuContent className="mr-4 bg-card">
                                                 <DropdownMenuItem
                                                     className="hover:bg-gray-100"
-                                                    onClick={() => handleToggleStatus(segment.segment_id)}
+                                                    onClick={() => handleUpdateSegmentStatus(segment)}
                                                 >
                                                     {segment.status === "active" ? "Disable" : "Enable"}
                                                 </DropdownMenuItem>
-                                                <DropdownMenuItem className="hover:bg-red-200 text-red-500">Delete</DropdownMenuItem>
+                                                <DropdownMenuItem 
+                                                    className="hover:bg-red-200 text-red-500"
+                                                    onClick={()=> handleDeleteSegment(segment)}>Delete</DropdownMenuItem>
                                             </DropdownMenuContent>
                                         </DropdownMenu>
                                     </TableCell>

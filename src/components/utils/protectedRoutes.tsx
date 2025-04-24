@@ -23,7 +23,7 @@ const ProtectedRoutes = () => {
       {/* Nếu đã đăng nhập, thiết lập route cho MicroSegmentation */}
       {token && (
         <>
-          <Route path="/customers-analysis" element={<MicroSegmentation />}>
+          <Route path="/micro-segmentation" element={<MicroSegmentation />}>
             <Route index element={<Navigate to="rfm" replace />} />
             {microSegmentRoutes.map((route, index) => {
               const Page = route.component;

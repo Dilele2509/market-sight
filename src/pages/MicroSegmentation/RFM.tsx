@@ -1,205 +1,100 @@
+"use client"
 
-import { MetricCard } from "@/components/dashboard/MetricCard";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Users } from "lucide-react";
-import { ChartContainer } from "@/components/ui/chart";
-import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Treemap, Tooltip, XAxis, YAxis } from "recharts";
-import { useState } from "react";
-import { Trophy, User, TriangleAlert, Ban, CircleHelp } from "lucide-react";
-import { useMicroSegmentation } from "@/context/MicroSegmentationContext";
+import { useState } from "react"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { RfmTreemap } from "@/components/blocks/RFM/rfm-treemap"
+import { RfmSegmentTable } from "@/components/blocks/RFM/rfm-segment-table"
+import { Badge } from "@/components/ui/badge"
 
-// Hàm chuyển đổi dữ liệu từ segmentationData -> trendData
-const generateTrendData = (segment : object) => {
-  const data = segment
-  return [
-    { date: "Jan", champions: data[0]?.value * 0.8 || 0, loyal: data[1]?.value * 0.8 || 0, risk: data[2]?.value * 0.8 || 0 },
-    { date: "Feb", champions: data[0]?.value * 0.85 || 0, loyal: data[1]?.value * 0.85 || 0, risk: data[2]?.value * 0.85 || 0 },
-    { date: "Mar", champions: data[0]?.value * 0.9 || 0, loyal: data[1]?.value * 0.9 || 0, risk: data[2]?.value * 0.9 || 0 },
-    { date: "Apr", champions: data[0]?.value || 0, loyal: data[1]?.value || 0, risk: data[2]?.value || 0 },
-  ];
-};
-
-const setIcon = (name: string) => {
-  switch (name) {
-    case "Champions":
-      return <Trophy className="h-4 w-4" />;
-    case "Loyal":
-      return <User className="h-4 w-4" />;
-    case "At Risk":
-      return <TriangleAlert className="h-4 w-4" />;
-    case "Lost":
-      return <Ban className="h-4 w-4" />;
-    default:
-      return <CircleHelp className="h-4 w-4" />;
-  }
-};
-
-
-const CustomTooltip = ({ active, payload }) => {
-  if (active && payload && payload.length) {
-    const data = payload[0].payload;
-    return (
-      <div className="bg-yellow-600 p-2 rounded shadow text-sm">
-        <p className="font-medium">{data.name}</p>
-        <p>Customers: {data.value}</p>
-        <p>Percentage: {data.percentage}%</p>
-      </div>
-    );
-  }
-  return null;
-};
+// orders = value * f
+// revenue = value * f * m * 10
+// RFM segment data
+const rfmData = [
+  { name: "Champions", value: 7960, percentage: "13%", r: 5, f: 5, m: 5, days: 145, orders: 39800, revenue: 1990000 },
+  { name: "Loyal Customers", value: 8603, percentage: "14%", r: 3, f: 5, m: 5, days: 579, orders: 43015, revenue: 2150750 },
+  { name: "Potential Loyalist", value: 4569, percentage: "7%", r: 5, f: 3, m: 3, days: 399, orders: 13707, revenue: 1233090 },
+  { name: "New Customers", value: 2672, percentage: "4%", r: 5, f: 1, m: 1, days: 279, orders: 2672, revenue: 26720 },
+  { name: "Promising", value: 4546, percentage: "7%", r: 4, f: 1, m: 1, days: 507, orders: 4546, revenue: 45460 },
+  { name: "Need Attention", value: 8741, percentage: "14%", r: 3, f: 2, m: 3, days: 683, orders: 17482, revenue: 524460 },
+  { name: "About to Sleep", value: 480, percentage: "1%", r: 3, f: 1, m: 3, days: 679, orders: 480, revenue: 14400 },
+  { name: "Can't lose them", value: 954, percentage: "2%", r: 2, f: 5, m: 5, days: 826, orders: 4770, revenue: 238500 },
+  { name: "At Risk", value: 4954, percentage: "8%", r: 2, f: 4, m: 3, days: 881, orders: 19816, revenue: 594480 },
+  { name: "Hibernating", value: 19053, percentage: "30%", r: 1, f: 2, m: 1, days: 928, orders: 38106, revenue: 381060 },
+]
 
 export default function RFM() {
-  const { selectedSegment } = useMicroSegmentation()
-  const [trendData, setTrendData] = useState(generateTrendData(selectedSegment));
-
-  const TreemapRFM = () => {
-    return (
-      <Card>
-        <CardHeader>
-          <CardTitle>RFM TreeMap</CardTitle>
-        </CardHeader>
-        <CardContent className="pb-10 h-96 relative flex flex-col">
-          <div className="flex flex-1 w-full">
-            {/* Hiển thị trục Frequency/Monetary */}
-            <div className="flex relative ml-8 mr-8">
-              <div className="flex flex-col justify-between h-full text-xs">
-                {[5, 4, 3, 2, 1].map((f) => (
-                  <div key={f} className="flex-1 flex items-center">{f}</div>
-                ))}
-              </div>
-              <div className="absolute -left-24 top-1/3 transform -translate-y-1/2 h-10 w-40 -rotate-90 text-xs font-semibold">
-                Frequency / Monetary
-              </div>
-            </div>
-
-            {/* Biểu đồ Treemap */}
-            <div className="flex-1 flex flex-col">
-              <ResponsiveContainer width="100%" height="100%">
-                <Treemap
-                  data={selectedSegment}
-                  dataKey="value"
-                  nameKey="name"
-                  aspectRatio={4 / 3}
-                  stroke="#fff"
-                  fill="#006BFF"
-                >
-                  <Tooltip content={CustomTooltip} />/
-                </Treemap>
-              </ResponsiveContainer>
-
-              {/* Hiển thị trục Recency */}
-              <div className="relative mt-2 flex justify-between text-xs">
-                {[1, 2, 3, 4, 5].map((r) => (
-                  <div key={r} className="flex-1 text-center">{r}</div>
-                ))}
-              </div>
-              <div className="absolute bottom-3 left-1/2 transform -translate-x-1/2 text-sm font-semibold">
-                Recency
-              </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-    );
-  };
+  const [activeTab, setActiveTab] = useState("overview")
 
   return (
-    <div className="flex flex-col gap-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold tracking-tight">RFM Analysis</h1>
-      </div>
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        {selectedSegment.map((segment) => (
-          <>
-            <MetricCard
-              key={segment.name}
-              title={segment.name}
-              value={segment.value.toString()}
-              subtitle={`${segment.percentage}% of customers`}
-              icon={setIcon(segment.name)}
-              trend={{ value: segment.percentage, isPositive: segment.percentage > 10 }}
-            />
-          </>
-        ))}
+    <div className="space-y-6">
+      <div className="flex flex-col space-y-2">
+        <h1 className="text-3xl font-bold tracking-tight">RFM Segments</h1>
+        <p className="text-muted-foreground">Customer segmentation based on Recency, Frequency, and Monetary value</p>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2">
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
         <Card>
-          <CardHeader>
-            <CardTitle>RFM Segment Distribution</CardTitle>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Customers</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="">
-              <ChartContainer
-                config={{
-                  champions: { color: "#08C2FF" },
-                  loyal: { color: "#1EAEDB" },
-                  risk: { color: "#F97316" },
-                }}
-              >
-                <AreaChart data={trendData}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="date" />
-                  <YAxis />
-                  <Tooltip />
-                  <Area
-                    type="monotone"
-                    dataKey="champions"
-                    stackId="1"
-                    stroke="#08C2FF"
-                    fill="#08C2FF"
-                  />
-                  <Area
-                    type="monotone"
-                    dataKey="loyal"
-                    stackId="1"
-                    stroke="#1EAEDB"
-                    fill="#1EAEDB"
-                  />
-                  <Area
-                    type="monotone"
-                    dataKey="risk"
-                    stackId="1"
-                    stroke="#F97316"
-                    fill="#F97316"
-                  />
-                </AreaChart>
-              </ChartContainer>
-            </div>
+            <div className="text-3xl font-bold">62,532</div>
           </CardContent>
         </Card>
-
         <Card>
-          <CardHeader>
-            <CardTitle>Segment Details</CardTitle>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Champions</CardTitle>
+            <Badge className="bg-teal-500">13%</Badge>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
-              {selectedSegment.map((segment) => (
-                <div key={segment.name} className="flex items-center justify-between">
-                  <div>
-                    <p className="font-medium">{segment.name}</p>
-                    <p className="text-sm text-muted-foreground">{segment.value} customers</p>
-                  </div>
-                  <div className="w-24 h-2 rounded-full bg-secondary overflow-hidden">
-                    <div
-                      className="h-full bg-primary"
-                      style={{ width: `${segment.percentage}%` }}
-                    />
-                  </div>
-                  <span className="text-sm font-medium">{segment.percentage}%</span>
-                </div>
-              ))}
-            </div>
+            <div className="text-3xl font-bold">7,960</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">At Risk</CardTitle>
+            <Badge className="bg-pink-400">8%</Badge>
+          </CardHeader>
+          <CardContent>
+            <div className="text-3xl font-bold">4,954</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Hibernating</CardTitle>
+            <Badge className="bg-indigo-400">30%</Badge>
+          </CardHeader>
+          <CardContent>
+            <div className="text-3xl font-bold">19,053</div>
           </CardContent>
         </Card>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2">
-        <TreemapRFM />
-      </div>
+      <Card>
+        <CardHeader>
+          <CardTitle>RFM Segments</CardTitle>
+          <CardDescription>
+            RFM stands for Recency, Frequency, and Monetary value, each corresponding to some key customer trait: number
+            of days since the last order, total number of orders and Lifetime Value. Customers are bucketed in 5 groups
+            on each score to be placed on the map below and each associated with one of ten customer segments.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Tabs defaultValue="treemap" className="space-y-4">
+            <TabsList>
+              <TabsTrigger value="treemap">Treemap</TabsTrigger>
+              <TabsTrigger value="table">Table</TabsTrigger>
+            </TabsList>
+            <TabsContent value="treemap" className="space-y-4">
+              <RfmTreemap />
+            </TabsContent>
+            <TabsContent value="table">
+              <RfmSegmentTable />
+            </TabsContent>
+          </Tabs>
+        </CardContent>
+      </Card>
     </div>
-  );
+  )
 }

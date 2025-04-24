@@ -1,165 +1,258 @@
+import type { Metadata } from "next"
+import { ArrowUpRight, Calendar, Download, Filter, Users } from "lucide-react"
 
-import { MetricCard } from "@/components/dashboard/MetricCard";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Layers, UserPlus, Handshake, ChartNoAxesCombined, CircleHelp, Trophy } from "lucide-react";
-import { ChartContainer } from "@/components/ui/chart";
-import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
-import { useIsMobile } from "@/hooks/use-mobile";
-import { useMicroSegmentation } from "@/context/MicroSegmentationContext";
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { CustomerLifecycleChart } from "@/components/blocks/customerLifecycle/customer-lifecycle-chart"
+import { CustomerMetricsTable } from "@/components/blocks/customerLifecycle/customer-metrics-table"
+import { DateRangePicker } from "@/components/blocks/customerLifecycle/date-range-picker"
+import { LifecycleStageCard } from "@/components/blocks/customerLifecycle/lifecycle-stage-card"
+import { MetricCard } from "@/components/blocks/customerLifecycle/metric-card"
+import { SegmentDistributionChart } from "@/components/blocks/customerLifecycle/segment-distribution-chart"
+import { useContext, useEffect, useState } from "react"
+import { axiosPrivate } from "@/API/axios"
+import AuthContext from "@/context/AuthContext"
+import { toast } from "sonner"
+import { error } from "console"
 
-const setIcon = (stage) => {
-  switch (stage) {
-    case "New":
-      return <UserPlus className="h-4 w-4" />;
-    case "Early-life":
-      return <ChartNoAxesCombined className="h-4 w-4" />;
-    case "Mature":
-      return <Handshake className="h-4 w-4" />;
-    case "Loyal":
-      return <Trophy className="h-4 w-4" />;
-    default:
-      return <CircleHelp className="h-4 w-4" />;
+export const metadata: Metadata = {
+  title: "Customer Lifecycle Analysis",
+  description: "Analyze customer behavior across different lifecycle stages",
+}
+
+export default function CustomerLifecyclePage() {
+  const { token } = useContext(AuthContext);
+  const header = {
+    headers: {
+      Authorization: `Bearer ${token}`
+    }
   }
-};
+  const [newCustomerSegment, setNewCustomerSegment] = useState([]);
+  const [earlyCustomerSegment, setEarlyCustomerSegment] = useState([]);
+  const [matureCustomerSegment, setMatureCustomerSegment] = useState([]);
+  const [loyalCustomerSegment, setLoyalCustomerSegment] = useState([]);
 
-const setSubtitle = (stage) => {
-  switch (stage) {
-    case "New":
-      return "First purchase within last 30 days";
-    case "Early-life":
-      return '2-3 purchases within first 90 days';
-    case "Mature":
-      return 'Regular purchasing pattern (4+ purchases)';
-    case "Loyal":
-      return 'High engagement over 180+ days';
-    default:
-      return "No subtitle";
-  }
-};
+  const transformData = (data: Record<string, any>) => {
+    return Object.entries(data).map(([key, value]) => ({
+      name: key,
+      value:
+        key === 'customer_count'
+          ? value
+          : typeof value === 'number'
+            ? Math.floor(value * 100) / 100 
+            : value,
+    }));
+  };
 
-export default function Segments() {
-  const isMobile = useIsMobile();
-  const { selectedSegment } = useMicroSegmentation();
+
+  const fetchSegmentList = async () => {
+    const segments = [
+      { url: '/customer-lifecycle/new-customers', setter: setNewCustomerSegment },
+      { url: '/customer-lifecycle/early-life-customers', setter: setEarlyCustomerSegment },
+      { url: '/customer-lifecycle/mature-customers', setter: setMatureCustomerSegment },
+      { url: '/customer-lifecycle/loyal-customers', setter: setLoyalCustomerSegment },
+    ];
+
+    try {
+      await Promise.all(
+        segments.map(async ({ url, setter }) => {
+          try {
+            const res = await axiosPrivate.get(url, header);
+            if (res.status === 200) {
+              const transformed = transformData(res.data.data);
+              setter(transformed);
+            }
+          } catch (err) {
+            toast.error(err.message);
+          }
+        })
+      );
+    } catch (error) {
+      toast.error(error.message);
+    }
+  };
+
+  useEffect(() => {
+    fetchSegmentList()
+  }, [])
+
+  const excludedKeys = ['customer_count', 'orders', 'aov', 'arpu', 'orders_per_day'];
+
+  const getCustomerCount = (segment: { name: string, value: any }[]) =>
+    segment.find(item => item.name === 'customer_count')?.value || 0;
+
+  const getMetricsWithoutKeys = (segment: { name: string, value: any }[], excluded: string[]) =>
+    segment.filter(item => !excluded.includes(item.name));
+
+  const getMetricsWithoutCount = (segment: { name: string, value: any }[]) =>
+    segment.filter(item => item.name !== 'customer_count');
+
+  const lifecycleStages = [
+    {
+      title: "New Customers",
+      count: getCustomerCount(newCustomerSegment),
+      metrics: getMetricsWithoutCount(newCustomerSegment),
+      color: "new",
+    },
+    {
+      title: "Early-life Customers",
+      count: getCustomerCount(earlyCustomerSegment),
+      metrics: getMetricsWithoutKeys(earlyCustomerSegment, excludedKeys),
+      color: "early",
+    },
+    {
+      title: "Mature Customers",
+      count: getCustomerCount(matureCustomerSegment),
+      metrics: getMetricsWithoutCount(matureCustomerSegment),
+      color: "mature",
+    },
+    {
+      title: "Loyal Customers",
+      count: getCustomerCount(loyalCustomerSegment),
+      metrics: getMetricsWithoutCount(loyalCustomerSegment),
+      color: "loyal",
+    },
+  ];
 
   return (
-    <div className="flex flex-col gap-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold tracking-tight">Customer Lifecycle Analysis</h1>
-      </div>
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        {selectedSegment.map((segment) => (
-          <MetricCard
-            key={segment.stage}
-            title={segment.stage}
-            value={segment.customers}
-            subtitle={setSubtitle(segment.stage)}
-            icon={setIcon(segment.stage)}
-            trend={{ value: Number((segment.customers * 0.1).toFixed(3)), isPositive: true }}
-          />
-        ))}
-      </div>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Lifecycle Stage Performance</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="w-full" style={{ height: isMobile ? "300px" : "400px" }}>
-            <ResponsiveContainer width="100%" height="100%">
-              <ChartContainer
-                config={{
-                  customers: { color: "#08C2FF" },
-                  gmv: { color: "#FCC737" },
-                  orders: { color: "#006BFF" },
-                }}
-              >
-                <BarChart
-                  data={selectedSegment}
-                  margin={isMobile ? { top: 5, right: 20, left: -20, bottom: 5 } : { top: 20, right: 30, left: 0, bottom: 5 }}
-                >
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="stage" />
-                  <YAxis yAxisId="left" orientation="left" stroke="#08C2FF" />
-                  <YAxis yAxisId="right" orientation="right" stroke="#FCC737" />
-                  <Tooltip />
-                  <Bar
-                    yAxisId="left"
-                    dataKey="customers"
-                    fill="#08C2FF"
-                    name="Customers"
-                  />
-                  <Bar
-                    yAxisId="right"
-                    dataKey="gmv"
-                    fill="#FCC737"
-                    name="GMV"
-                  />
-                  <Bar
-                    yAxisId="left"
-                    dataKey="orders"
-                    fill="#006BFF"
-                    name="Orders"
-                  />
-                </BarChart>
-              </ChartContainer>
-            </ResponsiveContainer>
+    <div className="flex min-h-screen w-full flex-col">
+      <main className="flex flex-1 flex-col gap-4 md:gap-8">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight">Customer Lifecycle Analysis</h1>
+            <p className="text-muted-foreground">
+              Track customer behavior and metrics across different lifecycle stages
+            </p>
           </div>
-        </CardContent>
-      </Card>
+          <div className="flex items-center gap-2">
+            <DateRangePicker />
+            <Button variant="outline" size="icon">
+              <Filter className="h-4 w-4" />
+              <span className="sr-only">Filter</span>
+            </Button>
+            <Button variant="outline" size="icon">
+              <Download className="h-4 w-4" />
+              <span className="sr-only">Download</span>
+            </Button>
+          </div>
+        </div>
 
-      <div className="grid gap-4 md:grid-cols-2">
-        <Card>
-          <CardHeader>
-            <CardTitle>Customer Distribution</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {selectedSegment.map((stage) => (
-                <div key={stage.stage} className="flex items-center justify-between">
-                  <div className="min-w-[120px]">
-                    <p className="font-medium">{stage.stage}</p>
-                    <p className="text-sm text-muted-foreground">{stage.customers} customers</p>
-                  </div>
-                  <div className="flex-1 mx-4 h-2 rounded-full bg-secondary overflow-hidden">
-                    <div
-                      className="h-full bg-primary"
-                      style={{ width: `${(stage.customers / 450) * 100}%` }}
-                    />
-                  </div>
-                  <span className="text-sm font-medium min-w-[40px] text-right">
-                    {Math.round((stage.customers / 450) * 100)}%
-                  </span>
-                </div>
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          <MetricCard
+            title="Total Customers"
+            value="24,892"
+            change="+12.3%"
+            trend="up"
+            description="vs. previous period"
+            icon={<Users className="h-4 w-4 text-muted-foreground" />}
+          />
+          <MetricCard
+            title="New Customers"
+            value="1,642"
+            change="+5.8%"
+            trend="up"
+            description="vs. previous period"
+            icon={<Users className="h-4 w-4 text-muted-foreground" />}
+          />
+          <MetricCard
+            title="Average Order Value"
+            value="$86.32"
+            change="+2.1%"
+            trend="up"
+            description="vs. previous period"
+            icon={<ArrowUpRight className="h-4 w-4 text-muted-foreground" />}
+          />
+          <MetricCard
+            title="Monthly Active Users"
+            value="18,453"
+            change="-3.2%"
+            trend="down"
+            description="vs. previous period"
+            icon={<Calendar className="h-4 w-4 text-muted-foreground" />}
+          />
+        </div>
+
+        <Tabs defaultValue="overview" className="space-y-4">
+          <TabsList>
+            <TabsTrigger value="overview">Overview</TabsTrigger>
+            <TabsTrigger value="segments">Segments</TabsTrigger>
+            <TabsTrigger value="metrics">Metrics</TabsTrigger>
+            <TabsTrigger value="trends">Trends</TabsTrigger>
+          </TabsList>
+          <TabsContent value="overview" className="space-y-4">
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+              <Card className="col-span-2">
+                <CardHeader>
+                  <CardTitle>Customer Lifecycle Distribution</CardTitle>
+                  <CardDescription>Distribution of customers across lifecycle stages</CardDescription>
+                </CardHeader>
+                <CardContent className="px-2">
+                  <CustomerLifecycleChart className="aspect-[2/1]" />
+                </CardContent>
+              </Card>
+              <Card>
+                <CardHeader>
+                  <CardTitle>Segment Distribution</CardTitle>
+                  <CardDescription>Percentage of customers in each lifecycle stage</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <SegmentDistributionChart className="aspect-square" />
+                </CardContent>
+              </Card>
+            </div>
+
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+              {lifecycleStages.map((stage, index) => (
+                <LifecycleStageCard
+                  key={index}
+                  title={stage.title}
+                  count={stage.count}
+                  metrics={stage.metrics}
+                  color={stage.color}
+                />
               ))}
             </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Stage Metrics</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {selectedSegment.map((stage) => (
-                <div key={stage.stage} className="space-y-2">
-                  <p className="font-medium">{stage.stage}</p>
-                  <div className="grid grid-cols-2 gap-4 text-sm">
-                    <div>
-                      <p className="text-muted-foreground">GMV</p>
-                      <p className="font-medium">${stage.gmv.toLocaleString()}</p>
-                    </div>
-                    <div>
-                      <p className="text-muted-foreground">Orders</p>
-                      <p className="font-medium">{stage.orders}</p>
-                    </div>
-                  </div>
+          </TabsContent>
+          <TabsContent value="segments" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle>Customer Segments</CardTitle>
+                <CardDescription>Detailed breakdown of customer segments and their behavior</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <CustomerMetricsTable />
+              </CardContent>
+            </Card>
+          </TabsContent>
+          <TabsContent value="metrics" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle>Monthly Metrics</CardTitle>
+                <CardDescription>Key performance indicators across all lifecycle stages</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="text-center text-muted-foreground py-12">
+                  Monthly metrics visualization will appear here
                 </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    </div >
-  );
+              </CardContent>
+            </Card>
+          </TabsContent>
+          <TabsContent value="trends" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle>Trend Analysis</CardTitle>
+                <CardDescription>Long-term trends in customer behavior and lifecycle progression</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="text-center text-muted-foreground py-12">
+                  Trend analysis visualization will appear here
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
+      </main>
+    </div>
+  )
 }

@@ -1,6 +1,8 @@
 import React, { createContext, useState, useContext, ReactNode } from "react";
 
 interface SegmentToggleContextProps {
+    logged: boolean;
+    setLogged: React.Dispatch<React.SetStateAction<boolean>>;
     isEditMode: boolean;
     loading: boolean;
     setLoading: React.Dispatch<React.SetStateAction<boolean>>;
@@ -30,6 +32,9 @@ const SegmentToggleContext = createContext<SegmentToggleContextProps | undefined
 
 export const SegmentToggleProvider: React.FC<{ children: ReactNode; editSegment?: any }> = ({ children, editSegment }) => {
     const isEditMode = !!editSegment;
+    const [logged, setLogged] = useState<boolean>(() => {
+        return localStorage.getItem('user') !== null;
+    });
     const [loading, setLoading] = useState<boolean>(false);
 
     const [isDisableRelatedAdd, setIsDisableRelatedAdd] = useState(false)
@@ -54,6 +59,8 @@ export const SegmentToggleProvider: React.FC<{ children: ReactNode; editSegment?
         <SegmentToggleContext.Provider
             value={{
                 isEditMode,
+                logged,
+                setLogged,
                 loading,
                 setLoading,
                 isDisableRelatedAdd,

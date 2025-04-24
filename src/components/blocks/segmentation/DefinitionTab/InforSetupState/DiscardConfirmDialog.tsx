@@ -4,41 +4,6 @@ import { toast } from "sonner";
 import { useSegmentData } from "@/context/SegmentDataContext";
 import { useSegmentToggle } from "@/context/SegmentToggleContext";
 
-// Interface cho điều kiện trong segmentation
-interface Condition {
-    id: string;
-    type: string;
-    field: string;
-    operator: string;
-    value?: string;
-    value2?: string;
-}
-
-// Interface cho nhóm điều kiện
-interface ConditionGroup {
-    id: string;
-    conditions: Condition[];
-    operator: string;
-}
-
-// Props cho component DiscardConfirmDialog
-interface DiscardConfirmDialogProps {
-    discardConfirmOpen: boolean;
-    setDiscardConfirmOpen: (value: boolean) => void;
-    setConditions: (conditions: Condition[]) => void;
-    setConditionGroups: (groups: ConditionGroup[]) => void;
-    setRootOperator: (operator: string) => void;
-    setSegmentName: (name: string) => void;
-    setDescription: (description: string) => void;
-    setShowDescriptionField: (show: boolean) => void;
-    setHasUnsavedChanges: (hasChanges: boolean) => void;
-    initialConditions: Condition[];
-    initialConditionGroups: ConditionGroup[];
-    initialRootOperator: string;
-    initialSegmentName: string;
-    initialDescription: string;
-}
-
 const DiscardConfirmDialog = () => {
     const {setConditions, setConditionGroups, initialConditions, initialConditionGroups, initialRootOperator, initialSegmentName, initialDescription, setRootOperator, setSegmentName, setDescription} = useSegmentData();
     const {setShowDescriptionField, setHasUnsavedChanges, setDiscardConfirmOpen, discardConfirmOpen} = useSegmentToggle();

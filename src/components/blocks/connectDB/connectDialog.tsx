@@ -115,7 +115,7 @@ export default function ConnectionDialog() {
                 </DialogHeader>
                 <div className="space-y-4">
                     <h3 className="text-lg font-medium">Connection URL Format</h3>
-                    <Card className="p-4 bg-gray-100 border border-gray-300 rounded-md">
+                    <Card className="p-4 bg-background border border-gray-300 rounded-md">
                         <p className="font-mono break-all text-sm">
                             postgresql://postgres.cyjehsjjvcakeizrehjy:[YOUR-PASSWORD]@aws-0-ap-southeast-1.pooler.supabase.com:6543/postgres
                         </p>

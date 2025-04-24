@@ -2,8 +2,12 @@ import { useState } from "react";
 import SegmentsList from "@/components/blocks/segmentation/SegmentsList";
 import SegmentBuilder from "@/components/blocks/segmentation/SegmentBuilder";
 import { Segment } from "@/types/segmentTypes";
+import { useSegmentData } from "@/context/SegmentDataContext";
+import { useSegmentToggle } from "@/context/SegmentToggleContext";
 
 export default function UserCreate() {
+  const { setConditions, editSegment, setEditSegment } = useSegmentData();
+  const { setHasUnsavedChanges, hasUnsavedChanges } = useSegmentToggle();
   const [showSegmentBuilder, setShowSegmentBuilder] = useState<boolean>(false);
   const [selectedSegment, setSelectedSegment] = useState<Segment | null>(null);
   const [segments, setSegments] = useState<Segment[]>([]);
@@ -11,10 +15,14 @@ export default function UserCreate() {
   const handleEditSegment = (segment: Segment) => {
     console.log("🖊️ [App] Editing segment:", segment);
     setSelectedSegment(segment);
+    setEditSegment(segment);
     setShowSegmentBuilder(true);
   };
 
-  const handleBackFromBuilder = (updatedSegment?: Segment) => {
+  const handleBackFromBuilder = () => {
+    setConditions([]);
+    if(editSegment) setEditSegment(null)
+    if (hasUnsavedChanges) setHasUnsavedChanges(!hasUnsavedChanges);
     setSelectedSegment(null);
     setShowSegmentBuilder(false);
   };

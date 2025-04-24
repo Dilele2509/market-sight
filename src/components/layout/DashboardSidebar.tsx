@@ -22,9 +22,9 @@ const menuItems = [
     path: "/",
   },
   {
-    title: "Customer Analysis",
+    title: "Micro-segmentation",
     icon: ChartNoAxesCombined,
-    path: "/customers-analysis",
+    path: "/micro-segmentation",
   },
   {
     title: "Create Segmentation",

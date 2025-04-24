@@ -2,7 +2,6 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { useState } from "react";
 import { useSegmentData } from "@/context/SegmentDataContext";
 import { useSegmentToggle } from "@/context/SegmentToggleContext";
 

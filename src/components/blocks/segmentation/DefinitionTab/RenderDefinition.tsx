@@ -14,12 +14,14 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 
 import { OPERATORS } from "@/types/constant";
 
-import { EventCondition, ConditionGroup, RelatedDatasetCondition, AttributeCondition } from "./ConditionState";
+import { EventCondition, ConditionGroup, AttributeCondition } from "./ConditionState";
 import { InclusionExclusion, SegmentSelectorDialog } from "./InclusionExclusionState";
 import { SQLDialog, SQLPreview } from "./SQLState";
 import { DiscardConfirmDialog, PreviewDialog } from "./InforSetupState";
 import { useSegmentToggle } from "@/context/SegmentToggleContext";
-import { defineDatasetName, useSegmentData } from "@/context/SegmentDataContext";
+import { useSegmentData } from "@/context/SegmentDataContext";
+import { defineDatasetName } from "@/utils/segmentFunctionHelper";
+import { Skeleton } from "@/components/ui/skeleton";
 
 
 interface SegmentDefinitionProps {
@@ -30,7 +32,9 @@ interface SegmentDefinitionProps {
 const RenderDefinition: React.FC<SegmentDefinitionProps> = ({
     generateSQLPreview,
 }) => {
-    const { datasets,
+    const {
+        editSegment,
+        datasets,
         segmentName,
         setSegmentName,
         setSegmentId,
@@ -48,7 +52,8 @@ const RenderDefinition: React.FC<SegmentDefinitionProps> = ({
         setAttributes,
         setConditions,
         setRootOperator,
-        setConditionGroups } = useSegmentData();
+        setConditionGroups,
+        setEstimatedSize } = useSegmentData();
 
     const { setLoading,
         loading,
@@ -56,6 +61,7 @@ const RenderDefinition: React.FC<SegmentDefinitionProps> = ({
         copySuccess,
         showDescriptionField,
         setShowDescriptionField } = useSegmentToggle();
+
 
     useEffect(() => {
         fetchAttributes(selectedDataset)
@@ -215,7 +221,7 @@ const RenderDefinition: React.FC<SegmentDefinitionProps> = ({
                 ...conditions,
                 {
                     id: newId,
-                    columnKey: '',
+                    columnKey: selectedDataset.fields[0],
                     relatedColKey: selectedDataset.fields[0],
                     type: 'event',
                     eventType: 'performed',
@@ -224,6 +230,7 @@ const RenderDefinition: React.FC<SegmentDefinitionProps> = ({
                     timePeriod: 'days',
                     timeValue: 30,
                     operator: 'AND',
+                    attributeConditions: [],
                     relatedConditions: []
                 }
             ]);
@@ -346,7 +353,9 @@ const RenderDefinition: React.FC<SegmentDefinitionProps> = ({
     };
 
     return (
+        // segmentName && segmentId && selectedDataset && rootOperator && conditions && conditionGroups && description && estimatedSize ? (
         <div className="grid grid-cols-10 gap-4">
+
             <div className="col-span-7 p-4 space-y-4">
                 <Card className="p-4">
                     <CardContent className="space-y-5">
@@ -360,7 +369,7 @@ const RenderDefinition: React.FC<SegmentDefinitionProps> = ({
                         <div className="space-y-1">
                             <label className="font-medium">Segment Resource ID</label>
                             <div className="relative">
-                                <Input value={segmentId} readOnly className="bg-gray-100 cursor-default" />
+                                <Input value={segmentId} readOnly className="bg-background cursor-default" />
                                 <Button
                                     variant="ghost"
                                     size="icon"
@@ -476,14 +485,6 @@ const RenderDefinition: React.FC<SegmentDefinitionProps> = ({
                                 >
                                     <Calendar className="w-3 h-3 mr-1" /> Add event condition
                                 </Button>
-                                {/* <Button
-                                    variant="outline"
-                                    size="sm"
-                                    className="px-2 py-1 text-xs w-auto"
-                                    onClick={handleAddRelatedCondition}
-                                >
-                                    <Link className="w-3 h-3 mr-1" /> Add related condition
-                                </Button> */}
                                 <Button
                                     variant="outline"
                                     size="sm"
@@ -497,15 +498,15 @@ const RenderDefinition: React.FC<SegmentDefinitionProps> = ({
                     </CardContent>
                 </Card>
 
-                <Card className="mb-4 p-4">
-                    {/* Inclusion/Exclusion section */}
+                {/* Inclusion/Exclusion section */}
+                {/* <Card className="mb-4 p-4">
                     <CardContent>
                         <InclusionExclusion />
                     </CardContent>
                     <SegmentSelectorDialog />
-                </Card>
+                </Card> */}
 
-                <Card className="mb-4 p-4 border border-gray-300 bg-gray-100 rounded-md font-mono whitespace-pre-wrap">
+                <Card className="mb-4 p-4 bg-card rounded-md font-mono whitespace-pre-wrap">
                     <CardContent>
                         <SQLPreview />
                     </CardContent>
@@ -629,6 +630,11 @@ const RenderDefinition: React.FC<SegmentDefinitionProps> = ({
                 </Card>
             </div>
         </div>
+        // ) : (
+        //     <div className="p-6 space-y-6 animate-pulse">
+        //         <Skeleton className="h-10 w-1/6 rounded-md" /> 
+        //     </div>
+        // )
     );
 };
 

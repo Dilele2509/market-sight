@@ -1,6 +1,8 @@
 import { axiosPrivate } from "@/API/axios";
 import { Segment } from "@/types/segmentTypes";
+import { defineDatasetName } from "@/utils/segmentFunctionHelper";
 import React, { createContext, useState, useContext, ReactNode, useEffect } from "react";
+import { useSegmentToggle } from "./SegmentToggleContext";
 
 interface SegmentDataContextProps {
     segmentName: string;
@@ -19,8 +21,6 @@ interface SegmentDataContextProps {
     setRootOperator: React.Dispatch<React.SetStateAction<string>>;
     conditions: any[];
     setConditions: React.Dispatch<React.SetStateAction<any[]>>;
-    relatedConditions: any[],
-    setRelatedConditions: React.Dispatch<React.SetStateAction<any[]>>;
     conditionGroups: any[];
     setConditionGroups: React.Dispatch<React.SetStateAction<any[]>>;
     description: string;
@@ -78,21 +78,6 @@ interface SegmentDataContextProps {
 
 const SegmentDataContext = createContext<SegmentDataContextProps | undefined>(undefined);
 
-export const defineDatasetName = (value: string) => {
-    switch (value.toLowerCase()) {
-        case 'customers':
-            return 'Customer Profile';
-        case 'transactions':
-            return 'Transactions';
-        case 'stores':
-            return 'Stores';
-        case 'product_lines':
-            return 'Product Line';
-        default:
-            // return value.charAt(0).toUpperCase + value.slice(1);
-            return 'Customer Profile';
-    }
-}
 const formattedData = async (inputData: any) => {
     return {
         "Customer Profile": {
@@ -123,8 +108,13 @@ const formattedData = async (inputData: any) => {
 };
 
 
-
 export const SegmentDataProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+    const { logged } = useSegmentToggle()
+    const [connectionUrl, setConnectionUrl] = useState();
+    const CONNECTION_STORAGE_KEY = 'postgres_connection';
+    const CONNECTION_EXPIRY_KEY = 'postgres_connection_expiry';
+    const ONE_HOUR_MS = 60 * 60 * 1000; // 1 hour in milliseconds
+
     const [datasets, setDatasets] = useState<Record<string, any>>({});
     const [selectedDataset, setSelectedDataset] = useState<any>({
         name: "customers",
@@ -144,6 +134,7 @@ export const SegmentDataProvider: React.FC<{ children: ReactNode }> = ({ childre
         schema: "public"
     });
     const [editSegment, setEditSegment] = useState(null);
+
     //fetch 4 tables of dataset
     useEffect(() => {
         const fetchTables = async () => {
@@ -158,32 +149,59 @@ export const SegmentDataProvider: React.FC<{ children: ReactNode }> = ({ childre
                 console.error("Failed to fetch tables:", error);
             }
         };
-        fetchTables();
-    }, []);
+        if (logged) fetchTables();
+    }, [connectionUrl, logged]);
     //fetch info if had editSegment
+
     useEffect(() => {
-        if (editSegment) {
-            setSegmentName(editSegment.segment_name || "High Value Users (new)");
-            setSegmentId(editSegment.segment_id || "segment:high-value-users-new");
-            setSelectedDataset(datasets[defineDatasetName(editSegment.dataset)] || datasets[defineDatasetName('customer')]);
-            setRootOperator(editSegment?.filter_criteria.rootOperator || "AND");
-            setConditions(editSegment?.filter_criteria.conditions || []);
-            setConditionGroups(editSegment?.filter_criteria.conditionGroups || []);
-            setDescription(editSegment?.description || "");
-            setEstimatedSize(
-                editSegment
-                    ? { count: editSegment.filter_criteria.size, percentage: Math.round((editSegment.filter_criteria.size / 400) * 100) }
-                    : { count: 88, percentage: 22 }
-            );
-        }
-    }, [editSegment]);
+        if (!datasets || Object.keys(datasets).length === 0) return;
+
+        setSegmentName(editSegment ? editSegment.segment_name : "High Value Users (new)");
+        setSegmentId(editSegment ? editSegment.segment_id : "segment:high-value-users-new");
+
+        const datasetKey = editSegment
+            ? defineDatasetName(editSegment.dataset)
+            : defineDatasetName("customer");
+
+        setSelectedDataset(datasets ? datasets[datasetKey] : {
+            name: "customers",
+            fields: [
+                "customer_id",
+                "first_name",
+                "last_name",
+                "email",
+                "phone",
+                "gender",
+                "birth_date",
+                "registration_date",
+                "address",
+                "city"
+            ],
+            description: "Customer information",
+            schema: "public"
+        });
+
+        setRootOperator(editSegment ? editSegment.filter_criteria.rootOperator : "AND");
+        setConditions(editSegment ? editSegment.filter_criteria.conditions : []);
+        setConditionGroups(editSegment ? editSegment.filter_criteria.conditionGroups : []);
+        setDescription(editSegment ? editSegment.description : "");
+        setEstimatedSize(
+            editSegment
+                ? {
+                    count: editSegment.filter_criteria.size,
+                    percentage: Math.round((editSegment.filter_criteria.size / 400) * 100),
+                }
+                : { count: 88, percentage: 22 }
+        );
+    }, [editSegment, datasets]);
+
     useEffect(() => {
         const fetchRelated = async () => {
             try {
                 const res = await axiosPrivate.post('/data/related-tables', { tableName: 'transactions' });
 
                 if (res.status === 200 && res.data.data) {
-                    console.log('Related tables data:', res.data.data);
+                    //console.log('Related tables data:', res.data.data);
                     setRelatedDatasetNames(res.data.data);
 
                     const firstValidData = res.data.data.find((data) => data.trim() !== 'customers');
@@ -192,8 +210,8 @@ export const SegmentDataProvider: React.FC<{ children: ReactNode }> = ({ childre
                         const datasetKey = defineDatasetName(firstValidData);
                         const dataset = datasets[datasetKey];
 
-                        console.log('Trying to select dataset key:', datasetKey);
-                        console.log('Dataset selected:', dataset);
+                        //console.log('Trying to select dataset key:', datasetKey);
+                        //console.log('Dataset selected:', dataset);
 
                         if (dataset) {
                             setSelectRelatedDataset(dataset);
@@ -213,10 +231,10 @@ export const SegmentDataProvider: React.FC<{ children: ReactNode }> = ({ childre
             }
         };
 
-        if (Object.keys(datasets).length > 0) {
+        if (logged && Object.keys(datasets).length > 0) {
             fetchRelated();
         }
-    }, [datasets]);
+    }, [datasets, logged]);
 
 
     const [segmentName, setSegmentName] = useState<string>("High Value Users (new)");
@@ -226,10 +244,15 @@ export const SegmentDataProvider: React.FC<{ children: ReactNode }> = ({ childre
     const [previewData, setPreviewData] = useState<any[]>([]);
     const [rootOperator, setRootOperator] = useState<string>("AND");
     const [conditions, setConditions] = useState<any[]>([]);
-    const [relatedConditions, setRelatedConditions] = useState<any[]>([]);
     const [conditionGroups, setConditionGroups] = useState<any[]>([]);
     const [description, setDescription] = useState<string>('');
     const [estimatedSize, setEstimatedSize] = useState<any>({ count: 88, percentage: 22 });
+
+    // useEffect(() => {
+    //     if ( logged ) {//console.log('check selected dataset: ', selectedDataset);
+    //     console.log('check all Condition: ', conditions);
+    //     console.log('check all condition group: ', conditionGroups);}
+    // }, [conditions || conditionGroups || logged])
 
     const [editableSql, setEditableSql] = useState<string>("");
     const [sqlError, setSqlError] = useState<any>(null);
@@ -253,12 +276,6 @@ export const SegmentDataProvider: React.FC<{ children: ReactNode }> = ({ childre
     ]);
 
     const [selectionMode, setSelectionMode] = useState("include"); // 'include' or 'exclude'
-
-
-    const [connectionUrl, setConnectionUrl] = useState();
-    const CONNECTION_STORAGE_KEY = 'postgres_connection';
-    const CONNECTION_EXPIRY_KEY = 'postgres_connection_expiry';
-    const ONE_HOUR_MS = 60 * 60 * 1000; // 1 hour in milliseconds
 
     const [selectedTable, setSelectedTable] = useState('');
     const [query, setQuery] = useState('');
@@ -288,8 +305,6 @@ export const SegmentDataProvider: React.FC<{ children: ReactNode }> = ({ childre
                 setRootOperator,
                 conditions,
                 setConditions,
-                relatedConditions,
-                setRelatedConditions,
                 conditionGroups,
                 setConditionGroups,
                 description,

@@ -2,7 +2,7 @@ import { GripVertical, Link, Trash, SlidersHorizontal } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { defineDatasetName, useSegmentData } from "@/context/SegmentDataContext";
+import { useSegmentData } from "@/context/SegmentDataContext";
 import { useEffect, useState } from "react";
 import { Label } from "@radix-ui/react-label";
 import { Card, CardContent } from "@/components/ui/card";
@@ -10,6 +10,7 @@ import { useSegmentToggle } from "@/context/SegmentToggleContext";
 import { toast } from "sonner";
 import { OPERATORS } from "@/types/constant";
 import { ReactSortable } from "react-sortablejs";
+import { defineDatasetName } from "@/utils/segmentFunctionHelper";
 
 type RelatedAttributeCondition = {
     id: number,
@@ -31,11 +32,13 @@ interface Condition {
 
 interface RelatedDatasetConditionProps {
     condition: Condition;
+    relatedConditionsState: any;
+    setRelatedConditionsState: React.Dispatch<React.SetStateAction<any[]>>
 }
 
-const RelatedDatasetCondition: React.FC<RelatedDatasetConditionProps> = ({ condition }) => {
+const RelatedDatasetCondition: React.FC<RelatedDatasetConditionProps> = ({ condition, relatedConditionsState, setRelatedConditionsState }) => {
     const { setLoading, setIsDisableRelatedAdd } = useSegmentToggle();
-    const { relatedConditions, setRelatedConditions, datasets, relatedDatasetNames} = useSegmentData();
+    const { datasets, relatedDatasetNames } = useSegmentData();
     const [attributes, setAttributes] = useState<any[]>([]);
 
     const attribute = attributes.find((attr) => attr.name === condition.fields?.[0]);
@@ -81,9 +84,9 @@ const RelatedDatasetCondition: React.FC<RelatedDatasetConditionProps> = ({ condi
         }
     };
 
-    useEffect(()=>{
+    useEffect(() => {
         console.log(condition);
-    },[])
+    }, [])
 
     const determineFieldType = (fieldName: string, dataType = null) => {
         if (dataType) {
@@ -107,7 +110,7 @@ const RelatedDatasetCondition: React.FC<RelatedDatasetConditionProps> = ({ condi
     const updateCondition = (key: string, value: any) => { handleUpdateCondition(condition.id, key, value); };
 
     const handleUpdateCondition = (id: number, field: string, value: any) => {
-        setRelatedConditions(prevConditions =>
+        setRelatedConditionsState(prevConditions =>
             prevConditions.map(condition => {
                 if (condition.id === id) {
                     return { ...condition, [field]: value };
@@ -122,7 +125,7 @@ const RelatedDatasetCondition: React.FC<RelatedDatasetConditionProps> = ({ condi
     };
 
     const handleUpdateAttributeCondition = (id, field, value, index) => {
-        setRelatedConditions(prevConditions =>
+        setRelatedConditionsState(prevConditions =>
             prevConditions.map(condition => {
                 if (condition.id === id) {
                     const updatedRelated = [...condition.relatedAttributeConditions];
@@ -141,22 +144,22 @@ const RelatedDatasetCondition: React.FC<RelatedDatasetConditionProps> = ({ condi
     };
 
     const handleRemoveCondition = (id: number) => {
-        setRelatedConditions(relatedConditions.filter((condition) => condition.id !== id));
+        setRelatedConditionsState(relatedConditionsState.filter((condition) => condition.id !== id));
         setIsDisableRelatedAdd(false);
     };
 
     const handleRootOperatorChange = (newValue) => {
         if (newValue !== null) {
-          updateCondition('operator',newValue);
+            updateCondition('operator', newValue);
         }
-      };
+    };
 
     const removeCondition = () => {
         handleRemoveCondition(condition.id);
     };
 
     const handleRemoveAttributeCondition = (conditionId: number, index: number) => {
-        setRelatedConditions(prevConditions =>
+        setRelatedConditionsState(prevConditions =>
             prevConditions.map(condition => {
                 if (condition.id === conditionId) {
                     const updatedRelated = [...condition.relatedAttributeConditions];
@@ -200,13 +203,13 @@ const RelatedDatasetCondition: React.FC<RelatedDatasetConditionProps> = ({ condi
                         {/* Field select */}
                         {condition.fields.length > 0 && (
                             <Select
-                                value={condition.fields[0] || ""}
-                                onValueChange={(value) => {updateRelatedAttributeCondition('field', value, index)}}
+                                value={relatedCondition.field || ""}
+                                onValueChange={(value) => { updateRelatedAttributeCondition('field', value, index) }}
                             >
                                 <SelectTrigger className="w-[160px]">
                                     <SelectValue placeholder="Select field">
-                                        {condition.fields[0]
-                                            ? attributes.find((attr) => attr.name === condition.fields[0])?.name || "Select field"
+                                        {relatedCondition.field
+                                            ? attributes.find((attr) => attr.name === relatedCondition.field)?.name || "Select field"
                                             : "No attribute"}
                                     </SelectValue>
                                 </SelectTrigger>
@@ -315,15 +318,17 @@ const RelatedDatasetCondition: React.FC<RelatedDatasetConditionProps> = ({ condi
                     </Button>
                 </div>
 
-                {relatedConditions && (
+                {relatedConditionsState && (
                     <div className="flex items-center justify-between">
                         <div className="flex items-center space-x-4 w-full">
                             <Label className="text-sm font-medium text-card-foreground">Related dataset</Label>
                             <Select
                                 value={condition.relatedDataset}
                                 onValueChange={(value) => {
-                                    updateCondition("fields", datasets[defineDatasetName(value)].fields);
-                                    updateCondition("relatedDataset", value);
+                                    const dataset = datasets[defineDatasetName(value)];
+                                    ["relatedDataset", "fields", "joinWithKey"].forEach((key, i) =>
+                                        updateCondition(key, [value, dataset.fields, dataset.fields[0]][i])
+                                    );
                                 }}
                             >
                                 <SelectTrigger className="w-[160px]">
@@ -370,7 +375,7 @@ const RelatedDatasetCondition: React.FC<RelatedDatasetConditionProps> = ({ condi
                     </div>
                 )}
 
-                <div className="grid grid-cols-10 gap-4">
+                <div className="grid grid-cols-10  gap-4">
                     <Label className="text-sm font-medium col-span-1">Where</Label>
                     <div className="relative col-span-9">
                         {condition.relatedAttributeConditions.length > 1 && (<div className={`border-2 ${condition.operator === "AND" ? 'border-primary' : 'border-yellow-400'} pl-2 w-6 border-l-0 rounded-xl rounded-l-none top-1/4 bottom-[20%] -right-6 absolute transition-colors duration-300`}>
@@ -388,14 +393,20 @@ const RelatedDatasetCondition: React.FC<RelatedDatasetConditionProps> = ({ condi
                                 </SelectContent>
                             </Select>
                         </div>)}
-                        <ReactSortable
-                            list={condition.relatedAttributeConditions}
-                            setList={(newList) => updateCondition("relatedAttributeConditions", newList)}
-                            animation={200}
-                            className="space-y-2 w-full pl-4"
-                        >
-                            {condition.relatedAttributeConditions.map((relatedAttCon, index) => (renderRelatedAttributeConditions(relatedAttCon, index)))}
-                        </ReactSortable>
+                        {condition.relatedAttributeConditions.length > 0 ? (
+                            <ReactSortable
+                                list={condition.relatedAttributeConditions}
+                                setList={(newList) => updateCondition("relatedAttributeConditions", newList)}
+                                animation={200}
+                                className="space-y-2 w-full pl-4"
+                            >
+                                {condition.relatedAttributeConditions.map((relatedAttCon, index) => (renderRelatedAttributeConditions(relatedAttCon, index)))}
+                            </ReactSortable>) :
+                            (
+                                <Card className="flex items-center justify-center p-2">
+                                    <p className="text-sm">No related attribute condition</p>
+                                </Card>
+                            )}
                     </div>
                 </div>
 

@@ -20,7 +20,7 @@ const publicRoutes = [
 
 const privateRoutes = [
     { path: "/", component: Index},
-    { path: "/customers-analysis", component: MicroSegmentation},
+    { path: "/micro-segmentation", component: MicroSegmentation},
     { path: "/create-segmentation", component: CreateSegmentation},
     { path: "/connect-data", component: ImportData},
     { path: "/settings", component: Settings},

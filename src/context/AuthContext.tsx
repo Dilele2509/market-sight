@@ -1,10 +1,12 @@
 import { axiosAuth, axiosPrivate } from "@/API/axios";
 import { createContext, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { useSegmentToggle } from "./SegmentToggleContext";
 
 const AuthContext = createContext(null);
 
 export const AuthProvider = ({ children }) => {
+  const { setLogged, logged } = useSegmentToggle();
   const [token, setToken] = useState(localStorage.getItem("token") || null);
   const [user, setUser] = useState(JSON.parse(localStorage.getItem("user") || null));
   const navigate = useNavigate();
@@ -53,6 +55,7 @@ export const AuthProvider = ({ children }) => {
       if (res.status === 200) {
         setUser(res.data);
         localStorage.setItem("user", JSON.stringify(res.data));
+        setLogged(!logged)
       } else {
         logout();
       }
@@ -104,7 +107,8 @@ export const AuthProvider = ({ children }) => {
   };
 
   const logout = () => {
-    localStorage.clear()
+    setLogged(false);
+    localStorage.clear();
     setToken(null);
     setUser(null);
     navigate("/"); // Quay về trang login

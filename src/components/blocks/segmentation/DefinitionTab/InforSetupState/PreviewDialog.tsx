@@ -48,7 +48,7 @@ const PreviewDialog: React.FC<PreviewDialogProps> = ({
     return (
         <>
             <Dialog open={previewOpen} onOpenChange={handleClosePreview}>
-                <DialogContent className="fixed p-4 bg-white w-full max-w-fit rounded-lg shadow-lg overflow-hidden">
+                <DialogContent className="fixed p-4 bg-card w-full max-w-fit rounded-lg shadow-lg overflow-hidden">
                     <DialogHeader>
                         <DialogTitle className="text-lg font-semibold">Preview Results</DialogTitle>
                         <small className="text-muted-foreground">

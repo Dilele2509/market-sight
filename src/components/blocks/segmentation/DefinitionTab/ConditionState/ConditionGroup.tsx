@@ -97,7 +97,7 @@ const ConditionGroup: React.FC<ConditionGroupProps> = ({
             {/* Group conditions */}
             <div className="pl-10">
                 <div className="relative">
-                    {group.conditions.length > 0 && (<div className={`border-2 ${group.operator === "AND" ? 'border-primary' : 'border-yellow-400'} pl-2 w-5 border-r-0 rounded-xl rounded-r-none top-8 bottom-4 -left-5 absolute transition-colors duration-300`}>
+                    {group.conditions.length > 1 && (<div className={`border-2 ${group.operator === "AND" ? 'border-primary' : 'border-yellow-400'} pl-2 w-5 border-r-0 rounded-xl rounded-r-none top-8 bottom-4 -left-5 absolute transition-colors duration-300`}>
                         <Select
                             value={group.operator}
                             onValueChange={(newValue) => {

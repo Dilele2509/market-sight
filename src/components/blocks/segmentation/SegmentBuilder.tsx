@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import axios, { axiosPrivate } from "@/API/axios";
 import { ArrowLeft, Code, EllipsisVertical, Section } from "lucide-react";
 import { SegmentBuilderProps } from "@/types/segmentTypes"
-import { generateSQLPreview } from "./DefinitionTab/SQLState/SQLPreview";
+import { generateSQLPreview } from "@/utils/segmentFunctionHelper";
 import RenderDefinition from "./DefinitionTab/RenderDefinition";
 import { useSegmentToggle } from "@/context/SegmentToggleContext";
 import { useSegmentData } from "@/context/SegmentDataContext";
@@ -35,7 +35,9 @@ export default function SegmentBuilder({ onBack, editSegment }: SegmentBuilderPr
         initialRootOperator,
         initialSegmentName,
         initialDescription,
-        setEditSegment } = useSegmentData();
+        setEditSegment,
+        setConditionGroups,
+        setConditions } = useSegmentData();
     const { token, user } = useContext(AuthContext);
     const {
         setSqlDialogOpen,
@@ -53,7 +55,7 @@ export default function SegmentBuilder({ onBack, editSegment }: SegmentBuilderPr
 
     useEffect(() => {
         setEditSegment(editSegment)
-    },[])
+    }, [])
 
     //dùng để set trạng thái unchange
     useEffect(() => {
@@ -65,7 +67,7 @@ export default function SegmentBuilder({ onBack, editSegment }: SegmentBuilderPr
             segmentName !== initialSegmentName ||
             description !== initialDescription;
 
-        setHasUnsavedChanges(hasChanged);
+        setHasUnsavedChanges(!hasUnsavedChanges);
     }, [
         conditions, conditionGroups, rootOperator, segmentName, description,
         initialConditions, initialConditionGroups, initialRootOperator, initialSegmentName, initialDescription
@@ -205,10 +207,10 @@ export default function SegmentBuilder({ onBack, editSegment }: SegmentBuilderPr
 
     const handleSaveSegment = async () => {
         try {
-            console.log('id: ', editSegment ? editSegment.segment_id : segmentId);
+            //console.log('id: ', editSegment ? editSegment.segment_id : segmentId);
 
             const segment = {
-                segment_id: segmentId,
+                segment_id: editSegment ? editSegment.segment_id : segmentId,
                 segment_name: segmentName,
                 created_by_user_id: user.user_id,
                 dataset: selectedDataset.name,
@@ -224,23 +226,28 @@ export default function SegmentBuilder({ onBack, editSegment }: SegmentBuilderPr
                 }
             };
 
-            console.log('[SegmentBuilder] Sending segment to API:', segment);
+            //console.log('[SegmentBuilder] Sending segment to API:', segment);
 
             await axiosPrivate.post('/segment/save-segment', segment, {
                 headers: {
                     Authorization: `Bearer ${token}`,
                 }
+            }).then(() => {
+                toast.success(`Segment ${editSegment ? 'updated' : 'created'} successfully!`);
+                setHasUnsavedChanges(false);
+                setConditionGroups([]);
+                setConditions([])
+
+                //console.log('[SegmentBuilder] Calling onBack with segment:', segment);
+                if (onBack) {
+                    onBack(segment);
+                } else {
+                    console.warn('[SegmentBuilder] onBack function is not provided');
+                }
+            }).catch((err) => {
+                toast.error('Failed to save segment: ', err);
             });
 
-            toast.success(`Segment ${editSegment ? 'updated' : 'created'} successfully!`);
-            setHasUnsavedChanges(false);
-
-            console.log('[SegmentBuilder] Calling onBack with segment:', segment);
-            if (onBack) {
-                onBack(segment);
-            } else {
-                console.warn('[SegmentBuilder] onBack function is not provided');
-            }
         } catch (error) {
             console.error('[SegmentBuilder] Error saving segment:', error);
             toast.error('Failed to save segment. Please try again.');
@@ -291,7 +298,7 @@ export default function SegmentBuilder({ onBack, editSegment }: SegmentBuilderPr
                         variant="default"
                         className="mx-1"
                         onClick={handleSaveSegment}
-                        disabled={!hasUnsavedChanges || !segmentName.trim()}
+                        disabled={!hasUnsavedChanges}
                     >
                         Save Segment
                     </Button>
