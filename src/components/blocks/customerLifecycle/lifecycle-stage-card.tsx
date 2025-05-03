@@ -1,10 +1,10 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { cn } from "@/lib/utils"
+import { ReactNode, useEffect } from "react"
 
 interface LifecycleStageCardProps {
     title: string
-    count: string
-    metrics: { name: string; value: string }[]
+    count: any
+    metrics: any
     color: string
 }
 
@@ -19,20 +19,24 @@ export function LifecycleStageCard({ title, count, metrics, color }: LifecycleSt
     const UPPERCASE_WORDS = ['avg', 'aov', 'arpu'];
 
     const formatMetricName = (name: string): string => {
-      const words = name.split('_');
-      const displayWords = words.length > 3 ? words.slice(0, 3) : words;
-    
-      return displayWords
-        .map((word, index) => {
-          if (index === 0 && UPPERCASE_WORDS.includes(word)) {
-            return word.toUpperCase(); 
-          }
-          return index === 0
-            ? word.charAt(0).toUpperCase() + word.slice(1) 
-            : word;
-        })
-        .join(' ');
-    };    
+        const words = name.split('_');
+        const displayWords = words.length > 3 ? words.slice(0, 3) : words;
+
+        return displayWords
+            .map((word, index) => {
+                if (index === 0 && UPPERCASE_WORDS.includes(word)) {
+                    return word.toUpperCase();
+                }
+                return index === 0
+                    ? word.charAt(0).toUpperCase() + word.slice(1)
+                    : word;
+            })
+            .join(' ');
+    };
+
+    // useEffect(()=>{
+    //     console.log(metrics);
+    // },[])
 
     return (
         <Card>
@@ -50,10 +54,10 @@ export function LifecycleStageCard({ title, count, metrics, color }: LifecycleSt
             <CardContent>
                 <div className="text-2xl font-bold mb-4">{count}</div>
                 <div className="space-y-2">
-                    {metrics.map((metric, index) => (
+                    {Object.entries(metrics).map(([key, value], index) => (
                         <div key={index} className="flex justify-between text-sm">
-                            <span className="text-muted-foreground">{formatMetricName(metric.name)}</span>
-                            <span className="font-medium">{metric.value}</span>
+                            <span className="text-muted-foreground">{formatMetricName(key)}</span> 
+                            <span className="font-medium">{value as ReactNode}</span>
                         </div>
                     ))}
                 </div>

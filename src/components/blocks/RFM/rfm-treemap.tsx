@@ -6,23 +6,6 @@ import { Card } from "@/components/ui/card"
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
 import ScoreBar from "./score-bar-rfm"
 
-// RFM segment data
-// orders = value * f
-// revenue = value * f * m * 10
-// RFM segment data
-const rfmData = [
-    { name: "Champions", value: 7960, percentage: "13%", r: 5, f: 5, m: 5, days: 145, orders: 39800, revenue: 1990000 },
-    { name: "Loyal Customers", value: 8603, percentage: "14%", r: 3, f: 5, m: 5, days: 579, orders: 43015, revenue: 2150750 },
-    { name: "Potential Loyalist", value: 4569, percentage: "7%", r: 5, f: 3, m: 3, days: 399, orders: 13707, revenue: 1233090 },
-    { name: "New Customers", value: 2672, percentage: "4%", r: 5, f: 1, m: 1, days: 279, orders: 2672, revenue: 26720 },
-    { name: "Promising", value: 4546, percentage: "7%", r: 4, f: 1, m: 1, days: 507, orders: 4546, revenue: 45460 },
-    { name: "Need Attention", value: 8741, percentage: "14%", r: 3, f: 2, m: 3, days: 683, orders: 17482, revenue: 524460 },
-    { name: "About to Sleep", value: 480, percentage: "1%", r: 3, f: 1, m: 3, days: 679, orders: 480, revenue: 14400 },
-    { name: "Can't lose them", value: 954, percentage: "2%", r: 2, f: 5, m: 5, days: 826, orders: 4770, revenue: 238500 },
-    { name: "At Risk", value: 4954, percentage: "8%", r: 2, f: 4, m: 3, days: 881, orders: 19816, revenue: 594480 },
-    { name: "Hibernating", value: 19053, percentage: "30%", r: 1, f: 2, m: 1, days: 928, orders: 38106, revenue: 381060 },
-]
-
 // Generate a color based on the name
 const generateColor: Record<string, string> = {
     "Champions": "#1D5C4D",         // Dark Teal
@@ -46,11 +29,57 @@ type TreemapNode = d3.HierarchyNode<any> & {
     y1: number
 }
 
-export function RfmTreemap() {
+interface RfmTreemapProps {
+    rfmData: {
+        name: string;
+        value: number;
+        percentage: string;
+        r: number;
+        f: number;
+        m: number;
+        days: number;
+        orders: number;
+        revenue: number;
+    }[];
+}
+
+export function RfmTreemap({ rfmData }: RfmTreemapProps) {
     const svgRef = useRef<SVGSVGElement>(null)
     const tooltipRef = useRef<HTMLDivElement>(null)
     const [tab, setTab] = useState("R")
 
+    const [animatedValues, setAnimatedValues] = useState<Record<string, number>>({})
+
+    useEffect(() => {
+        const initialValues: Record<string, number> = {}
+        rfmData.forEach((segment) => {
+            initialValues[segment.name] = 0
+        })
+        setAnimatedValues(initialValues)
+
+        // Bắt đầu animate
+        const duration = 1000 
+        const start = Date.now()
+
+        const timer = d3.timer(() => {
+            const elapsed = Date.now() - start
+            const t = Math.min(1, elapsed / duration) // 0 -> 1
+
+            const newValues: Record<string, number> = {}
+            rfmData.forEach((segment) => {
+                newValues[segment.name] = Math.floor(d3.interpolateNumber(0, segment.value)(t))
+            })
+            setAnimatedValues(newValues)
+
+            if (t === 1) {
+                timer.stop()
+            }
+        })
+
+        return () => timer.stop()
+    }, [])
+
+    //generate tree map
     useEffect(() => {
         if (!svgRef.current) return
 
@@ -82,7 +111,7 @@ export function RfmTreemap() {
             .select(tooltipRef.current)
             .style("position", "absolute")
             .style("visibility", "hidden")
-            .style("background-color", "white")
+            .style("background-color", "hsl(var(--background))")
             .style("border", "1px solid #ddd")
             .style("border-radius", "4px")
             .style("padding", "10px")
@@ -92,16 +121,25 @@ export function RfmTreemap() {
 
         // Create cells
         const cell = svg
-            .selectAll("g")
+            .selectAll<SVGGElement, TreemapNode>("g")
             .data(root.leaves() as TreemapNode[])
             .join("g")
-            .attr("transform", (d) => `translate(${d.x0},${d.y0})`)
+            .attr("transform", (d) => `translate(${(d.x0 + d.x1) / 2}, ${(d.y0 + d.y1) / 2})`) // Bắt đầu ở tâm cell
+            .style("opacity", 0) // Bắt đầu ẩn
+
+        cell.transition()
+            .delay((_, i) => i * 40 + Math.random() * 150) // Delay đan xen
+            .duration(600)
+            .ease(d3.easeBackOut.overshoot(1.5)) // Nảy nhẹ cực đẹp
+            .attr("transform", (d) => `translate(${d.x0},${d.y0})`) // Bay về đúng vị trí
+            .style("opacity", 1) // Fade in
+
 
         // Add rectangles
         cell
             .append("rect")
-            .attr("width", (d) => d.x1 - d.x0)
-            .attr("height", (d) => d.y1 - d.y0)
+            .attr("width", 0)
+            .attr("height", 0)
             .attr("fill", (d) => generateColor[(d.data as any).name])
             .on("mouseover", (event, d) => {
                 tooltip.style("visibility", "visible").html(`
@@ -132,6 +170,11 @@ export function RfmTreemap() {
             .on("mouseout", () => {
                 tooltip.style("visibility", "hidden")
             })
+            .transition()
+            .duration(800)
+            .ease(d3.easeCubicOut)
+            .attr("width", (d) => d.x1 - d.x0)
+            .attr("height", (d) => d.y1 - d.y0)
 
         // Add text - percentage
         cell
@@ -168,6 +211,7 @@ export function RfmTreemap() {
             .attr("x", width / 2)
             .attr("y", height + 45)
             .attr("text-anchor", "middle")
+            .attr("fill", "hsl(var(--foreground))")
             .attr("font-size", "14px")
             .text("Recency (days)")
 
@@ -177,6 +221,7 @@ export function RfmTreemap() {
             .attr("x", -height / 2)
             .attr("y", -45)
             .attr("text-anchor", "middle")
+            .attr("fill", "hsl(var(--foreground))")
             .attr("font-size", "14px")
             .text("Frequency + Monetary (orders + revenue)")
 
@@ -187,6 +232,7 @@ export function RfmTreemap() {
                 .attr("x", (width / 5) * i - width / 10)
                 .attr("y", height + 20)
                 .attr("text-anchor", "middle")
+                .attr("fill", "hsl(var(--foreground))")
                 .attr("font-size", "14px")
                 .text(i.toString())
         }
@@ -197,10 +243,12 @@ export function RfmTreemap() {
                 .attr("x", -20)
                 .attr("y", (height / 5) * (5 - i) + height / 10)
                 .attr("text-anchor", "middle")
+                .attr("fill", "hsl(var(--foreground))")
                 .attr("font-size", "14px")
                 .text(i.toString())
         }
     }, [])
+
 
     return (
         <div>
@@ -222,7 +270,9 @@ export function RfmTreemap() {
                                 <div className="w-4 h-4" style={{ backgroundColor: generateColor[segment.name] }}></div>
                                 <div className="text-sm">{segment.name}</div>
                             </div>
-                            <div className="text-sm">{segment.value.toLocaleString()}</div>
+                            <div className="text-sm">
+                                {animatedValues[segment.name]?.toLocaleString() ?? 0}
+                            </div>
                         </div>
                     ))}
                 </div>

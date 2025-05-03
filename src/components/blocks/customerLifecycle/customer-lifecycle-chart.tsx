@@ -7,54 +7,11 @@ import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 
 import { cn } from "@/lib/utils"
 
-interface CustomerLifecycleChartProps extends React.HTMLAttributes<HTMLDivElement> { }
+interface CustomerLifecycleChartProps extends React.HTMLAttributes<HTMLDivElement> { 
+    data: Object[]
+}
 
-const data = [
-    {
-        month: "Jan",
-        new: 1200,
-        early: 4100,
-        mature: 9800,
-        loyal: 4200,
-    },
-    {
-        month: "Feb",
-        new: 1300,
-        early: 4300,
-        mature: 10200,
-        loyal: 4400,
-    },
-    {
-        month: "Mar",
-        new: 1400,
-        early: 4600,
-        mature: 10800,
-        loyal: 4600,
-    },
-    {
-        month: "Apr",
-        new: 1500,
-        early: 4800,
-        mature: 11200,
-        loyal: 4800,
-    },
-    {
-        month: "May",
-        new: 1600,
-        early: 5000,
-        mature: 11800,
-        loyal: 5000,
-    },
-    {
-        month: "Jun",
-        new: 1642,
-        early: 5237,
-        mature: 12468,
-        loyal: 5545,
-    },
-]
-
-export function CustomerLifecycleChart({ className, ...props }: CustomerLifecycleChartProps) {
+export function CustomerLifecycleChart({ data, className, ...props }: CustomerLifecycleChartProps) {
     const [mounted, setMounted] = useState(false)
 
     useEffect(() => {

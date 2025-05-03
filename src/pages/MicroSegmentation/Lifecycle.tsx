@@ -14,7 +14,10 @@ import { useContext, useEffect, useState } from "react"
 import { axiosPrivate } from "@/API/axios"
 import AuthContext from "@/context/AuthContext"
 import { toast } from "sonner"
-import { error } from "console"
+import { CLSList } from "@/types/lifecycleTypes"
+import { useLifeContext } from "@/context/LifecycleContext"
+import { format } from "date-fns"
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 
 export const metadata: Metadata = {
   title: "Customer Lifecycle Analysis",
@@ -22,49 +25,101 @@ export const metadata: Metadata = {
 }
 
 export default function CustomerLifecyclePage() {
+  const sortOrder = ["new", "early", "mature", "loyal"];
+  const { date, timeRange } = useLifeContext();
   const { token } = useContext(AuthContext);
   const header = {
     headers: {
-      Authorization: `Bearer ${token}`
-    }
-  }
-  const [newCustomerSegment, setNewCustomerSegment] = useState([]);
-  const [earlyCustomerSegment, setEarlyCustomerSegment] = useState([]);
-  const [matureCustomerSegment, setMatureCustomerSegment] = useState([]);
-  const [loyalCustomerSegment, setLoyalCustomerSegment] = useState([]);
-
-  const transformData = (data: Record<string, any>) => {
-    return Object.entries(data).map(([key, value]) => ({
-      name: key,
-      value:
-        key === 'customer_count'
-          ? value
-          : typeof value === 'number'
-            ? Math.floor(value * 100) / 100 
-            : value,
-    }));
+      Authorization: `Bearer ${token}`,
+    },
   };
 
+  const [cusLifeList, setCusLifeList] = useState<CLSList>({});
+  const [dataMonthly, setDataMonthly] = useState<Object[]>([]);
+
+  const monthMap = {
+    1: "Jan", 2: "Feb", 3: "Mar", 4: "Apr",
+    5: "May", 6: "Jun", 7: "Jul", 8: "Aug",
+    9: "Sep", 10: "Oct", 11: "Nov", 12: "Dec"
+  };
+
+  const formatCustomerData = (inputData: Object) => {
+    const result = Object.entries(inputData).map(([title, values]) => {
+      //console.log('check title: ', title, ' check value: ', values);
+      const startDateRaw = values?.period?.start_date || "";
+      const startDate = new Date(startDateRaw);
+      const month = startDate.getMonth() + 1;
+      const year = startDate.getFullYear();
+
+      const isValidDate = !isNaN(startDate.getTime());
+
+      return {
+        month: isValidDate ? `${monthMap[month]} ${year}` : "Invalid Date",
+        new: values?.stages["New Customers"].customer_count || 0,
+        early: values?.stages["Early Life Customers"].customer_count || 0,
+        mature: values?.stages["Mature Customers"].customer_count || 0,
+        loyal: values?.stages["Loyal Customers"].customer_count || 0,
+      };
+    });
+
+    return result;
+  };
+
+  useEffect(() => {
+    console.log(dataMonthly);
+  }, [dataMonthly])
+
+  const fetchLineGraphTotalData = async () => {
+    try {
+      await axiosPrivate.post('/customer-lifecycle/stage-breakdown',
+        { reference_date: format(date, "yyyy-MM-dd"), time_range: timeRange },
+        header
+      )
+        .then((res) => {
+          if (res.status === 200) {
+            const formatData = formatCustomerData(res.data.data.monthly_breakdown)
+            //console.log(formatData);
+            setDataMonthly(formatData)
+          }
+        })
+    } catch (error) {
+      toast.error(error.message)
+    }
+  }
 
   const fetchSegmentList = async () => {
+    // console.log(format(date, "yyyy-MM-dd"), timeRange)
     const segments = [
-      { url: '/customer-lifecycle/new-customers', setter: setNewCustomerSegment },
-      { url: '/customer-lifecycle/early-life-customers', setter: setEarlyCustomerSegment },
-      { url: '/customer-lifecycle/mature-customers', setter: setMatureCustomerSegment },
-      { url: '/customer-lifecycle/loyal-customers', setter: setLoyalCustomerSegment },
+      { key: 'new', url: '/customer-lifecycle/new-customers' },
+      { key: 'early', url: '/customer-lifecycle/early-life-customers' },
+      { key: 'mature', url: '/customer-lifecycle/mature-customers' },
+      { key: 'loyal', url: '/customer-lifecycle/loyal-customers' },
     ];
 
     try {
       await Promise.all(
-        segments.map(async ({ url, setter }) => {
+        segments.map(async ({ key, url }) => {
           try {
-            const res = await axiosPrivate.get(url, header);
+            const res = await axiosPrivate.post(
+              url,
+              { reference_date: format(date, "yyyy-MM-dd"), time_range: timeRange },
+              header
+            );
+
             if (res.status === 200) {
-              const transformed = transformData(res.data.data);
-              setter(transformed);
+              const data = res.data.data;
+              setCusLifeList((prev) => ({
+                ...prev,
+                [key]: {
+                  name: data.segment,
+                  metrics: data.metrics,
+                  customers: data.customers,
+                  time_window: data.time_window,
+                },
+              }));
             }
           } catch (err) {
-            toast.error(err.message);
+            toast.error('no data at this time');
           }
         })
       );
@@ -74,46 +129,21 @@ export default function CustomerLifecyclePage() {
   };
 
   useEffect(() => {
-    fetchSegmentList()
-  }, [])
+    fetchSegmentList();
+    fetchLineGraphTotalData();
+  }, [date, timeRange]);
 
-  const excludedKeys = ['customer_count', 'orders', 'aov', 'arpu', 'orders_per_day'];
+  const excludedKeysEarly = ['customer_count', 'orders', 'aov', 'arpu', 'orders_per_day', 'customer_percentage'];
+  const excludedKeys = ['customer_count', 'customer_percentage'];
 
-  const getCustomerCount = (segment: { name: string, value: any }[]) =>
-    segment.find(item => item.name === 'customer_count')?.value || 0;
-
-  const getMetricsWithoutKeys = (segment: { name: string, value: any }[], excluded: string[]) =>
-    segment.filter(item => !excluded.includes(item.name));
-
-  const getMetricsWithoutCount = (segment: { name: string, value: any }[]) =>
-    segment.filter(item => item.name !== 'customer_count');
-
-  const lifecycleStages = [
-    {
-      title: "New Customers",
-      count: getCustomerCount(newCustomerSegment),
-      metrics: getMetricsWithoutCount(newCustomerSegment),
-      color: "new",
-    },
-    {
-      title: "Early-life Customers",
-      count: getCustomerCount(earlyCustomerSegment),
-      metrics: getMetricsWithoutKeys(earlyCustomerSegment, excludedKeys),
-      color: "early",
-    },
-    {
-      title: "Mature Customers",
-      count: getCustomerCount(matureCustomerSegment),
-      metrics: getMetricsWithoutCount(matureCustomerSegment),
-      color: "mature",
-    },
-    {
-      title: "Loyal Customers",
-      count: getCustomerCount(loyalCustomerSegment),
-      metrics: getMetricsWithoutCount(loyalCustomerSegment),
-      color: "loyal",
-    },
-  ];
+  const getMetricsWithoutKeys = (metricList: Record<string, any>, excluded: string[]) => {
+    return Object.entries(metricList)
+      .filter(([key]) => !excluded.includes(key))
+      .reduce((acc, [key, value]) => {
+        acc[key] = value;
+        return acc;
+      }, {} as Record<string, any>);
+  };
 
   return (
     <div className="flex min-h-screen w-full flex-col">
@@ -126,52 +156,23 @@ export default function CustomerLifecyclePage() {
             </p>
           </div>
           <div className="flex items-center gap-2">
-            <DateRangePicker />
-            <Button variant="outline" size="icon">
-              <Filter className="h-4 w-4" />
-              <span className="sr-only">Filter</span>
-            </Button>
-            <Button variant="outline" size="icon">
-              <Download className="h-4 w-4" />
-              <span className="sr-only">Download</span>
-            </Button>
+            <DateRangePicker className="bg-background" />
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button variant="outline" className="bg-primary" size="icon">
+                    <Download className="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  Click to sync data
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
           </div>
         </div>
 
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          <MetricCard
-            title="Total Customers"
-            value="24,892"
-            change="+12.3%"
-            trend="up"
-            description="vs. previous period"
-            icon={<Users className="h-4 w-4 text-muted-foreground" />}
-          />
-          <MetricCard
-            title="New Customers"
-            value="1,642"
-            change="+5.8%"
-            trend="up"
-            description="vs. previous period"
-            icon={<Users className="h-4 w-4 text-muted-foreground" />}
-          />
-          <MetricCard
-            title="Average Order Value"
-            value="$86.32"
-            change="+2.1%"
-            trend="up"
-            description="vs. previous period"
-            icon={<ArrowUpRight className="h-4 w-4 text-muted-foreground" />}
-          />
-          <MetricCard
-            title="Monthly Active Users"
-            value="18,453"
-            change="-3.2%"
-            trend="down"
-            description="vs. previous period"
-            icon={<Calendar className="h-4 w-4 text-muted-foreground" />}
-          />
-        </div>
+        {/* for chart overview  */}
 
         <Tabs defaultValue="overview" className="space-y-4">
           <TabsList>
@@ -188,7 +189,7 @@ export default function CustomerLifecyclePage() {
                   <CardDescription>Distribution of customers across lifecycle stages</CardDescription>
                 </CardHeader>
                 <CardContent className="px-2">
-                  <CustomerLifecycleChart className="aspect-[2/1]" />
+                  <CustomerLifecycleChart data={dataMonthly} className="aspect-[2/1]" />
                 </CardContent>
               </Card>
               <Card>
@@ -197,21 +198,28 @@ export default function CustomerLifecyclePage() {
                   <CardDescription>Percentage of customers in each lifecycle stage</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <SegmentDistributionChart className="aspect-square" />
+                  {Object.entries(cusLifeList).length > 0 &&
+                    <SegmentDistributionChart data={cusLifeList} className="aspect-square" />
+                  }
                 </CardContent>
               </Card>
             </div>
 
+
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-              {lifecycleStages.map((stage, index) => (
-                <LifecycleStageCard
-                  key={index}
-                  title={stage.title}
-                  count={stage.count}
-                  metrics={stage.metrics}
-                  color={stage.color}
-                />
-              ))}
+              {cusLifeList && Object.entries(cusLifeList)
+                .sort(([keyA], [keyB]) => {
+                  return sortOrder.indexOf(keyA) - sortOrder.indexOf(keyB);
+                })
+                .map(([key, value], index) => (
+                  <LifecycleStageCard
+                    key={index}
+                    title={value.name}
+                    count={value.metrics.customer_count}
+                    metrics={getMetricsWithoutKeys(value.metrics, key === 'early' ? excludedKeysEarly : excludedKeys)}
+                    color={key}
+                  />
+                ))}
             </div>
           </TabsContent>
           <TabsContent value="segments" className="space-y-4">

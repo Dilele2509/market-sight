@@ -9,6 +9,7 @@ export const AuthProvider = ({ children }) => {
   const { setLogged, logged } = useSegmentToggle();
   const [token, setToken] = useState(localStorage.getItem("token") || null);
   const [user, setUser] = useState(JSON.parse(localStorage.getItem("user") || null));
+  localStorage.setItem("loginTime", Date.now().toString()); // <== lưu thời gian login
   const navigate = useNavigate();
 
   // useEffect(() => {
@@ -37,11 +38,18 @@ export const AuthProvider = ({ children }) => {
   // Tải lại user từ localStorage nếu có
   useEffect(() => {
     if (token) {
-      const storedUser = JSON.parse(localStorage.getItem("user") || "null");
-      if (storedUser) {
-        setUser(storedUser);
+      const storedLoginTime = parseInt(localStorage.getItem("loginTime") || "0", 10);
+      const threeDaysMs = 3 * 24 * 60 * 60 * 1000; // 3 ngày tính bằng milliseconds
+
+      if (Date.now() - storedLoginTime > threeDaysMs) {
+        logout();
       } else {
-        fetchUserProfile();
+        const storedUser = JSON.parse(localStorage.getItem("user") || "null");
+        if (storedUser) {
+          setUser(storedUser);
+        } else {
+          fetchUserProfile();
+        }
       }
     }
   }, [token]);
@@ -111,7 +119,7 @@ export const AuthProvider = ({ children }) => {
     localStorage.clear();
     setToken(null);
     setUser(null);
-    navigate("/"); // Quay về trang login
+    navigate("/");
   };
 
   return (

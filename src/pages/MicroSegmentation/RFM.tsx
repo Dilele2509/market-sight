@@ -87,10 +87,14 @@ export default function RFM() {
               <TabsTrigger value="table">Table</TabsTrigger>
             </TabsList>
             <TabsContent value="treemap" className="space-y-4">
-              <RfmTreemap />
+              <RfmTreemap
+                rfmData={rfmData}
+              />
             </TabsContent>
             <TabsContent value="table">
-              <RfmSegmentTable />
+              <RfmSegmentTable
+                rfmData={rfmData}
+              />
             </TabsContent>
           </Tabs>
         </CardContent>

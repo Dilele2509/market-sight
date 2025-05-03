@@ -9,6 +9,7 @@ import { AuthProvider } from "./context/AuthContext";
 import ProtectedRoutes from "./components/utils/protectedRoutes";
 import { SegmentToggleProvider } from "./context/SegmentToggleContext";
 import { SegmentDataProvider } from "./context/SegmentDataContext";
+import { LifecycleContextProvider } from "./context/LifecycleContext";
 
 const queryClient = new QueryClient();
 
@@ -20,6 +21,7 @@ const App = () => (
         <Sonner />
         <SegmentToggleProvider>
           <SegmentDataProvider>
+            <LifecycleContextProvider>
               <MicroSegmentationProvider>
                 <BrowserRouter>
                   <AuthProvider>
@@ -27,6 +29,7 @@ const App = () => (
                   </AuthProvider>
                 </BrowserRouter>
               </MicroSegmentationProvider>
+            </LifecycleContextProvider>
           </SegmentDataProvider>
         </SegmentToggleProvider>
       </TooltipProvider>

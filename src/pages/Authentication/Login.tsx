@@ -1,5 +1,5 @@
-import {axiosAuth} from "@/API/axios"
-import { useState, useContext } from "react";
+import { axiosAuth } from "@/API/axios"
+import { useState, useContext, useEffect } from "react";
 import AuthContext from "@/context/AuthContext";
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
@@ -7,18 +7,36 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Checkbox } from "@/components/ui/checkbox"
+import { Link, useSearchParams } from "react-router-dom";
 
 export default function Login() {
   const { login } = useContext(AuthContext);
   const [email, setEmail] = useState<string>('');
   const [password, setPassword] = useState<string>('');
   const [isShowing, setIsShowing] = useState(false);
+  const [searchParams] = useSearchParams();
+
+  useEffect(() => {
+    const tokenVerify = searchParams.get("token");
+    if (tokenVerify) {
+      console.log("Token:", tokenVerify);  
+      axiosAuth.post(`/verify-email?token=${tokenVerify}`)
+        .then((res) => {
+          console.log(res.data);
+        })
+        .catch((err) => {
+          console.error("Error verifying email", err.response?.data);
+        });
+    } else {
+      console.log("Token not found");
+    }
+  }, [searchParams]);
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
     login(email, password);
   };
-  
+
 
   return (
     <div className="flex min-h-svh flex-col items-center justify-center gap-6 bg-muted p-6 md:p-10 bg-login">
@@ -84,9 +102,9 @@ export default function Login() {
                   </div>
                   <div className="text-center text-sm">
                     Don&apos;t have an account?{" "}
-                    <a href="#" className="underline underline-offset-4">
+                    <Link to={'/register'} className="underline underline-offset-4">
                       Sign up
-                    </a>
+                    </Link>
                   </div>
                 </div>
               </form>
