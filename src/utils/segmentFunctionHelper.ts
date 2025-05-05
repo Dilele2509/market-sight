@@ -87,7 +87,7 @@ function getClauseEvent(parentTable: string, eventCondition: any): string {
     for (const rel of relatedConditions || []) {
         const relTable = rel.relatedDataset;
         const joinKey = rel.joinWithKey;
-        joins.push(`LEFT JOIN ${relTable} ON ${baseTable}.${joinKey} = ${relTable}.${joinKey}`);
+        joins.push(`INNER JOIN ${relTable} ON ${baseTable}.${joinKey} = ${relTable}.${joinKey}`);
 
         for (const attr of rel.relatedAttributeConditions || []) {
             relatedWhere.push(getClause(relTable, attr));
@@ -178,43 +178,37 @@ function generateSQLPreview(
     rootOperator: string
 ): string {
     const tableName = selectedDataset.name;
-    const joins: string[] = [];
     const whereClauses: string[] = [];
 
     for (const condition of conditions) {
         if (condition.type === "attribute") {
             whereClauses.push(getClause(tableName, condition));
         } else if (condition.type === "event") {
-            const joinTable = "transactions";
-            const leftKey = condition.relatedColKey;
-            const rightKey = condition.columnKey;
-            joins.push(`LEFT JOIN ${joinTable} ON ${tableName}.${leftKey} = ${joinTable}.${rightKey}`);
-
+            // tao bỏ JOIN
             whereClauses.push(getClauseEvent(tableName, condition));
         }
     }
 
     for (const group of conditionGroups) {
-        const groupClause = buildGroupClause(group, tableName); // truyền tableName vào
+        const groupClause = buildGroupClause(group, tableName);
         if (groupClause) {
             whereClauses.push(groupClause);
         }
     }
 
     const whereClause = buildClauses(whereClauses, rootOperator) || "1=1";
-    const joinSQL = joins.length ? `\n${[...new Set(joins)].join("\n")}` : "";
 
     return `
 SELECT *
 FROM ${tableName}
-${joinSQL}
 WHERE ${whereClause};
     `.trim();
 }
 
+
 const highlightSQLWithTailwind = (sql: string): string => {
     const keywords = [
-        "SELECT", "FROM", "WHERE", "LEFT JOIN", "RIGHT JOIN", "INNER JOIN", "OUTER JOIN", "GROUP BY",
+        "SELECT", "FROM", "WHERE", "INNER JOIN", "RIGHT JOIN", "INNER JOIN", "OUTER JOIN", "GROUP BY",
         "HAVING", "ORDER BY", "NOT EXISTS", "EXISTS", "AND", "OR", "ON", "AS", "IN", "BETWEEN"
     ];
 
