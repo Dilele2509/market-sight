@@ -58,7 +58,7 @@ export function DateRangePicker({ className }: HTMLAttributes<HTMLDivElement>) {
                                     <SelectValue placeholder="Select range" />
                                 </SelectTrigger>
                                 <SelectContent className="bg-card" position="popper">
-                                    <SelectItem value="3">Last 3 month</SelectItem>
+                                    <SelectItem value="1">Last 1 month</SelectItem>
                                     <SelectItem value="3">Last 3 month</SelectItem>
                                     <SelectItem value="6">Last 6 months</SelectItem>
                                     <SelectItem value="9">Last 9 months</SelectItem>

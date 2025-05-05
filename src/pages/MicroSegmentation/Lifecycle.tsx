@@ -14,10 +14,12 @@ import { useContext, useEffect, useState } from "react"
 import { axiosPrivate } from "@/API/axios"
 import AuthContext from "@/context/AuthContext"
 import { toast } from "sonner"
-import { CLSList } from "@/types/lifecycleTypes"
+import { CLSList, MetricsValue } from "@/types/lifecycleTypes"
 import { useLifeContext } from "@/context/LifecycleContext"
 import { format } from "date-fns"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
+import MetricsLineGraph from "@/components/blocks/customerLifecycle/line-graph-component"
+import LifecycleGMVCard from "./LifecycleGMVCard"
 
 export const metadata: Metadata = {
   title: "Customer Lifecycle Analysis",
@@ -34,8 +36,14 @@ export default function CustomerLifecyclePage() {
     },
   };
 
+
   const [cusLifeList, setCusLifeList] = useState<CLSList>({});
   const [dataMonthly, setDataMonthly] = useState<Object[]>([]);
+  const [dataGMV, setDataGMV] = useState<Object[]>([]);
+
+  useEffect(() => {
+    console.log(cusLifeList)
+  }, [cusLifeList])
 
   const monthMap = {
     1: "Jan", 2: "Feb", 3: "Mar", 4: "Apr",
@@ -43,7 +51,7 @@ export default function CustomerLifecyclePage() {
     9: "Sep", 10: "Oct", 11: "Nov", 12: "Dec"
   };
 
-  const formatCustomerData = (inputData: Object) => {
+  const formatCustomerData = (inputData: Object): any => {
     const result = Object.entries(inputData).map(([title, values]) => {
       //console.log('check title: ', title, ' check value: ', values);
       const startDateRaw = values?.period?.start_date || "";
@@ -61,6 +69,23 @@ export default function CustomerLifecyclePage() {
         loyal: values?.stages["Loyal Customers"].customer_count || 0,
       };
     });
+  }
+  const formatGMVData = (inputData: Object) => {
+    const result = Object.entries(inputData).map(([title, values]) => {
+      const startDateRaw = values?.period?.start_date || "";
+      const startDate = new Date(startDateRaw);
+      const month = startDate.getMonth() + 1;
+      const year = startDate.getFullYear();
+
+      const isValidDate = !isNaN(startDate.getTime());
+
+      return {
+        month: isValidDate ? `${monthMap[month]} ${year}` : "Invalid Date",
+        GMV: values?.values?.["gmv"] || 0,
+        Orders: values?.values?.["orders"] || 0,
+        Customers: values?.values?.["customer_count"] || 0,
+      };
+    });
 
     return result;
   };
@@ -68,6 +93,10 @@ export default function CustomerLifecyclePage() {
   useEffect(() => {
     console.log(dataMonthly);
   }, [dataMonthly])
+
+  useEffect(()=>{
+    console.log('gmv: ', dataGMV);
+  },[dataGMV])
 
   const fetchLineGraphTotalData = async () => {
     try {
@@ -108,6 +137,11 @@ export default function CustomerLifecyclePage() {
 
             if (res.status === 200) {
               const data = res.data.data;
+              setDataGMV((prev) => ({
+                ...prev,
+                [key]: formatGMVData(data.metrics)
+              }));
+
               setCusLifeList((prev) => ({
                 ...prev,
                 [key]: {
@@ -136,13 +170,13 @@ export default function CustomerLifecyclePage() {
   const excludedKeysEarly = ['customer_count', 'orders', 'aov', 'arpu', 'orders_per_day', 'customer_percentage'];
   const excludedKeys = ['customer_count', 'customer_percentage'];
 
-  const getMetricsWithoutKeys = (metricList: Record<string, any>, excluded: string[]) => {
-    return Object.entries(metricList)
+  const getMetricsWithoutKeys = (metricValueList: Record<string, MetricsValue>, excluded: string[]) => {
+    return Object.entries(metricValueList)
       .filter(([key]) => !excluded.includes(key))
       .reduce((acc, [key, value]) => {
         acc[key] = value;
         return acc;
-      }, {} as Record<string, any>);
+      }, {} as Record<string, MetricsValue>);
   };
 
   return (
@@ -173,6 +207,7 @@ export default function CustomerLifecyclePage() {
         </div>
 
         {/* for chart overview  */}
+        <LifecycleGMVCard GMVData={dataGMV}/>
 
         <Tabs defaultValue="overview" className="space-y-4">
           <TabsList>
@@ -211,15 +246,22 @@ export default function CustomerLifecyclePage() {
                 .sort(([keyA], [keyB]) => {
                   return sortOrder.indexOf(keyA) - sortOrder.indexOf(keyB);
                 })
-                .map(([key, value], index) => (
-                  <LifecycleStageCard
-                    key={index}
-                    title={value.name}
-                    count={value.metrics.customer_count}
-                    metrics={getMetricsWithoutKeys(value.metrics, key === 'early' ? excludedKeysEarly : excludedKeys)}
-                    color={key}
-                  />
-                ))}
+                .map(([key, value], index) => {
+                  const lastMetric = value?.metrics?.[value.metrics.length - 1];
+                  //console.log(key, ' name: ', value?.name, ' last metric: ', lastMetric.values);
+
+                  return (
+                    <></>
+                    // <LifecycleStageCard
+                    //   key={index}
+                    //   title={value.name}
+                    //   count={value.metrics.customer_count}
+                    //   metrics={getMetricsWithoutKeys(lastMetric?.values, key === 'early' ? excludedKeysEarly : excludedKeys)}
+                    //   color={key}
+                    // />
+                  )
+                }
+                )}
             </div>
           </TabsContent>
           <TabsContent value="segments" className="space-y-4">

@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Link, useSearchParams } from "react-router-dom";
+import { toast } from "sonner";
 
 export default function Login() {
   const { login } = useContext(AuthContext);
@@ -23,6 +24,7 @@ export default function Login() {
       axiosAuth.post(`/verify-email?token=${tokenVerify}`)
         .then((res) => {
           console.log(res.data);
+          toast.success('This account was verified')
         })
         .catch((err) => {
           console.error("Error verifying email", err.response?.data);

@@ -7,8 +7,12 @@ import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 
 import { cn } from "@/lib/utils"
 
+interface dataObject {
+
+}
+
 interface CustomerLifecycleChartProps extends React.HTMLAttributes<HTMLDivElement> { 
-    data: Object[]
+    data: any
 }
 
 export function CustomerLifecycleChart({ data, className, ...props }: CustomerLifecycleChartProps) {

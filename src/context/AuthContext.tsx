@@ -2,6 +2,7 @@ import { axiosAuth, axiosPrivate } from "@/API/axios";
 import { createContext, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useSegmentToggle } from "./SegmentToggleContext";
+import { toast } from "sonner";
 
 const AuthContext = createContext(null);
 
@@ -92,19 +93,22 @@ export const AuthProvider = ({ children }) => {
                 localStorage.setItem("user", JSON.stringify(userProfile.data.data));
               } else {
                 console.error('can not get user profile')
+                toast.error('can not get user profile')
               }
 
               setToken(response.data.accessToken);
+              toast.success('Login successful')
               navigate("/");
             } catch (error) {
-              console.error("Error fetching user profile:", error);
+              console.error("Error fetching user profile:", error.message);
+              toast.error(error.message)
             }
           }
         })
         .catch(error => {
-          console.error("Error logging in:", error);
           if (error.response) {
-            console.error("Server Response:", error.response); // Log chi tiết lỗi từ server
+            console.error("Server Response:", error.response.data.message);
+            toast.error(error.response.data.message)
           }
         });
 
