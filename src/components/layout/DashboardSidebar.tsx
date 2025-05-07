@@ -1,5 +1,5 @@
 
-import { LayoutDashboard, ChartNoAxesCombined, Cable, Settings, Moon, Sun, ChevronLeft, ChevronRight, Database, Filter } from "lucide-react";
+import { LayoutDashboard, ChartNoAxesCombined, Cable, Moon, Sun, ChevronLeft, ChevronRight, Database, Filter } from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
@@ -40,11 +40,6 @@ const menuItems = [
     title: "Connect Data",
     icon: Cable,
     path: "/connect-data",
-  },
-  {
-    title: "Settings",
-    icon: Settings,
-    path: "/settings",
   },
 ];
 

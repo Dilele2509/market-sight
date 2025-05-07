@@ -3,6 +3,7 @@
 import { CartesianGrid, Legend, Line, LineChart, XAxis, YAxis } from "recharts"
 
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart"
+import CustomTooltip from "./custom-toolip"
 
 interface MetricsLineGraphProps extends React.HTMLAttributes<HTMLDivElement> {
     data: any
@@ -18,6 +19,12 @@ export default function MetricsLineGraph({ data }: MetricsLineGraphProps) {
         padding: "8px 12px",
         boxShadow: "0 4px 12px rgba(0, 0, 0, 0.1)",
     }
+    const colorMap = {
+        GMV: "hsl(var(--chart-1))",
+        Orders: "hsl(var(--chart-2))",
+        Customers: "hsl(var(--chart-3))",
+    };
+
 
     const maxOrders = Math.max(...data.map((item) => item.Orders || 0));
     const maxCustomers = Math.max(...data.map((item) => item.Customers || 0));
@@ -41,10 +48,11 @@ export default function MetricsLineGraph({ data }: MetricsLineGraphProps) {
                         color: "hsl(var(--chart-3))",
                     },
                 }}
-                className="min-h-[400px] tooltip-visible"
+                className="max-h-[400px] min-w-full tooltip-visible"
             >
                 <LineChart
                     data={data}
+                    height={200} 
                     margin={{
                         top: 20,
                         right: 50, // Increased right margin for the second Y-axis
@@ -85,19 +93,7 @@ export default function MetricsLineGraph({ data }: MetricsLineGraphProps) {
                     />
 
                     <ChartTooltip
-                        content={
-                            <ChartTooltipContent
-                                className="border-2 bg-background p-2 shadow-lg"
-                                formatter={(value, name) => {
-                                    // Format GMV with currency symbol
-                                    if (name === "GMV") {
-                                        return [`$${value.toLocaleString()}` + ' ' + name]
-                                    }
-                                    // Format Orders and Customers as whole numbers
-                                    return [value.toLocaleString() + ' ' + name]
-                                }}
-                            />
-                        }
+                        content={<CustomTooltip />}
                         cursor={{ stroke: "hsl(var(--muted-foreground))", strokeWidth: 1, strokeDasharray: "3 3" }}
                         active={true}
                     />

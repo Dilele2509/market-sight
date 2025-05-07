@@ -9,26 +9,26 @@ const LifecycleGMVCard = ({ GMVData }) => {
     const tabKeys = sortOrder.filter((key) => key in GMVData);
 
     return (
-        <Card>
-            <CardContent>
-                {/* Tabs */}
-                <div className="mb-4 mt-4 flex gap-2">
-                    {tabKeys.map((key) => (
+        <>
+            {/* Tabs */}
+            <div className="mb-4 flex gap-2" >
+                {
+                    tabKeys.map((key) => (
                         <button
                             key={key}
                             className={`px-4 py-1 rounded ${selectedTab === key ? "bg-primary text-white" : "bg-gray-100 text-gray-700"
                                 }`}
                             onClick={() => setSelectedTab(key)}
                         >
-                            {key.charAt(0).toUpperCase() + key.slice(1)}
+                            <p className="text-sm">{key.charAt(0).toUpperCase() + key.slice(1)}</p>
                         </button>
-                    ))}
-                </div>
+                    ))
+                }
+            </div >
 
-                {/* Chart */}
-                <MetricsLineGraph data={GMVData[selectedTab] || []} />
-            </CardContent>
-        </Card>
+            {/* Chart */}
+            < MetricsLineGraph data={GMVData[selectedTab] || []} />
+        </>
     );
 };
 

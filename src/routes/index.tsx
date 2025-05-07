@@ -3,7 +3,6 @@ import Index from "../pages/Index";
 import NotFound from "../pages/NotFound";
 import RFM from "../pages/MicroSegmentation/RFM";
 import Lifecycle from "../pages/MicroSegmentation/Lifecycle";
-import Settings from "../pages/Settings";
 import ImportData from "../pages/Sync";
 import UserCreate from "../pages/CreateSegmentation/UserCreate";
 import AiCreate from "../pages/CreateSegmentation/AiCreate";
@@ -23,7 +22,6 @@ const privateRoutes = [
     { path: "/micro-segmentation", component: MicroSegmentation},
     { path: "/create-segmentation", component: CreateSegmentation},
     { path: "/connect-data", component: ImportData},
-    { path: "/settings", component: Settings},
     { path: "/data-modeling", component:  DataModeling},
     { path: "*", component: NotFound}
 ]

@@ -14,7 +14,7 @@ import { useContext, useEffect, useState } from "react"
 import { axiosPrivate } from "@/API/axios"
 import AuthContext from "@/context/AuthContext"
 import { toast } from "sonner"
-import { CLSList, MetricsValue } from "@/types/lifecycleTypes"
+import { AggregatedMetrics, BreakdownMonthly, CLSList, MetricsValue } from "@/types/lifecycleTypes"
 import { useLifeContext } from "@/context/LifecycleContext"
 import { format } from "date-fns"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
@@ -41,9 +41,9 @@ export default function CustomerLifecyclePage() {
   const [dataMonthly, setDataMonthly] = useState<Object[]>([]);
   const [dataGMV, setDataGMV] = useState<Object[]>([]);
 
-  useEffect(() => {
-    console.log(cusLifeList)
-  }, [cusLifeList])
+  // useEffect(() => {
+  //   console.log(cusLifeList)
+  // }, [cusLifeList])
 
   const monthMap = {
     1: "Jan", 2: "Feb", 3: "Mar", 4: "Apr",
@@ -51,25 +51,29 @@ export default function CustomerLifecyclePage() {
     9: "Sep", 10: "Oct", 11: "Nov", 12: "Dec"
   };
 
-  const formatCustomerData = (inputData: Object): any => {
-    const result = Object.entries(inputData).map(([title, values]) => {
-      //console.log('check title: ', title, ' check value: ', values);
-      const startDateRaw = values?.period?.start_date || "";
-      const startDate = new Date(startDateRaw);
-      const month = startDate.getMonth() + 1;
-      const year = startDate.getFullYear();
+  const formatCustomerData = (inputData: BreakdownMonthly[]): any[] => {
+    const result = inputData.map((values, index) => {
+      const endDateRaw = values?.period?.end_date || "";
+      const endDate = new Date(endDateRaw);
+      const month = endDate.getMonth() + 1;
+      const year = endDate.getFullYear();
 
-      const isValidDate = !isNaN(startDate.getTime());
+      const isValidDate = !isNaN(endDate.getTime());
 
       return {
         month: isValidDate ? `${monthMap[month]} ${year}` : "Invalid Date",
-        new: values?.stages["New Customers"].customer_count || 0,
-        early: values?.stages["Early Life Customers"].customer_count || 0,
-        mature: values?.stages["Mature Customers"].customer_count || 0,
-        loyal: values?.stages["Loyal Customers"].customer_count || 0,
+        new: values?.stages.New.customer_count || 0,
+        early: values?.stages["Early-life"].customer_count || 0,
+        mature: values?.stages.Mature.customer_count || 0,
+        loyal: values?.stages.Loyal.customer_count || 0,
       };
     });
-  }
+
+    //console.log('result: ', result);
+    return result;
+  };
+
+
   const formatGMVData = (inputData: Object) => {
     const result = Object.entries(inputData).map(([title, values]) => {
       const startDateRaw = values?.period?.start_date || "";
@@ -90,13 +94,14 @@ export default function CustomerLifecyclePage() {
     return result;
   };
 
-  useEffect(() => {
-    console.log(dataMonthly);
-  }, [dataMonthly])
+  // useEffect(() => {
+  //   console.log('datamonthly: ', dataMonthly);
+  // }, [dataMonthly])
 
-  useEffect(()=>{
-    console.log('gmv: ', dataGMV);
-  },[dataGMV])
+  // useEffect(()=>{
+  //   console.log('gmv: ', dataGMV);
+  //   console.log('fetch list: ', cusLifeList);
+  // },[dataGMV, cusLifeList])
 
   const fetchLineGraphTotalData = async () => {
     try {
@@ -104,15 +109,17 @@ export default function CustomerLifecyclePage() {
         { reference_date: format(date, "yyyy-MM-dd"), time_range: timeRange },
         header
       )
-        .then((res) => {
+        .then(async (res) => {
           if (res.status === 200) {
-            const formatData = formatCustomerData(res.data.data.monthly_breakdown)
-            //console.log(formatData);
+            //console.log('check cls breakdown before format: ', res.data.data.monthly_breakdown);
+            const formatData = await formatCustomerData(res.data.data.monthly_breakdown)
+            //console.log('format data: ', await formatCustomerData(res.data.data.monthly_breakdown));
             setDataMonthly(formatData)
           }
         })
     } catch (error) {
-      toast.error(error.message)
+      console.log(error);
+      toast.error('no data at this time')
     }
   }
 
@@ -137,6 +144,7 @@ export default function CustomerLifecyclePage() {
 
             if (res.status === 200) {
               const data = res.data.data;
+              //console.log('data after fetch: ',data);
               setDataGMV((prev) => ({
                 ...prev,
                 [key]: formatGMVData(data.metrics)
@@ -148,6 +156,7 @@ export default function CustomerLifecyclePage() {
                   name: data.segment,
                   metrics: data.metrics,
                   customers: data.customers,
+                  aggregated_metrics: data.aggregated_metrics,
                   time_window: data.time_window,
                 },
               }));
@@ -158,7 +167,7 @@ export default function CustomerLifecyclePage() {
         })
       );
     } catch (error) {
-      toast.error(error.message);
+      toast.error('no data at this time');
     }
   };
 
@@ -167,16 +176,16 @@ export default function CustomerLifecyclePage() {
     fetchLineGraphTotalData();
   }, [date, timeRange]);
 
-  const excludedKeysEarly = ['customer_count', 'orders', 'aov', 'arpu', 'orders_per_day', 'customer_percentage'];
-  const excludedKeys = ['customer_count', 'customer_percentage'];
+  const excludedKeysEarly = ['unique_customers', 'avg_bill_per_user', 'orders_per_day', 'gmv', 'aov', 'arpu', 'orders', 'orders_per_day', 'orders_per_day_per_store'];
+  const excludedKeys = ['unique_customers', 'avg_bill_per_user', 'orders_per_day', 'gmv', 'aov', 'arpu', 'orders', 'orders_per_day', 'orders_per_day_per_store'];
 
-  const getMetricsWithoutKeys = (metricValueList: Record<string, MetricsValue>, excluded: string[]) => {
+  const getMetricsWithoutKeys = (metricValueList: any, excluded: string[]) => {
     return Object.entries(metricValueList)
       .filter(([key]) => !excluded.includes(key))
       .reduce((acc, [key, value]) => {
         acc[key] = value;
         return acc;
-      }, {} as Record<string, MetricsValue>);
+      }, {} as any);
   };
 
   return (
@@ -206,15 +215,11 @@ export default function CustomerLifecyclePage() {
           </div>
         </div>
 
-        {/* for chart overview  */}
-        <LifecycleGMVCard GMVData={dataGMV}/>
-
         <Tabs defaultValue="overview" className="space-y-4">
           <TabsList>
             <TabsTrigger value="overview">Overview</TabsTrigger>
             <TabsTrigger value="segments">Segments</TabsTrigger>
             <TabsTrigger value="metrics">Metrics</TabsTrigger>
-            <TabsTrigger value="trends">Trends</TabsTrigger>
           </TabsList>
           <TabsContent value="overview" className="space-y-4">
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
@@ -223,9 +228,9 @@ export default function CustomerLifecyclePage() {
                   <CardTitle>Customer Lifecycle Distribution</CardTitle>
                   <CardDescription>Distribution of customers across lifecycle stages</CardDescription>
                 </CardHeader>
-                <CardContent className="px-2">
+                {dataMonthly.length > 0 && <CardContent className="px-2">
                   <CustomerLifecycleChart data={dataMonthly} className="aspect-[2/1]" />
-                </CardContent>
+                </CardContent>}
               </Card>
               <Card>
                 <CardHeader>
@@ -247,18 +252,17 @@ export default function CustomerLifecyclePage() {
                   return sortOrder.indexOf(keyA) - sortOrder.indexOf(keyB);
                 })
                 .map(([key, value], index) => {
-                  const lastMetric = value?.metrics?.[value.metrics.length - 1];
-                  //console.log(key, ' name: ', value?.name, ' last metric: ', lastMetric.values);
+                  //console.log(key, ' name: ', value?.name, ' combine metric: ', value?.aggregated_metrics);
+                  //console.log('check function: ',getMetricsWithoutKeys(cusLifeList?.new.aggregated_metrics, excludedKeys))
 
                   return (
-                    <></>
-                    // <LifecycleStageCard
-                    //   key={index}
-                    //   title={value.name}
-                    //   count={value.metrics.customer_count}
-                    //   metrics={getMetricsWithoutKeys(lastMetric?.values, key === 'early' ? excludedKeysEarly : excludedKeys)}
-                    //   color={key}
-                    // />
+                    <LifecycleStageCard
+                      key={index}
+                      title={value.name}
+                      count={value.metrics.customer_count}
+                      metrics={getMetricsWithoutKeys(value?.aggregated_metrics, key === 'early' ? excludedKeysEarly : excludedKeys)}
+                      color={key}
+                    />
                   )
                 }
                 )}
@@ -271,7 +275,7 @@ export default function CustomerLifecyclePage() {
                 <CardDescription>Detailed breakdown of customer segments and their behavior</CardDescription>
               </CardHeader>
               <CardContent>
-                <CustomerMetricsTable />
+                {Object.entries(cusLifeList).length > 0 && <CustomerMetricsTable tableData={cusLifeList} />}
               </CardContent>
             </Card>
           </TabsContent>
@@ -282,22 +286,7 @@ export default function CustomerLifecyclePage() {
                 <CardDescription>Key performance indicators across all lifecycle stages</CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="text-center text-muted-foreground py-12">
-                  Monthly metrics visualization will appear here
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-          <TabsContent value="trends" className="space-y-4">
-            <Card>
-              <CardHeader>
-                <CardTitle>Trend Analysis</CardTitle>
-                <CardDescription>Long-term trends in customer behavior and lifecycle progression</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="text-center text-muted-foreground py-12">
-                  Trend analysis visualization will appear here
-                </div>
+                <LifecycleGMVCard GMVData={dataGMV} />
               </CardContent>
             </Card>
           </TabsContent>

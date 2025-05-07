@@ -10,11 +10,12 @@ const generateColor: Record<string, string> = {
     "New Customers": "#4A91D6",     // Medium Sky Blue
     "Promising": "#86C3E6",         // Soft Ice Blue
     "Need Attention": "#EA8D00",    // Warm Yellow-Orange
-    "About to Sleep": "#5A8A9D",    // Dusty Powder Blue
-    "Can't lose them": "#FF9B4B",   // Warm Orange
+    "About To Sleep": "#5A8A9D",    // Dusty Powder Blue
+    "Can't Lose Them": "#FF9B4B",   // Warm Orange
     "At Risk": "#F24A4A",           // Soft Red
     "Hibernating": "#4B8FB7",       // Medium Powder Blue
-};
+    "Lost": "#B85B5B",              // Soft Red (for Lost, if you want to add color for Lost)
+  };
 
 interface RfmSegmentTableProps {
     rfmData: {

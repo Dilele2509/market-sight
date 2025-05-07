@@ -1,30 +1,68 @@
 "use client"
 
-import { useState } from "react"
+import { useContext, useEffect, useState } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { RfmTreemap } from "@/components/blocks/RFM/rfm-treemap"
 import { RfmSegmentTable } from "@/components/blocks/RFM/rfm-segment-table"
 import { Badge } from "@/components/ui/badge"
+import { axiosPrivate } from "@/API/axios"
+import AuthContext from "@/context/AuthContext"
 
 // orders = value * f
 // revenue = value * f * m * 10
 // RFM segment data
-const rfmData = [
-  { name: "Champions", value: 7960, percentage: "13%", r: 5, f: 5, m: 5, days: 145, orders: 39800, revenue: 1990000 },
-  { name: "Loyal Customers", value: 8603, percentage: "14%", r: 3, f: 5, m: 5, days: 579, orders: 43015, revenue: 2150750 },
-  { name: "Potential Loyalist", value: 4569, percentage: "7%", r: 5, f: 3, m: 3, days: 399, orders: 13707, revenue: 1233090 },
-  { name: "New Customers", value: 2672, percentage: "4%", r: 5, f: 1, m: 1, days: 279, orders: 2672, revenue: 26720 },
-  { name: "Promising", value: 4546, percentage: "7%", r: 4, f: 1, m: 1, days: 507, orders: 4546, revenue: 45460 },
-  { name: "Need Attention", value: 8741, percentage: "14%", r: 3, f: 2, m: 3, days: 683, orders: 17482, revenue: 524460 },
-  { name: "About to Sleep", value: 480, percentage: "1%", r: 3, f: 1, m: 3, days: 679, orders: 480, revenue: 14400 },
-  { name: "Can't lose them", value: 954, percentage: "2%", r: 2, f: 5, m: 5, days: 826, orders: 4770, revenue: 238500 },
-  { name: "At Risk", value: 4954, percentage: "8%", r: 2, f: 4, m: 3, days: 881, orders: 19816, revenue: 594480 },
-  { name: "Hibernating", value: 19053, percentage: "30%", r: 1, f: 2, m: 1, days: 928, orders: 38106, revenue: 381060 },
-]
+// const rfmData = [
+//   { name: "Champions", value: 7960, percentage: "13%", r: 5, f: 5, m: 5, days: 145, orders: 39800, revenue: 1990000 },
+//   { name: "Loyal Customers", value: 8603, percentage: "14%", r: 3, f: 5, m: 5, days: 579, orders: 43015, revenue: 2150750 },
+//   { name: "Potential Loyalist", value: 4569, percentage: "7%", r: 5, f: 3, m: 3, days: 399, orders: 13707, revenue: 1233090 },
+//   { name: "New Customers", value: 2672, percentage: "4%", r: 5, f: 1, m: 1, days: 279, orders: 2672, revenue: 26720 },
+//   { name: "Promising", value: 4546, percentage: "7%", r: 4, f: 1, m: 1, days: 507, orders: 4546, revenue: 45460 },
+//   { name: "Need Attention", value: 8741, percentage: "14%", r: 3, f: 2, m: 3, days: 683, orders: 17482, revenue: 524460 },
+//   { name: "About to Sleep", value: 480, percentage: "1%", r: 3, f: 1, m: 3, days: 679, orders: 480, revenue: 14400 },
+//   { name: "Can't lose them", value: 954, percentage: "2%", r: 2, f: 5, m: 5, days: 826, orders: 4770, revenue: 238500 },
+//   { name: "At Risk", value: 4954, percentage: "8%", r: 2, f: 4, m: 3, days: 881, orders: 19816, revenue: 594480 },
+//   { name: "Hibernating", value: 19053, percentage: "30%", r: 1, f: 2, m: 1, days: 928, orders: 38106, revenue: 381060 },
+// ]
+
 
 export default function RFM() {
   const [activeTab, setActiveTab] = useState("overview")
+  const { token } = useContext(AuthContext)
+  const [rfmData, setRfmData] = useState([])
+  useEffect(() => {
+    console.log('rfm: ', rfmData);
+  }, [rfmData])
+  useEffect(() => {
+    axiosPrivate('/rfm/rfm-statistic', {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    })
+      .then((res) => {
+        const rawData = res.data?.data || [];
+
+        const formattedData = rawData.map((item) => ({
+          name: item.segment,
+          value: item.customer_count,
+          percentage: item.percentage + '%',
+          r: item.r_score,
+          f: item.f_score,
+          m: item.m_score,
+          days: item.recency_value,
+          orders: item.frequency_value,
+          revenue: item.total_monetary,
+        }));
+
+        console.log('formattedData', formattedData);
+
+        setRfmData(formattedData);
+      })
+      .catch((err) => {
+        console.error('RFM fetch error:', err);
+      });
+  }, []);
+
 
   return (
     <div className="space-y-6">
@@ -87,14 +125,14 @@ export default function RFM() {
               <TabsTrigger value="table">Table</TabsTrigger>
             </TabsList>
             <TabsContent value="treemap" className="space-y-4">
-              <RfmTreemap
+              {rfmData.length > 0 && <RfmTreemap
                 rfmData={rfmData}
-              />
+              />}
             </TabsContent>
             <TabsContent value="table">
-              <RfmSegmentTable
+              {rfmData.length>0 && <RfmSegmentTable
                 rfmData={rfmData}
-              />
+              />}
             </TabsContent>
           </Tabs>
         </CardContent>

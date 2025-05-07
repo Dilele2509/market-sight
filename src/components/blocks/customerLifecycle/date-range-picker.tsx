@@ -10,19 +10,28 @@ import { Calendar } from "@/components/ui/calendar"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useLifeContext } from "@/context/LifecycleContext"
-//import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 
 export function DateRangePicker({ className }: HTMLAttributes<HTMLDivElement>) {
     const { date, setDate, timeRange, setTimeRange, setStartDate } = useLifeContext()
 
-    // Tính ngày bắt đầu và ngày kết thúc
+    // Tính ngày bắt đầu và ngày kết thúc, giới hạn chỉ cập nhật từ ngày hiện tại trở về trước
     useEffect(() => {
         if (date && timeRange) {
+            // Get the current date
+            const currentDate = new Date()
+
+            // Ensure the selected date is not in the future
+            if (date > currentDate) {
+                setDate(currentDate)
+            }
+
+            // Set start date based on time range, subtracting months
             setStartDate(subMonths(date, timeRange))
         } else {
             setStartDate(null)
         }
-    }, [date, timeRange, setStartDate])
+    }, [date, timeRange, setDate, setStartDate])
+
     const endDate = date || null
 
     return (
@@ -74,39 +83,13 @@ export function DateRangePicker({ className }: HTMLAttributes<HTMLDivElement>) {
                                 selected={date}
                                 onSelect={setDate}
                                 initialFocus
+                                // Disable future dates
+                                disabled={{ after: new Date() }}
                             />
                         </div>
                     </div>
                 </PopoverContent>
             </Popover>
-
-            {/* Bảng Preview */}
-            {/* {date && timeRange && (
-                <div className="mt-4">
-                    <div className="overflow-x-auto">
-                        <Table className="min-w-full text-sm border border-border rounded-lg overflow-hidden">
-                            <TableHeader className="bg-muted">
-                                <TableRow>
-                                    <TableHead className="px-4 py-2 border-b text-center">Time Range</TableHead>
-                                    <TableHead className="px-4 py-2 border-b text-center">Reference Date</TableHead>
-                                    <TableHead className="px-4 py-2 border-b text-center">Start Date</TableHead>
-                                    <TableHead className="px-4 py-2 border-b text-center">End Date</TableHead>
-                                </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                                <TableRow className="hover:bg-muted/50">
-                                    <TableCell className="px-4 py-2 border-b text-center">
-                                        Last {timeRange} {timeRange === 1 ? "month" : "months"}
-                                    </TableCell>
-                                    <TableCell className="px-4 py-2 border-b text-center">{format(date, "PPP")}</TableCell>
-                                    <TableCell className="px-4 py-2 border-b text-center">{startDate ? format(startDate, "PPP") : "-"}</TableCell>
-                                    <TableCell className="px-4 py-2 border-b text-center">{endDate ? format(endDate, "PPP") : "-"}</TableCell>
-                                </TableRow>
-                            </TableBody>
-                        </Table>
-                    </div>
-                </div>
-            )} */}
         </div>
     )
 }

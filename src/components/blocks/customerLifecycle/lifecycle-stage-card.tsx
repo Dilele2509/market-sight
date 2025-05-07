@@ -20,18 +20,20 @@ export function LifecycleStageCard({ title, count, metrics, color }: LifecycleSt
 
     const formatMetricName = (name: string): string => {
         const words = name.split('_');
-        const displayWords = words.length > 3 ? words.slice(0, 3) : words;
+        const hasPer = words.includes('per');
 
-        return displayWords
-            .map((word, index) => {
-                if (index === 0 && UPPERCASE_WORDS.includes(word)) {
-                    return word.toUpperCase();
-                }
-                return index === 0
-                    ? word.charAt(0).toUpperCase() + word.slice(1)
-                    : word;
-            })
-            .join(' ');
+        const firstWord = words[0];
+        const formattedFirstWord = UPPERCASE_WORDS.includes(firstWord)
+            ? firstWord.toUpperCase()
+            : firstWord.charAt(0).toUpperCase() + firstWord.slice(1);
+
+        const restWords = words.slice(1).map(word => (word === 'per' ? '/' : word));
+
+        const allWords = [formattedFirstWord, ...restWords];
+
+        const displayWords = hasPer ? allWords : allWords.slice(0, 3);
+
+        return displayWords.join(' ');
     };
 
     // useEffect(()=>{
@@ -54,12 +56,18 @@ export function LifecycleStageCard({ title, count, metrics, color }: LifecycleSt
             <CardContent>
                 <div className="text-2xl font-bold mb-4">{count}</div>
                 <div className="space-y-2">
-                    {Object.entries(metrics).map(([key, value], index) => (
-                        <div key={index} className="flex justify-between text-sm">
-                            <span className="text-muted-foreground">{formatMetricName(key)}</span> 
-                            <span className="font-medium">{value as ReactNode}</span>
-                        </div>
-                    ))}
+                    {Object.entries(metrics).map(([key, value], index) => {
+                        const numValue = typeof value === 'number'
+                            ? (Number.isInteger(value) ? value : value.toFixed(2))
+                            : value;
+
+                        return (
+                            <div key={index} className="flex justify-between text-sm">
+                                <span className="text-muted-foreground">{formatMetricName(key)}</span>
+                                <span className="font-medium">{numValue as ReactNode}</span>
+                            </div>
+                        );
+                    })}
                 </div>
             </CardContent>
         </Card>
