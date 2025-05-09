@@ -6,10 +6,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { CustomerLifecycleChart } from "@/components/blocks/customerLifecycle/customer-lifecycle-chart"
 import { CustomerMetricsTable } from "@/components/blocks/customerLifecycle/customer-metrics-table"
-import { DateRangePicker } from "@/components/blocks/customerLifecycle/date-range-picker"
 import { LifecycleStageCard } from "@/components/blocks/customerLifecycle/lifecycle-stage-card"
 import { MetricCard } from "@/components/blocks/customerLifecycle/metric-card"
-import { SegmentDistributionChart } from "@/components/blocks/customerLifecycle/segment-distribution-chart"
 import { useContext, useEffect, useState } from "react"
 import { axiosPrivate } from "@/API/axios"
 import AuthContext from "@/context/AuthContext"
@@ -19,7 +17,9 @@ import { useLifeContext } from "@/context/LifecycleContext"
 import { format } from "date-fns"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import MetricsLineGraph from "@/components/blocks/customerLifecycle/line-graph-component"
-import LifecycleGMVCard from "./LifecycleGMVCard"
+import LifecycleGMVCard from "../../components/blocks/customerLifecycle/LifecycleGMVCard"
+import DateRangePicker from "@/components/blocks/customerLifecycle/date-range-picker"
+import { BarChartCLS } from "@/components/blocks/customerLifecycle/bar-chart-cls"
 
 export const metadata: Metadata = {
   title: "Customer Lifecycle Analysis",
@@ -28,7 +28,7 @@ export const metadata: Metadata = {
 
 export default function CustomerLifecyclePage() {
   const sortOrder = ["new", "early", "mature", "loyal"];
-  const { date, timeRange } = useLifeContext();
+  const { startDate, endDate } = useLifeContext();
   const { token } = useContext(AuthContext);
   const header = {
     headers: {
@@ -106,7 +106,7 @@ export default function CustomerLifecyclePage() {
   const fetchLineGraphTotalData = async () => {
     try {
       await axiosPrivate.post('/customer-lifecycle/stage-breakdown',
-        { reference_date: format(date, "yyyy-MM-dd"), time_range: timeRange },
+        { start_date: format(startDate, "yyyy-MM-dd"), end_date: format(endDate, "yyyy-MM-dd") },
         header
       )
         .then(async (res) => {
@@ -138,7 +138,7 @@ export default function CustomerLifecyclePage() {
           try {
             const res = await axiosPrivate.post(
               url,
-              { reference_date: format(date, "yyyy-MM-dd"), time_range: timeRange },
+              { start_date: format(startDate, "yyyy-MM-dd"), end_date: format(endDate, "yyyy-MM-dd") },
               header
             );
 
@@ -174,7 +174,7 @@ export default function CustomerLifecyclePage() {
   useEffect(() => {
     fetchSegmentList();
     fetchLineGraphTotalData();
-  }, [date, timeRange]);
+  }, [startDate, endDate]);
 
   const excludedKeysEarly = ['unique_customers', 'avg_bill_per_user', 'orders_per_day', 'gmv', 'aov', 'arpu', 'orders', 'orders_per_day', 'orders_per_day_per_store'];
   const excludedKeys = ['unique_customers', 'avg_bill_per_user', 'orders_per_day', 'gmv', 'aov', 'arpu', 'orders', 'orders_per_day', 'orders_per_day_per_store'];
@@ -199,7 +199,7 @@ export default function CustomerLifecyclePage() {
             </p>
           </div>
           <div className="flex items-center gap-2">
-            <DateRangePicker className="bg-background" />
+            <DateRangePicker />
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
@@ -233,13 +233,13 @@ export default function CustomerLifecyclePage() {
                 </CardContent>}
               </Card>
               <Card>
-                <CardHeader>
-                  <CardTitle>Segment Distribution</CardTitle>
-                  <CardDescription>Percentage of customers in each lifecycle stage</CardDescription>
+                <CardHeader className="h-1/5">
+                  <CardTitle>Customer Segment Performance</CardTitle>
+                  <CardDescription>Normalized metrics (0-100%) by segment</CardDescription>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="h-4/5">
                   {Object.entries(cusLifeList).length > 0 &&
-                    <SegmentDistributionChart data={cusLifeList} className="aspect-square" />
+                    <BarChartCLS data={cusLifeList} />
                   }
                 </CardContent>
               </Card>
