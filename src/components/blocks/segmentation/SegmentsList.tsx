@@ -56,6 +56,7 @@ const SegmentsList: React.FC<SegmentsListProps> = ({ segments = [], onCreateSegm
 
     const handleRowClick = (segment: Segment) => {
         if (onEditSegment) {
+            //console.log('check segment: ', segment);
             onEditSegment(segment);
         }
     };

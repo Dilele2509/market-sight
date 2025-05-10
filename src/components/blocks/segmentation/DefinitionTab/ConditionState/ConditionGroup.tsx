@@ -24,6 +24,7 @@ const ConditionGroup: React.FC<ConditionGroupProps> = ({
     renderAttributeCondition,
     renderEventCondition,
 }) => {
+    const { selectedDataset } = useSegmentData()
     const { setConditionGroups, conditionGroups, conditions } = useSegmentData()
 
     const handleAddConditionToGroup = (groupId, type = 'attribute') => {
@@ -49,13 +50,17 @@ const ConditionGroup: React.FC<ConditionGroupProps> = ({
                 } else if (type === 'event') {
                     newCondition = {
                         id: newId,
+                        columnKey: selectedDataset.fields[0],
+                        relatedColKey: selectedDataset.fields[0],
                         type: 'event',
                         eventType: 'performed',
-                        eventName: '',
                         frequency: 'at_least',
                         count: 1,
                         timePeriod: 'days',
-                        timeValue: 30
+                        timeValue: 30,
+                        operator: 'AND',
+                        attributeConditions: [],
+                        relatedConditions: []
                     };
                 }
 
@@ -90,7 +95,7 @@ const ConditionGroup: React.FC<ConditionGroupProps> = ({
                     variant="ghost"
                     onClick={() => handleRemoveConditionGroup(group.id)}
                 >
-                    <Trash className="w-4 h-4" color={'#E11D48'}/>
+                    <Trash className="w-4 h-4" color={'#E11D48'} />
                 </Button>
             </div>
 
@@ -136,26 +141,18 @@ const ConditionGroup: React.FC<ConditionGroupProps> = ({
                         <Button
                             variant="outline"
                             size="sm"
-                            className="h-8 px-2 text-xs"
+                            className="px-2 py-1 text-xs w-auto"
                             onClick={() => handleAddConditionToGroup(group.id, "attribute")}
                         >
-                            <SlidersHorizontal className="w-3 h-3 mr-1" /> Add attribute
+                            <SlidersHorizontal className="w-3 h-3 mr-1" /> Add attribute condition
                         </Button>
                         <Button
                             variant="outline"
                             size="sm"
-                            className="h-8 px-2 text-xs"
+                            className="px-2 py-1 text-xs w-auto"
                             onClick={() => handleAddConditionToGroup(group.id, "event")}
                         >
-                            <Calendar className="w-3 h-3 mr-1" /> Add event
-                        </Button>
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            className="h-8 px-2 text-xs"
-                            onClick={() => handleAddConditionToGroup(group.id, "related")}
-                        >
-                            <Link className="w-3 h-3 mr-1" /> Add related
+                            <Calendar className="w-3 h-3 mr-1" /> Add event condition
                         </Button>
                     </div>
                 </div>

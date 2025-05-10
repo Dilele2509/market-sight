@@ -155,6 +155,7 @@ export const SegmentDataProvider: React.FC<{ children: ReactNode }> = ({ childre
 
     useEffect(() => {
         if (!datasets || Object.keys(datasets).length === 0) return;
+        console.log('check segment in context: ', editSegment);
 
         setSegmentName(editSegment ? editSegment.segment_name : "High Value Users (new)");
         setSegmentId(editSegment ? editSegment.segment_id : "segment:high-value-users-new");

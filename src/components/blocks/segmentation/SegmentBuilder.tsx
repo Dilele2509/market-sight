@@ -92,10 +92,10 @@ export default function SegmentBuilder({ onBack, editSegment }: SegmentBuilderPr
         try {
             const sqlQuery = generateSQLPreview(selectedDataset, conditions, conditionGroups, attributes, rootOperator);
 
-            console.log('condition: ', conditions, ' sql query: ', sqlQuery);
+            //console.log('condition: ', conditions, ' sql query: ', sqlQuery);
 
             const connectionUrl = localStorage.getItem(CONNECTION_STORAGE_KEY)
-            console.log('connection: ', connectionUrl);
+            //console.log('connection: ', connectionUrl);
 
             if (!connectionUrl) {
                 toast.error("Connection URL not configured. Please set the connection URL first.");
@@ -322,23 +322,11 @@ export default function SegmentBuilder({ onBack, editSegment }: SegmentBuilderPr
                     <RenderDefinition
                         generateSQLPreview={generateSQL}
                     />
-
-                </TabsContent>
-
-
-                <TabsContent value="activity">
-                    <h2 className="text-base font-medium">Activity Tab Content</h2>
-                    <p className="text-sm">This tab shows activity information.</p>
                 </TabsContent>
 
                 <TabsContent value="syncs">
                     <h2 className="text-base font-medium">Syncs Tab Content</h2>
                     <p className="text-sm">This tab shows syncs information.</p>
-                </TabsContent>
-
-                <TabsContent value="overlap">
-                    <h2 className="text-base font-medium">Overlap Tab Content</h2>
-                    <p className="text-sm">This tab shows overlap information.</p>
                 </TabsContent>
             </Tabs>
         </div>
