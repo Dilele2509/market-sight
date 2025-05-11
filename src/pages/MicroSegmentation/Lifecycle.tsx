@@ -162,6 +162,7 @@ export default function CustomerLifecyclePage() {
               }));
             }
           } catch (err) {
+            console.log(err);
             toast.error('no data at this time');
           }
         })
@@ -198,7 +199,7 @@ export default function CustomerLifecyclePage() {
               Track customer behavior and metrics across different lifecycle stages
             </p>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-4">
             <DateRangePicker />
             <TooltipProvider>
               <Tooltip>
@@ -215,7 +216,7 @@ export default function CustomerLifecyclePage() {
           </div>
         </div>
 
-        <Tabs defaultValue="overview" className="space-y-4">
+        {dataGMV && cusLifeList && dataMonthly ? <Tabs defaultValue="overview" className="space-y-4">
           <TabsList>
             <TabsTrigger value="overview">Overview</TabsTrigger>
             <TabsTrigger value="table">Table</TabsTrigger>
@@ -290,7 +291,12 @@ export default function CustomerLifecyclePage() {
               </CardContent>
             </Card>
           </TabsContent>
-        </Tabs>
+        </Tabs> : (
+          <div className="flex flex-col items-center justify-center py-20 space-y-4">
+            <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-card-foreground"></div>
+            <p className="text-sm text-muted-foreground">Loading data...</p>
+          </div>
+        )}
       </main>
     </div>
   )
