@@ -8,19 +8,33 @@ import ScoreBar from "./score-bar-rfm"
 
 // Generate a color based on the name
 const generateColor: Record<string, string> = {
-    "Champions": "#1D5C4D",         // Dark Teal
-    "Loyal Customers": "#4D8C8C",   // Dark Turquoise
-    "Potential Loyalist": "#6A9F86",// Dark Mint Green
-    "New Customers": "#4A91D6",     // Medium Sky Blue
-    "Promising": "#86C3E6",         // Soft Ice Blue
-    "Need Attention": "#EA8D00",    // Warm Yellow-Orange
-    "About To Sleep": "#5A8A9D",    // Dusty Powder Blue
-    "Can't Lose Them": "#FF9B4B",   // Warm Orange
-    "At Risk": "#F24A4A",           // Soft Red
-    "Hibernating": "#4B8FB7",       // Medium Powder Blue
-    "Lost": "#B85B5B",              // Soft Red (for Lost, if you want to add color for Lost)
-  };
+    Champions: "#1D5C4D", // Dark Teal
+    "Loyal Customers": "#4D8C8C", // Dark Turquoise
+    "Potential Loyalist": "#6A9F86", // Dark Mint Green
+    "New Customers": "#4A91D6", // Medium Sky Blue
+    Promising: "#86C3E6", // Soft Ice Blue
+    "Need Attention": "#EA8D00", // Warm Yellow-Orange
+    "About To Sleep": "#5A8A9D", // Dusty Powder Blue
+    "Can't Lose Them": "#FF9B4B", // Warm Orange
+    "At Risk": "#F24A4A", // Soft Red
+    Hibernating: "#4B8FB7", // Medium Powder Blue
+    Lost: "#B85B5B", // Soft Red (for Lost, if you want to add color for Lost)
+}
 
+// Add this mapping of segments to their RFM values after the generateColor object
+const segmentRfmValues: Record<string, { r: number; f: number; m: number }> = {
+    Champions: { r: 5, f: 5, m: 5 },
+    "Loyal Customers": { r: 3, f: 4, m: 5 },
+    "Potential Loyalist": { r: 4, f: 2, m: 2 },
+    "New Customers": { r: 5, f: 1, m: 1 },
+    Promising: { r: 4, f: 1, m: 1 },
+    "Need Attention": { r: 4, f: 4, m: 3 },
+    "About To Sleep": { r: 3, f: 2, m: 2 },
+    "At Risk": { r: 2, f: 4, m: 4 },
+    "Can't Lose Them": { r: 1, f: 5, m: 5 },
+    Hibernating: { r: 2, f: 2, m: 2 },
+    Lost: { r: 1, f: 1, m: 1 },
+}
 
 // Define a type for the treemap node that includes the properties added by d3.treemap()
 type TreemapNode = d3.HierarchyNode<any> & {
@@ -30,18 +44,13 @@ type TreemapNode = d3.HierarchyNode<any> & {
     y1: number
 }
 
+// Replace the interface RfmTreemapProps with this updated version
 interface RfmTreemapProps {
     rfmData: {
-        name: string;
-        value: number;
-        percentage: string;
-        r: number;
-        f: number;
-        m: number;
-        days: number;
-        orders: number;
-        revenue: number;
-    }[];
+        segment: string
+        count: number
+        percentage: number
+    }[]
 }
 
 export function RfmTreemap({ rfmData }: RfmTreemapProps) {
@@ -49,17 +58,30 @@ export function RfmTreemap({ rfmData }: RfmTreemapProps) {
     const tooltipRef = useRef<HTMLDivElement>(null)
     const [tab, setTab] = useState("R")
 
+    // Replace the formattedData transformation in the RfmTreemap component with this
+    const formattedData = rfmData.map((item) => {
+        const rfmValues = segmentRfmValues[item.segment] || { r: 3, f: 3, m: 3 }
+        return {
+            name: item.segment,
+            value: item.count,
+            percentage: item.percentage + "%",
+            r: rfmValues.r,
+            f: rfmValues.f,
+            m: rfmValues.m,
+        }
+    })
+
     const [animatedValues, setAnimatedValues] = useState<Record<string, number>>({})
 
     useEffect(() => {
         const initialValues: Record<string, number> = {}
-        rfmData.forEach((segment) => {
+        formattedData.forEach((segment) => {
             initialValues[segment.name] = 0
         })
         setAnimatedValues(initialValues)
 
         // Bắt đầu animate
-        const duration = 1000 
+        const duration = 1000
         const start = Date.now()
 
         const timer = d3.timer(() => {
@@ -67,7 +89,7 @@ export function RfmTreemap({ rfmData }: RfmTreemapProps) {
             const t = Math.min(1, elapsed / duration) // 0 -> 1
 
             const newValues: Record<string, number> = {}
-            rfmData.forEach((segment) => {
+            formattedData.forEach((segment) => {
                 newValues[segment.name] = Math.floor(d3.interpolateNumber(0, segment.value)(t))
             })
             setAnimatedValues(newValues)
@@ -100,7 +122,7 @@ export function RfmTreemap({ rfmData }: RfmTreemapProps) {
             .style("font", "10px sans-serif")
 
         // Create hierarchy
-        const root = d3.hierarchy({ children: rfmData }).sum((d) => (d as any).value)
+        const root = d3.hierarchy({ children: formattedData }).sum((d) => (d as any).value)
 
         // Create treemap layout
         const treemap = d3.treemap().size([width, height]).paddingOuter(3).paddingInner(1)
@@ -128,13 +150,13 @@ export function RfmTreemap({ rfmData }: RfmTreemapProps) {
             .attr("transform", (d) => `translate(${(d.x0 + d.x1) / 2}, ${(d.y0 + d.y1) / 2})`) // Bắt đầu ở tâm cell
             .style("opacity", 0) // Bắt đầu ẩn
 
-        cell.transition()
+        cell
+            .transition()
             .delay((_, i) => i * 40 + Math.random() * 150) // Delay đan xen
             .duration(600)
             .ease(d3.easeBackOut.overshoot(1.5)) // Nảy nhẹ cực đẹp
             .attr("transform", (d) => `translate(${d.x0},${d.y0})`) // Bay về đúng vị trí
             .style("opacity", 1) // Fade in
-
 
         // Add rectangles
         cell
@@ -147,9 +169,6 @@ export function RfmTreemap({ rfmData }: RfmTreemapProps) {
                     <div class="font-medium">${(d.data as any).name}</div>
                     <div>Customers: ${(d.data as any).value.toLocaleString()}</div>
                     <div>Percentage: ${(d.data as any).percentage}</div>
-                    <div>Avg Days: ${(d.data as any).days}</div>
-                    <div>Orders: ${(d.data as any).orders.toLocaleString()}</div>
-                    <div>Revenue: $${((d.data as any).revenue / 1000).toLocaleString()}K</div>
                     <div>R: ${(d.data as any).r}, F: ${(d.data as any).f}, M: ${(d.data as any).m}</div>
                   `)
 
@@ -250,7 +269,6 @@ export function RfmTreemap({ rfmData }: RfmTreemapProps) {
         }
     }, [])
 
-
     return (
         <div>
             <div className="grid grid-cols-11 w-full gap-3">
@@ -265,15 +283,13 @@ export function RfmTreemap({ rfmData }: RfmTreemapProps) {
                     <div className="flex justify-end mb-4">
                         <div className="text-sm font-medium">customers</div>
                     </div>
-                    {rfmData.map((segment) => (
+                    {formattedData.map((segment) => (
                         <div key={segment.name} className="flex items-center justify-between">
                             <div className="flex items-center space-x-2">
                                 <div className="w-4 h-4" style={{ backgroundColor: generateColor[segment.name] }}></div>
                                 <div className="text-sm">{segment.name}</div>
                             </div>
-                            <div className="text-sm">
-                                {animatedValues[segment.name]?.toLocaleString() ?? 0}
-                            </div>
+                            <div className="text-sm">{animatedValues[segment.name]?.toLocaleString() ?? 0}</div>
                         </div>
                     ))}
                 </div>
@@ -290,37 +306,37 @@ export function RfmTreemap({ rfmData }: RfmTreemapProps) {
                         </TabsList>
 
                         <TabsContent value="R">
-                            {rfmData.map((segment) => (
+                            {formattedData.map((segment) => (
                                 <div key={segment.name} className="flex items-center justify-between py-1 border-b text-sm">
                                     <div className="flex items-center gap-5">
                                         <div className="w-4 h-4" style={{ backgroundColor: generateColor[segment.name] }} />
                                         <ScoreBar value={segment.r} color={generateColor[segment.name]} />
                                     </div>
-                                    <div>{segment.days}</div>
+                                    <label>{segment.r}</label>
                                 </div>
                             ))}
                         </TabsContent>
 
                         <TabsContent value="F">
-                            {rfmData.map((segment) => (
+                            {formattedData.map((segment) => (
                                 <div key={segment.name} className="flex items-center justify-between py-1 border-b text-sm">
                                     <div className="flex items-center gap-5">
                                         <div className="w-4 h-4" style={{ backgroundColor: generateColor[segment.name] }} />
                                         <ScoreBar value={segment.f} color={generateColor[segment.name]} />
                                     </div>
-                                    <div>{segment.orders.toLocaleString()}</div>
+                                    <label>{segment.f}</label>
                                 </div>
                             ))}
                         </TabsContent>
 
                         <TabsContent value="M">
-                            {rfmData.map((segment) => (
+                            {formattedData.map((segment) => (
                                 <div key={segment.name} className="flex items-center justify-between py-1 border-b text-sm">
                                     <div className="flex items-center gap-5">
                                         <div className="w-4 h-4" style={{ backgroundColor: generateColor[segment.name] }} />
                                         <ScoreBar value={segment.m} color={generateColor[segment.name]} />
                                     </div>
-                                    <div>${segment.revenue.toLocaleString()}</div>
+                                    <label>{segment.m}</label>
                                 </div>
                             ))}
                         </TabsContent>

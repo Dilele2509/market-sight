@@ -8,6 +8,9 @@ import { RfmSegmentTable } from "@/components/blocks/RFM/rfm-segment-table"
 import { Badge } from "@/components/ui/badge"
 import { axiosPrivate } from "@/API/axios"
 import AuthContext from "@/context/AuthContext"
+import { format } from "date-fns"
+import { useLifeContext } from "@/context/LifecycleContext"
+import DateRangePicker from "@/components/blocks/customerLifecycle/date-range-picker"
 
 // orders = value * f
 // revenue = value * f * m * 10
@@ -24,51 +27,89 @@ import AuthContext from "@/context/AuthContext"
 //   { name: "At Risk", value: 4954, percentage: "8%", r: 2, f: 4, m: 3, days: 881, orders: 19816, revenue: 594480 },
 //   { name: "Hibernating", value: 19053, percentage: "30%", r: 1, f: 2, m: 1, days: 928, orders: 38106, revenue: 381060 },
 // ]
+interface segment_stats_interface {
+  "segment": string,
+  "count": number,
+  "percentage": number
+}
 
+interface rfm_scores_interface {
+  "customer_id": string,
+  "business_id": number,
+  "recency_value": number,
+  "frequency_value": number,
+  "monetary_value": number,
+  "r_score": number,
+  "f_score": number,
+  "m_score": number,
+  "segment": string,
+  "last_updated": string
+}
+
+interface RFMInterface {
+  "analyzed_customers": number,
+  "period": {
+    "start_date": string,
+    "end_date": string
+  },
+  "segment_stats": segment_stats_interface[],
+  "rfm_scores": rfm_scores_interface[]
+}
 
 export default function RFM() {
   const [activeTab, setActiveTab] = useState("overview")
   const { token } = useContext(AuthContext)
-  const [rfmData, setRfmData] = useState([])
+  const [rfmData, setRfmData] = useState<RFMInterface>()
+  const { startDate, endDate } = useLifeContext();
   useEffect(() => {
     console.log('rfm: ', rfmData);
+    console.log('segment stats: ', rfmData?.segment_stats);
   }, [rfmData])
+  const fetchDataRfm = async () => {
+    try {
+      await axiosPrivate.post('/rfm/analyze-period',
+        { start_date: format(startDate, "yyyy-MM-dd"), end_date: format(endDate, "yyyy-MM-dd") },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        })
+        .then((res) => {
+          // const rawData = res.data?.data || [];
+
+          // const formattedData = rawData.map((item) => ({
+          //   name: item.segment,
+          //   value: item.customer_count,
+          //   percentage: item.percentage + '%',
+          //   r: item.r_score,
+          //   f: item.f_score,
+          //   m: item.m_score,
+          //   days: item.recency_value,
+          //   orders: item.frequency_value,
+          //   revenue: item.total_monetary,
+          // }));
+
+          // console.log('formattedData', formattedData);
+          setRfmData(res.data?.data);
+        })
+    } catch (error) {
+      console.error(error.message)
+    }
+  }
+
   useEffect(() => {
-    axiosPrivate('/rfm/rfm-statistic', {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    })
-      .then((res) => {
-        const rawData = res.data?.data || [];
-
-        const formattedData = rawData.map((item) => ({
-          name: item.segment,
-          value: item.customer_count,
-          percentage: item.percentage + '%',
-          r: item.r_score,
-          f: item.f_score,
-          m: item.m_score,
-          days: item.recency_value,
-          orders: item.frequency_value,
-          revenue: item.total_monetary,
-        }));
-
-        console.log('formattedData', formattedData);
-
-        setRfmData(formattedData);
-      })
-      .catch((err) => {
-        console.error('RFM fetch error:', err);
-      });
-  }, []);
+    fetchDataRfm()
+  }, [startDate, endDate]);
 
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col space-y-2">
-        <h1 className="text-3xl font-bold tracking-tight">RFM Segments</h1>
-        <p className="text-muted-foreground">Customer segmentation based on Recency, Frequency, and Monetary value</p>
+      <div className="flex items-start justify-between">
+        <div className="flex flex-col space-y-2">
+          <h1 className="text-3xl font-bold tracking-tight">RFM Segments</h1>
+          <p className="text-muted-foreground">Customer segmentation based on Recency, Frequency, and Monetary value</p>
+        </div>
+        <DateRangePicker />
       </div>
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
@@ -77,34 +118,44 @@ export default function RFM() {
             <CardTitle className="text-sm font-medium">Total Customers</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold">62,532</div>
+            <div className="text-3xl font-bold">{rfmData?.analyzed_customers}</div>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Champions</CardTitle>
-            <Badge className="bg-teal-500">13%</Badge>
+            <Badge className="bg-teal-800 text-secondary-light">
+              {rfmData?.segment_stats.find(item => item.segment === "Champions")?.percentage}%
+            </Badge>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold">7,960</div>
+            <div className="text-3xl font-bold">
+              {rfmData?.segment_stats.find(item => item.segment === "Champions")?.count}
+            </div>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">At Risk</CardTitle>
-            <Badge className="bg-pink-400">8%</Badge>
+            <Badge className="bg-red-500 text-secondary-light">
+              {rfmData?.segment_stats.find(item => item.segment === "At Risk")?.percentage}%
+            </Badge>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold">4,954</div>
+            <div className="text-3xl font-bold">
+              {rfmData?.segment_stats.find(item => item.segment === "At Risk")?.count}
+            </div>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Hibernating</CardTitle>
-            <Badge className="bg-indigo-400">30%</Badge>
+            <Badge className="bg-cyan-600 text-secondary-light">
+              {rfmData?.segment_stats.find(item => item.segment === "Hibernating")?.percentage}%
+            </Badge>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold">19,053</div>
+            <div className="text-3xl font-bold">{rfmData?.segment_stats.find(item => item.segment === "Hibernating")?.count}</div>
           </CardContent>
         </Card>
       </div>
@@ -125,13 +176,14 @@ export default function RFM() {
               <TabsTrigger value="table">Table</TabsTrigger>
             </TabsList>
             <TabsContent value="treemap" className="space-y-4">
-              {rfmData.length > 0 && <RfmTreemap
-                rfmData={rfmData}
-              />}
+              {rfmData?.segment_stats.length > 0 &&
+                <RfmTreemap
+                  rfmData={rfmData?.segment_stats}
+                />}
             </TabsContent>
             <TabsContent value="table">
-              {rfmData.length>0 && <RfmSegmentTable
-                rfmData={rfmData}
+              {rfmData?.rfm_scores.length > 0 && <RfmSegmentTable
+                rfmData={rfmData?.rfm_scores}
               />}
             </TabsContent>
           </Tabs>

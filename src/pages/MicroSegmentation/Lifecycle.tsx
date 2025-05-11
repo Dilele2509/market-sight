@@ -218,7 +218,7 @@ export default function CustomerLifecyclePage() {
         <Tabs defaultValue="overview" className="space-y-4">
           <TabsList>
             <TabsTrigger value="overview">Overview</TabsTrigger>
-            <TabsTrigger value="segments">Segments</TabsTrigger>
+            <TabsTrigger value="table">Table</TabsTrigger>
             <TabsTrigger value="metrics">Metrics</TabsTrigger>
           </TabsList>
           <TabsContent value="overview" className="space-y-4">
@@ -268,7 +268,7 @@ export default function CustomerLifecyclePage() {
                 )}
             </div>
           </TabsContent>
-          <TabsContent value="segments" className="space-y-4">
+          <TabsContent value="table" className="space-y-4">
             <Card>
               <CardHeader>
                 <CardTitle>Customer Segments</CardTitle>

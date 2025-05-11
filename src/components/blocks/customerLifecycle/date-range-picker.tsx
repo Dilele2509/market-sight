@@ -24,7 +24,7 @@ function DateRangePicker() {
         // If startDate is not set, default to one month ago
         if (!startDate) {
             const now = new Date()
-            const twoMonthAgo = addMonths(now, -2)
+            const twoMonthAgo = addMonths(now, -3)
             setStartDate(twoMonthAgo)
         }
     }, [startDate, endDate, setStartDate, setEndDate])

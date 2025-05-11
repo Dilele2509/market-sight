@@ -18,17 +18,6 @@ export interface Segment {
     };
 }
 
-// /** Định nghĩa kiểu dữ liệu cho một segment */
-// export interface SegmentList {
-//     id: string;
-//     name: string;
-//     dataset: string;
-//     updated_at: string;
-//     size: number;
-//     status: string;
-//   }
-
-
 /** Props của component SegmentBuilder */
 export interface SegmentBuilderProps {
     onBack: (updatedSegment?: Segment) => void;

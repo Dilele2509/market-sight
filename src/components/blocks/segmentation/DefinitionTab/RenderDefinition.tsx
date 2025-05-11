@@ -66,6 +66,9 @@ const RenderDefinition: React.FC<SegmentDefinitionProps> = ({
     useEffect(() => {
         fetchAttributes(selectedDataset)
     }, [selectedDataset])
+    useEffect(()=>{
+        console.log('check condition: ', conditions, ' check condition group: ', conditionGroups);
+    },[conditions, conditionGroups])
 
     const fetchAttributes = async (dataset: any, showToast = true) => {
         try {
@@ -179,15 +182,16 @@ const RenderDefinition: React.FC<SegmentDefinitionProps> = ({
     const handleAttributeClick = (attribute) => {
         const newId = Math.max(...conditions.map(c => c.id), ...conditionGroups.map(g => g.id), 0) + 1;
 
-        const newCondition = {
-            id: newId,
-            type: 'attribute',
-            field: attribute.name,
-            operator: getDefaultOperatorForType(attribute.type),
-            value: null
-        };
-
-        setConditions([...conditions, newCondition]);
+        setConditions([
+            ...conditions,
+            {
+                id: newId,
+                type: 'attribute',
+                field: attribute.name,
+                operator: getDefaultOperatorForType(attribute.type),
+                value: null
+            }
+        ]);
         toast.info(`Added condition for "${attribute.name}"`);
     };
     const getDefaultOperatorForType = (type) => {
@@ -524,7 +528,7 @@ const RenderDefinition: React.FC<SegmentDefinitionProps> = ({
             </div >
             <div className="mt-4 col-span-3 space-y-4">
                 {/* Estimate */}
-                <Card className="p-4">
+                {/* <Card className="p-4">
                     <CardContent>
                         <div className="flex justify-between items-center">
                             <p className="text-sm text-gray-600 flex items-center font-medium">
@@ -557,7 +561,7 @@ const RenderDefinition: React.FC<SegmentDefinitionProps> = ({
                             <p className="ml-3 text-sm font-medium text-red-500">-54%</p>
                         </div>
                     </CardContent>
-                </Card>
+                </Card> */}
 
                 {/* Details List Card */}
                 <Card className="border border-gray-300 rounded-lg relative">
@@ -602,7 +606,7 @@ const RenderDefinition: React.FC<SegmentDefinitionProps> = ({
                                         {attributes.map((attr, index) => (
                                             <div
                                                 key={index}
-                                                className="flex items-center p-2 border-b last:border-b-0 cursor-pointer hover:bg-gray-100"
+                                                className="flex items-center p-2 border-b last:border-b-0 cursor-pointer hover:bg-background"
                                                 onClick={() => handleAttributeClick(attr)}
                                             >
                                                 <span className="w-5 text-gray-500 text-sm">
@@ -611,7 +615,7 @@ const RenderDefinition: React.FC<SegmentDefinitionProps> = ({
                                                             attr.type === "boolean" ? "✓" :
                                                                 attr.type === "array" ? "[]" : "T"}
                                                 </span>
-                                                <p className="text-sm">{attr.name}</p>
+                                                <p className="text-sm text-card-foreground">{attr.name}</p>
                                             </div>
                                         ))}
                                         <div className="flex items-center p-2 border-t cursor-pointer hover:bg-gray-100">
