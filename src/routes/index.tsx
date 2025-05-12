@@ -11,6 +11,7 @@ import MicroSegmentation from "@/pages/MicroSegmentation";
 import Login from "@/pages/Authentication/Login";
 import Register from "@/pages/Authentication/Register";
 import CreateSegmentation from "@/pages/CreateSegmentation";
+import SyncConfigPage from "@/pages/SyncConfig";
 
 const publicRoutes = [
     { path: "/", component: Login},
@@ -23,6 +24,7 @@ const privateRoutes = [
     { path: "/create-segmentation", component: CreateSegmentation},
     { path: "/connect-data", component: ImportData},
     { path: "/data-modeling", component:  DataModeling},
+    { path: "/sync-config", component:  SyncConfigPage},
     { path: "*", component: NotFound}
 ]
 

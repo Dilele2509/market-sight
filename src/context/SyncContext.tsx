@@ -9,7 +9,14 @@ const SyncContext = createContext<SyncContextProps | undefined>(undefined);
 
 
 export const SyncContextProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-    const [sheetURL, setSheetURL] = useState<string>()
+    const [sheetURL, setSheetURL] = useState<string>('');
+
+    useEffect(() => {
+        const storedURL = localStorage.getItem('sheetURL');
+        if (storedURL) {
+            setSheetURL(storedURL);
+        }
+    }, []);
 
     return (
         <SyncContext.Provider
