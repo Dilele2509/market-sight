@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { toast } from "sonner";
 import { ReactSortable } from "react-sortablejs";
 
@@ -66,9 +66,9 @@ const RenderDefinition: React.FC<SegmentDefinitionProps> = ({
     useEffect(() => {
         fetchAttributes(selectedDataset)
     }, [selectedDataset])
-    useEffect(()=>{
-        console.log('check condition: ', conditions, ' check condition group: ', conditionGroups);
-    },[conditions, conditionGroups])
+    // useEffect(()=>{
+    //     console.log('check condition: ', conditions, ' check condition group: ', conditionGroups);
+    // },[conditions, conditionGroups])
 
     const fetchAttributes = async (dataset: any, showToast = true) => {
         try {
@@ -144,11 +144,18 @@ const RenderDefinition: React.FC<SegmentDefinitionProps> = ({
             return 'text';
         }
     };
+    
     useEffect(() => {
-        const slug = segmentName.toLowerCase().replace(/[^\w\s-]/g, "").replace(/\s+/g, "-").replace(/-+/g, "-");
-        setSegmentId(`segment:${slug}`);
-    }, [segmentName]);
-
+        if (!editSegment) {
+            const slug = segmentName
+                .toLowerCase()
+                .replace(/[^\w\s-]/g, "")
+                .replace(/\s+/g, "-")
+                .replace(/-+/g, "-");
+            setSegmentId(`segment:${slug}`);
+        }
+    }, [segmentName, editSegment]);
+    
 
     //handle changes
     const handleDatasetChange = (value: string) => {

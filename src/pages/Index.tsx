@@ -189,6 +189,7 @@ export default function Dashboard() {
                     data={rawData?.data?.metrics}
                     currentData={dashboardData}
                     resetCurrentData={setDashboardData} />}
+                  <label className="font-medium text-sm flex items-center gap-1">From: <p className="text-red-600 mr-2">{dashboardData?.period?.start_date}</p> to: <p className="text-red-600">{dashboardData?.period?.end_date}</p></label>
                 </div>
               </div>
 

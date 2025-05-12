@@ -11,6 +11,7 @@ import RenderDefinition from "./DefinitionTab/RenderDefinition";
 import { useSegmentToggle } from "@/context/SegmentToggleContext";
 import { useSegmentData } from "@/context/SegmentDataContext";
 import AuthContext from "@/context/AuthContext";
+import RenderSync from "./DefinitionTab/RenderSync";
 
 
 export default function SegmentBuilder({ onBack, editSegment }: SegmentBuilderProps) {
@@ -47,11 +48,6 @@ export default function SegmentBuilder({ onBack, editSegment }: SegmentBuilderPr
         setHasUnsavedChanges,
         previewLoading,
         setDiscardConfirmOpen } = useSegmentToggle();
-
-    useEffect(() => {
-        const slug = segmentName.toLowerCase().replace(/[^\w\s-]/g, "").replace(/\s+/g, "-").replace(/-+/g, "-");
-        setSegmentId(`segment:${slug}`);
-    }, [segmentName]);
 
     useEffect(() => {
         setEditSegment(editSegment)
@@ -312,9 +308,7 @@ export default function SegmentBuilder({ onBack, editSegment }: SegmentBuilderPr
             <Tabs defaultValue="definition">
                 <TabsList>
                     <TabsTrigger value="definition">Definition</TabsTrigger>
-                    <TabsTrigger value="activity">Activity</TabsTrigger>
                     <TabsTrigger value="syncs">Syncs</TabsTrigger>
-                    <TabsTrigger value="overlap">Overlap</TabsTrigger>
                 </TabsList>
 
                 {/* render definition UI */}
@@ -325,8 +319,7 @@ export default function SegmentBuilder({ onBack, editSegment }: SegmentBuilderPr
                 </TabsContent>
 
                 <TabsContent value="syncs">
-                    <h2 className="text-base font-medium">Syncs Tab Content</h2>
-                    <p className="text-sm">This tab shows syncs information.</p>
+                    <RenderSync/>
                 </TabsContent>
             </Tabs>
         </div>

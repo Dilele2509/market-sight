@@ -6,7 +6,7 @@ import { useSegmentData } from "@/context/SegmentDataContext";
 import { useSegmentToggle } from "@/context/SegmentToggleContext";
 
 export default function UserCreate() {
-  const { setConditions, editSegment, setEditSegment } = useSegmentData();
+  const { setConditions, editSegment, setEditSegment, setPreviewData } = useSegmentData();
   const { setHasUnsavedChanges, hasUnsavedChanges } = useSegmentToggle();
   const [showSegmentBuilder, setShowSegmentBuilder] = useState<boolean>(false);
   const [selectedSegment, setSelectedSegment] = useState<Segment | null>(null);
@@ -25,6 +25,7 @@ export default function UserCreate() {
     if (hasUnsavedChanges) setHasUnsavedChanges(!hasUnsavedChanges);
     setSelectedSegment(null);
     setShowSegmentBuilder(false);
+    setPreviewData([])
   };
 
   return (

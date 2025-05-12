@@ -10,6 +10,7 @@ import ProtectedRoutes from "./components/utils/protectedRoutes";
 import { SegmentToggleProvider } from "./context/SegmentToggleContext";
 import { SegmentDataProvider } from "./context/SegmentDataContext";
 import { LifecycleContextProvider } from "./context/LifecycleContext";
+import { SyncContextProvider } from "./context/SyncContext";
 
 const queryClient = new QueryClient();
 
@@ -23,11 +24,13 @@ const App = () => (
           <SegmentDataProvider>
             <LifecycleContextProvider>
               <MicroSegmentationProvider>
-                <BrowserRouter>
-                  <AuthProvider>
-                    <ProtectedRoutes />
-                  </AuthProvider>
-                </BrowserRouter>
+                <SyncContextProvider>
+                  <BrowserRouter>
+                    <AuthProvider>
+                      <ProtectedRoutes />
+                    </AuthProvider>
+                  </BrowserRouter>
+                </SyncContextProvider>
               </MicroSegmentationProvider>
             </LifecycleContextProvider>
           </SegmentDataProvider>
