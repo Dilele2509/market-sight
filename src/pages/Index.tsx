@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useContext, useEffect, useState } from "react"
 import {
   CalendarIcon,
   CreditCardIcon,
@@ -13,71 +13,108 @@ import {
 } from "lucide-react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Button } from "@/components/ui/button"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { format, getYear } from "date-fns"
 import { MetricCard } from "@/components/dashboard/MetricCard"
-import { AreaChartCard, BarChartCard, PieChartCard } from "@/components/dashboard/ChartDashboard"
+import { LineChartCard, BarChartCard, PieChartCard } from "@/components/dashboard/ChartDashboard"
 import { DashboardShell } from "@/components/layout/DashboardShell"
 import DateRangePicker from "@/components/blocks/customerLifecycle/date-range-picker"
+import { axiosPrivate } from "@/API/axios"
+import { useLifeContext } from "@/context/LifecycleContext"
+import AuthContext from "@/context/AuthContext"
+import { QuickInsightsCard } from "@/components/dashboard/QuickInsightCard"
+import { MonthlyDetailDropdown } from "@/components/dashboard/DropdownSelect"
+
+export interface dashboardDataInterface {
+  period: {
+    start_date: string,
+    end_date: string,
+  },
+  values: {
+    gmv: number,
+    orders: number,
+    unique_customers: number,
+    aov: number,
+    avg_bill_per_user: number,
+    arpu: number,
+    orders_per_day: number,
+    orders_per_day_per_store: number,
+  },
+  changes: {
+    gmv: number,
+    orders: number,
+    unique_customers: number,
+    aov: number,
+    avg_bill_per_user: number,
+    arpu: number,
+    orders_per_day: number,
+    orders_per_day_per_store: number,
+  },
+}
+
+export interface rawDataInterface {
+  success: boolean,
+  data: {
+    "metrics": dashboardDataInterface[],
+    "is_monthly_breakdown": boolean,
+    "time_window": {
+      "start_date": string,
+      "end_date": string
+    }
+  }
+}
 
 export default function Dashboard() {
-  const [period, setPeriod] = useState("current")
+  const { startDate, endDate } = useLifeContext();
+  const { token } = useContext(AuthContext)
+  const [rawData, setRawData] = useState<rawDataInterface>()
+  const [dashboardData, setDashboardData] = useState<dashboardDataInterface>()
 
-  // Dashboard data
-  const dashboardData = {
-    period: {
-      start_date: "2025-03-01",
-      end_date: "2025-03-31",
-    },
-    values: {
-      gmv: 14669.54,
-      orders: 30,
-      unique_customers: 14,
-      aov: 488.98466666666667,
-      avg_bill_per_user: 1047.8242857142857,
-      arpu: 293.3908,
-      orders_per_day: 0.967741935483871,
-      orders_per_day_per_store: 0.1935483870967742,
-    },
-    changes: {
-      gmv: -39.41,
-      orders: 66.67,
-      unique_customers: 16.67,
-      aov: -63.64,
-      avg_bill_per_user: -48.06,
-      arpu: -39.41,
-      orders_per_day: 50.54,
-      orders_per_day_per_store: 50.54,
-    },
+  // The 8 specific metrics to display
+  const metricsToShow = [
+    "gmv",
+    "orders",
+    "unique_customers",
+    "aov",
+    "avg_bill_per_user",
+    "arpu",
+    "orders_per_day",
+    "orders_per_day_per_store",
+  ]
+
+  // Metrics with smaller values that should use the right y-axis
+  const smallValueMetrics = ["orders", "unique_customers", "orders_per_day", "orders_per_day_per_store"]
+
+  const fetchDataDashboard = async () => {
+    try {
+      const res = await axiosPrivate.post('/customer-lifecycle/topline-metrics',
+        { start_date: format(startDate, "yyyy-MM-dd"), end_date: format(endDate, "yyyy-MM-dd") },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      //console.log('check: ', res.data);
+      setRawData(res.data);
+      if (res.data?.data?.is_monthly_breakdown && Array.isArray(res.data?.data?.metrics)) {
+        const metrics = res.data?.data?.metrics
+        const lastElement = metrics[metrics.length - 1]
+        //console.log('last: ', lastElement)
+        setDashboardData(lastElement)
+      } else if (!res.data?.data?.is_monthly_breakdown && Array.isArray(res.data?.data?.metrics)) {
+        const metrics = res.data?.data?.metrics
+        setDashboardData(metrics[0])
+      }
+    } catch (error) {
+      console.error("Error calling API:", error);
+    }
   }
 
-  // Chart data for GMV trend
-  const gmvTrendData = [
-    { name: "Mar 1", value: 300 },
-    { name: "Mar 5", value: 600 },
-    { name: "Mar 10", value: 400 },
-    { name: "Mar 15", value: 800 },
-    { name: "Mar 20", value: 500 },
-    { name: "Mar 25", value: 700 },
-    { name: "Mar 31", value: 900 },
-  ]
-
-  // Chart data for Orders vs Customers
-  const ordersVsCustomersData = [
-    { name: "Week 1", orders: 8, customers: 4 },
-    { name: "Week 2", orders: 7, customers: 3 },
-    { name: "Week 3", orders: 9, customers: 5 },
-    { name: "Week 4", orders: 6, customers: 2 },
-  ]
-
-  // Chart data for AOV distribution
-  const aovDistributionData = [
-    { name: "<$200", value: 5 },
-    { name: "$200-$400", value: 8 },
-    { name: "$400-$600", value: 10 },
-    { name: "$600-$800", value: 4 },
-    { name: ">$800", value: 3 },
-  ]
+  useEffect(() => {
+    // console.log("startDate:", startDate);
+    // console.log("endDate:", endDate);
+    fetchDataDashboard()
+  }, [startDate, endDate])
 
   // Format currency
   const formatCurrency = (value: number) => {
@@ -92,18 +129,19 @@ export default function Dashboard() {
     <DashboardShell>
       <div className="flex min-h-screen flex-col">
         <header className="sticky top-0 z-10 flex h-16 items-center gap-4 bg-background px-4 md:px-6">
-          <div className="flex items-center gap-2">
-            {/* <ShoppingBagIcon className="h-6 w-6" /> */}
-            <h1 className="text-lg font-semibold">E-Commerce Dashboard</h1>
+          <div className="flex items-center justify-between">
+            <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
           </div>
         </header>
+        <div className="w-full flex items-center justify-end pr-6"><DateRangePicker /></div>
+
         <main className="flex-1 p-4 md:p-6">
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          {dashboardData ? <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
             {/* GMV Card */}
             <MetricCard
               title="Gross Merchandise Value"
-              value={dashboardData.values.gmv}
-              change={dashboardData.changes.gmv}
+              value={dashboardData?.values?.gmv}
+              change={dashboardData?.changes?.gmv}
               icon={<DollarSignIcon />}
               isCurrency={true}
             />
@@ -111,8 +149,8 @@ export default function Dashboard() {
             {/* Orders Card */}
             <MetricCard
               title="Total Orders"
-              value={dashboardData.values.orders}
-              change={dashboardData.changes.orders}
+              value={dashboardData?.values?.orders}
+              change={dashboardData?.changes?.orders}
               icon={<ShoppingCartIcon />}
               isCurrency={false}
               precision={0}
@@ -121,8 +159,8 @@ export default function Dashboard() {
             {/* Unique Customers Card */}
             <MetricCard
               title="Unique Customers"
-              value={dashboardData.values.unique_customers}
-              change={dashboardData.changes.unique_customers}
+              value={dashboardData?.values?.unique_customers}
+              change={dashboardData?.changes?.unique_customers}
               icon={<UsersIcon />}
               isCurrency={false}
               precision={0}
@@ -131,33 +169,30 @@ export default function Dashboard() {
             {/* AOV Card */}
             <MetricCard
               title="Average Order Value"
-              value={dashboardData.values.aov}
-              change={dashboardData.changes.aov}
+              value={dashboardData?.values?.aov}
+              change={dashboardData?.changes?.aov}
               icon={<CreditCardIcon />}
               isCurrency={true}
             />
-          </div>
+          </div> : (
+            <div className="flex flex-col items-center justify-center py-20 space-y-4">
+              <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-card-foreground"></div>
+              <p className="text-sm text-muted-foreground">Loading data...</p>
+            </div>)}
 
           <div className="mt-6">
-            <Tabs defaultValue="overview" className="w-full">
-              <div className="flex items-center justify-between">
-                <TabsList>
-                  <TabsTrigger value="overview">Overview</TabsTrigger>
-                  <TabsTrigger value="orders">Orders</TabsTrigger>
-                  <TabsTrigger value="customers">Customers</TabsTrigger>
-                </TabsList>
-                <div className="flex items-center gap-2">
-                  <Button variant="outline" size="sm">
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    Date Range
-                  </Button>
-                  <Button variant="outline" size="sm">
-                    Export
-                  </Button>
+            <div className="w-full">
+              <div className="flex items-center justify-between mb-4">
+                <label className="font-bold">Overview</label>
+                <div className="flex items-center gap-4">
+                  {rawData && <MonthlyDetailDropdown
+                    data={rawData?.data?.metrics}
+                    currentData={dashboardData}
+                    resetCurrentData={setDashboardData} />}
                 </div>
               </div>
 
-              <TabsContent value="overview" className="space-y-4">
+              {dashboardData ? <div className="space-y-4">
                 <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                   {/* Avg Bill Per User Card */}
                   <MetricCard
@@ -188,23 +223,26 @@ export default function Dashboard() {
                 </div>
 
                 {/* GMV Trend Chart */}
-                <AreaChartCard
-                  title="GMV Trend"
-                  description="Daily gross merchandise value for March 2025"
-                  data={gmvTrendData}
-                  dataKey="value"
-                  xAxisDataKey="name"
-                  height={300}
-                  valueFormatter={(value) => `$${value}`}
+                <LineChartCard
+                  title="Business Performance Metrics"
+                  description="Monthly comparison of all key business metrics"
+                  data={rawData?.data?.metrics}
+                  dataKeys={metricsToShow}
+                  smallValueKeys={smallValueMetrics}
+                  xAxisDataKey="month"
+                  height={500}
+                  valueFormatter={(value) =>
+                    typeof value === "number" ? value.toLocaleString(undefined, { maximumFractionDigits: 2 }) : value
+                  }
                 />
 
                 <div className="grid gap-4 md:grid-cols-2">
                   {/* Orders vs Customers Chart */}
                   <BarChartCard
                     title="Orders vs Customers"
-                    description="Weekly comparison for March 2025"
-                    data={ordersVsCustomersData}
-                    barKeys={["orders", "customers"]}
+                    description="Monthly comparison for the period"
+                    data={rawData?.data?.metrics}
+                    barKeys={["orders", "unique_customers"]}
                     xAxisDataKey="name"
                     height={300}
                   />
@@ -212,47 +250,23 @@ export default function Dashboard() {
                   {/* AOV Distribution Chart */}
                   <PieChartCard
                     title="AOV Distribution"
-                    description="Order value distribution for March 2025"
-                    data={aovDistributionData}
+                    description={`Order value distribution for period`}
+                    data={rawData?.data?.metrics}
                     dataKey="value"
                     nameKey="name"
                     height={300}
                     valueFormatter={(value) => `${value} orders`}
                   />
                 </div>
-              </TabsContent>
-
-              <TabsContent value="orders" className="space-y-4">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Orders Analysis</CardTitle>
-                    <CardDescription>Detailed order metrics for March 2025</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-sm text-muted-foreground">
-                      Select the Orders tab to view detailed order analysis.
-                    </p>
-                  </CardContent>
-                </Card>
-              </TabsContent>
-
-              <TabsContent value="customers" className="space-y-4">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Customer Analysis</CardTitle>
-                    <CardDescription>Detailed customer metrics for March 2025</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-sm text-muted-foreground">
-                      Select the Customers tab to view detailed customer analysis.
-                    </p>
-                  </CardContent>
-                </Card>
-              </TabsContent>
-            </Tabs>
+              </div> : (
+                <div className="flex flex-col items-center justify-center py-20 space-y-4">
+                  <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-card-foreground"></div>
+                  <p className="text-sm text-muted-foreground">Loading data...</p>
+                </div>)}
+            </div>
           </div>
 
-          <div className="mt-6 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          {dashboardData ? <div className="mt-6 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             <Card className="col-span-full lg:col-span-2">
               <CardHeader>
                 <CardTitle>Performance Summary</CardTitle>
@@ -331,53 +345,12 @@ export default function Dashboard() {
               </CardContent>
             </Card>
 
-            <Card>
-              <CardHeader>
-                <CardTitle>Quick Insights</CardTitle>
-                <CardDescription>Key takeaways from March 2025</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div className="flex items-start gap-2">
-                    <div className="rounded-full bg-emerald-100 p-1.5 dark:bg-emerald-900">
-                      <TrendingUpIcon className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
-                    </div>
-                    <div className="space-y-1">
-                      <p className="text-sm font-medium">Orders increased by 66.67%</p>
-                      <p className="text-xs text-muted-foreground">Strong growth in order volume</p>
-                    </div>
-                  </div>
-                  <div className="flex items-start gap-2">
-                    <div className="rounded-full bg-rose-100 p-1.5 dark:bg-rose-900">
-                      <TrendingDownIcon className="h-4 w-4 text-rose-600 dark:text-rose-400" />
-                    </div>
-                    <div className="space-y-1">
-                      <p className="text-sm font-medium">AOV decreased by 63.64%</p>
-                      <p className="text-xs text-muted-foreground">Significant drop in average order value</p>
-                    </div>
-                  </div>
-                  <div className="flex items-start gap-2">
-                    <div className="rounded-full bg-emerald-100 p-1.5 dark:bg-emerald-900">
-                      <UsersIcon className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
-                    </div>
-                    <div className="space-y-1">
-                      <p className="text-sm font-medium">Customer base grew by 16.67%</p>
-                      <p className="text-xs text-muted-foreground">Healthy growth in unique customers</p>
-                    </div>
-                  </div>
-                  <div className="flex items-start gap-2">
-                    <div className="rounded-full bg-rose-100 p-1.5 dark:bg-rose-900">
-                      <DollarSignIcon className="h-4 w-4 text-rose-600 dark:text-rose-400" />
-                    </div>
-                    <div className="space-y-1">
-                      <p className="text-sm font-medium">GMV decreased by 39.41%</p>
-                      <p className="text-xs text-muted-foreground">Overall revenue decline despite more orders</p>
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
+            <QuickInsightsCard data={dashboardData} />
+          </div> : (
+            <div className="flex flex-col items-center justify-center py-20 space-y-4">
+              <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-card-foreground"></div>
+              <p className="text-sm text-muted-foreground">Loading data...</p>
+            </div>)}
         </main>
       </div>
     </DashboardShell>
