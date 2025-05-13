@@ -14,14 +14,15 @@ import DateRangePicker from "@/components/blocks/customerLifecycle/date-range-pi
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { Button } from "@/components/ui/button"
 import { Download } from "lucide-react"
+import { SyncSettingsDialog } from "@/components/blocks/RFM/DialogChooseSegmentSynx"
 
-interface segment_stats_interface {
+export interface segment_stats_interface {
   "segment": string,
   "count": number,
   "percentage": number
 }
 
-interface rfm_scores_interface {
+export interface rfm_scores_interface {
   "customer_id": string,
   "business_id": number,
   "recency_value": number,
@@ -34,7 +35,7 @@ interface rfm_scores_interface {
   "last_updated": string
 }
 
-interface RFMInterface {
+export interface RFMInterface {
   "analyzed_customers": number,
   "period": {
     "start_date": string,
@@ -48,6 +49,8 @@ export default function RFM() {
   const { token } = useContext(AuthContext)
   const [rfmData, setRfmData] = useState<RFMInterface>()
   const { startDate, endDate } = useLifeContext();
+  const [dialogOpen, setDialogOpen] = useState(false)
+
   // useEffect(() => {
   //   console.log('rfm: ', rfmData);
   //   console.log('segment stats: ', rfmData?.segment_stats);
@@ -74,7 +77,6 @@ export default function RFM() {
     fetchDataRfm()
   }, [startDate, endDate]);
 
-
   return (
     <div className="space-y-6">
       <div className="flex items-start justify-between">
@@ -87,7 +89,9 @@ export default function RFM() {
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
-                <Button variant="outline" className="bg-primary" size="icon">
+                <Button variant="outline" className="bg-primary" size="icon" onClick={()=>{
+                  setDialogOpen(true)
+                }}>
                   <Download className="h-4 w-4" />
                 </Button>
               </TooltipTrigger>
@@ -176,6 +180,7 @@ export default function RFM() {
               </TabsContent>
             </Tabs>
           </CardContent>
+          <SyncSettingsDialog open={dialogOpen} onClose={()=>setDialogOpen(false)} inputData={rfmData}/>
         </Card>
       </div> : (
         <div className="flex flex-col items-center justify-center py-20 space-y-4">

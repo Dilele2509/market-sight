@@ -1,5 +1,12 @@
 import { dashboardDataInterface } from '@/pages/Index';
 import { useState } from 'react';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
 
 interface MonthlyDetailDropdownProps {
     data: dashboardDataInterface[];
@@ -15,39 +22,36 @@ export function MonthlyDetailDropdown({ data, currentData, resetCurrentData }: M
 
     const [selectedMonth, setSelectedMonth] = useState<string>(getMonthYear(currentData.period.end_date));
 
-
-    const handleChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
-        const selected = event.target.value;
-        setSelectedMonth(selected);
-    
+    const handleChange = (value: string) => {
+        setSelectedMonth(value);
         const matchedItem = data.find(item =>
-            getMonthYear(item.period.end_date) === selected
+            getMonthYear(item.period.end_date) === value
         );
-    
         if (matchedItem) {
             resetCurrentData(matchedItem);
         }
-    };    
+    };
 
     return (
-        <div className='flex items-center gap-2'>
-            <label htmlFor="month-select" className="min-w-fit text-sm font-medium text-gray-700">Select monthly detail:</label>
-            <select
-                id="month-select"
-                value={selectedMonth}
-                onChange={handleChange}
-                className="block w-full py-2 px-3 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-            >
-                <option value="">Select a Month</option>
-                {data.map((item, index) => {
-                    const monthYear = getMonthYear(item.period.end_date);
-                    return (
-                        <option key={index} value={monthYear}>
-                            {monthYear}
-                        </option>
-                    );
-                })}
-            </select>
+        <div className="flex items-center gap-2">
+            <label className="min-w-fit text-sm font-medium text-card-foreground">
+                Select monthly detail:
+            </label>
+            <Select value={selectedMonth} onValueChange={handleChange}>
+                <SelectTrigger className="w-[200px] bg-card">
+                    <SelectValue placeholder="Select a Month" />
+                </SelectTrigger>
+                <SelectContent className='bg-card'>
+                    {data.map((item, index) => {
+                        const monthYear = getMonthYear(item.period.end_date);
+                        return (
+                            <SelectItem className='hover:bg-background' key={index} value={monthYear}>
+                                {monthYear}
+                            </SelectItem>
+                        );
+                    })}
+                </SelectContent>
+            </Select>
         </div>
     );
 }

@@ -319,7 +319,7 @@ export default function SegmentBuilder({ onBack, editSegment }: SegmentBuilderPr
                 </TabsContent>
 
                 <TabsContent value="syncs">
-                    <RenderSync/>
+                    <RenderSync />
                 </TabsContent>
             </Tabs>
         </div>

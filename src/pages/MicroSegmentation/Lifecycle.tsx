@@ -20,6 +20,7 @@ import MetricsLineGraph from "@/components/blocks/customerLifecycle/line-graph-c
 import LifecycleGMVCard from "../../components/blocks/customerLifecycle/LifecycleGMVCard"
 import DateRangePicker from "@/components/blocks/customerLifecycle/date-range-picker"
 import { BarChartCLS } from "@/components/blocks/customerLifecycle/bar-chart-cls"
+import { ConfigSyncCLS } from "@/components/blocks/customerLifecycle/DialogConfigSynx"
 
 export const metadata: Metadata = {
   title: "Customer Lifecycle Analysis",
@@ -29,6 +30,7 @@ export const metadata: Metadata = {
 export default function CustomerLifecyclePage() {
   const sortOrder = ["new", "early", "mature", "loyal"];
   const { startDate, endDate } = useLifeContext();
+  const [isOpenSyncDialog, setIsOpenSyncDialog] = useState(false)
   const { token } = useContext(AuthContext);
   const header = {
     headers: {
@@ -204,7 +206,7 @@ export default function CustomerLifecyclePage() {
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <Button variant="outline" className="bg-primary" size="icon">
+                  <Button disabled={!cusLifeList} variant="outline" className="bg-primary" size="icon" onClick={() => { setIsOpenSyncDialog(true) }}>
                     <Download className="h-4 w-4" />
                   </Button>
                 </TooltipTrigger>
@@ -298,6 +300,7 @@ export default function CustomerLifecyclePage() {
           </div>
         )}
       </main>
+      <ConfigSyncCLS open={isOpenSyncDialog} onClose={() => { setIsOpenSyncDialog(false)}} data={cusLifeList} />
     </div>
   )
 }

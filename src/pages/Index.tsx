@@ -130,7 +130,7 @@ export default function Dashboard() {
       <div className="flex min-h-screen flex-col">
         <header className="sticky top-0 z-10 flex h-16 items-center gap-4 bg-background px-4 md:px-6">
           <div className="flex items-center justify-between">
-            <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
+            <h1 className="text-3xl font-bold tracking-tight">Tổng quan hoạt động</h1>
           </div>
         </header>
         <div className="w-full flex items-center justify-end pr-6"><DateRangePicker /></div>
@@ -183,13 +183,13 @@ export default function Dashboard() {
           <div className="mt-6">
             <div className="w-full">
               <div className="flex items-center justify-between mb-4">
-                <label className="font-bold">Overview</label>
+                <label className="font-bold">Tổng quan</label>
                 <div className="flex items-center gap-4">
                   {rawData && <MonthlyDetailDropdown
                     data={rawData?.data?.metrics}
                     currentData={dashboardData}
                     resetCurrentData={setDashboardData} />}
-                  <label className="font-medium text-sm flex items-center gap-1">From: <p className="text-red-600 mr-2">{dashboardData?.period?.start_date}</p> to: <p className="text-red-600">{dashboardData?.period?.end_date}</p></label>
+                  <label className="font-medium text-sm flex items-center gap-1">Từ ngày: <p className="text-red-600 mr-2">{dashboardData?.period?.start_date}</p> đến ngày: <p className="text-red-600">{dashboardData?.period?.end_date}</p></label>
                 </div>
               </div>
 

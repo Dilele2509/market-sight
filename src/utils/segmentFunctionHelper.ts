@@ -9,8 +9,26 @@ type Condition = {
     relatedDataset?: string;
     joinWithKey?: string;
     relatedConditions?: any[];
-    relatedAttributeConditions?: any[];
+    relatedAttributeConditions?: relatedConditions[];
 };
+
+type RelatedAttributeCondition = {
+    id: number,
+    field: string,
+    operator: string,
+    value: string,
+    value2: string
+}
+
+type relatedConditions = {
+    id: number,
+    type: string,
+    relatedDataset: string,
+    joinWithKey: string
+    fields: any
+    operator: 'AND' | 'OR'
+    relatedAttributeConditions: RelatedAttributeCondition[]
+}
 
 type GroupCondition = {
     type: "group";

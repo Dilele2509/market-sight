@@ -1,18 +1,15 @@
 "use client"
 
 import type React from "react"
-import { useState, useCallback, useEffect } from "react"
+import { useState, useCallback } from "react"
 import { cn } from "@/lib/utils"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { AnimatePresence } from "framer-motion"
-import { RegistrationTypeSelection } from "./registration-type-selection"
 import { AccountRegistrationForm } from "./account-registration-form"
-import { BusinessRegistrationForm } from "./business-registration-form"
 import { toast } from "sonner"
-import { axiosAuth, axiosPrivate } from "@/API/axios"
+import { axiosAuth } from "@/API/axios"
 
 export type FormData = {
-  registerType: "business" | "account" | ""
   firstName: string
   lastName: string
   email: string
@@ -20,25 +17,17 @@ export type FormData = {
   business_id: number
   password: string
   confirmPassword: string
-
-  // Business registration fields
-  businessName: string
-  businessEmail: string
-  businessPhone: string
-  industry: string
   otpCode: string
 }
 
 export type RegistrationStatus = "pending" | "success" | "error"
 
 export function RegisterForm({ className, ...props }: React.ComponentPropsWithoutRef<"div">) {
-  const [step, setStep] = useState(0)
-  const [registrationType, setRegistrationType] = useState<"business" | "account" | null>(null)
+  const [step, setStep] = useState(1)
   const [showPassword, setShowPassword] = useState(false)
   const [direction, setDirection] = useState<"left" | "right">("left")
   const [registrationStatus, setRegistrationStatus] = useState<RegistrationStatus>("pending")
   const [formData, setFormData] = useState<FormData>({
-    registerType: "",
     firstName: "",
     lastName: "",
     email: "",
@@ -46,10 +35,6 @@ export function RegisterForm({ className, ...props }: React.ComponentPropsWithou
     business_id: null,
     password: "",
     confirmPassword: "",
-    businessName: "",
-    businessEmail: "",
-    businessPhone: "",
-    industry: "",
     otpCode: "",
   })
 
@@ -62,10 +47,8 @@ export function RegisterForm({ className, ...props }: React.ComponentPropsWithou
     setFormData((prev) => ({ ...prev, [name]: value }))
   }
 
-  // Use useCallback to memoize the function and prevent unnecessary re-renders
   const handleOTPChange = useCallback((value: string) => {
     setFormData((prev) => {
-      // Only update if the value is different to prevent unnecessary re-renders
       if (prev.otpCode !== value) {
         return { ...prev, otpCode: value }
       }
@@ -80,45 +63,7 @@ export function RegisterForm({ className, ...props }: React.ComponentPropsWithou
 
   const handleBack = () => {
     setDirection("right")
-
-    // If we're on step 1 and going back to step 0, reset the form
-    if (step === 1) {
-      // Reset registration type and clear form data
-      setRegistrationType(null)
-
-      // Reset only the relevant form data based on registration type
-      if (registrationType === "business") {
-        setFormData((prev) => ({
-          ...prev,
-          businessName: "",
-          businessEmail: "",
-          businessPhone: "",
-          industry: "",
-          otpCode: "",
-        }))
-      } else if (registrationType === "account") {
-        setFormData((prev) => ({
-          ...prev,
-          firstName: "",
-          lastName: "",
-          email: "",
-          role: "",
-          business: "",
-        }))
-      }
-
-      // Reset registration status
-      setRegistrationStatus("pending")
-    }
-
     setStep((prev) => prev - 1)
-  }
-
-  const handleRegistrationTypeSelect = (type: "business" | "account") => {
-    setDirection("left")
-    setRegistrationType(type)
-    setStep(1)
-    setFormData((prev) => ({ ...prev, registerType: type }))
   }
 
   const toggleShowPassword = (checked: boolean) => {
@@ -126,7 +71,6 @@ export function RegisterForm({ className, ...props }: React.ComponentPropsWithou
   }
 
   const handleVerifyOTP = () => {
-    // Simulate OTP verification
     if (formData.otpCode.length === 6) {
       setRegistrationStatus("success")
     } else {
@@ -135,17 +79,14 @@ export function RegisterForm({ className, ...props }: React.ComponentPropsWithou
   }
 
   const handleTryAgain = () => {
-    // Reset OTP and status but stay on step 2
     setFormData((prev) => ({ ...prev, otpCode: "" }))
     setRegistrationStatus("pending")
   }
 
   const resetForm = () => {
-    setStep(0)
-    setRegistrationType(null)
+    setStep(1)
     setRegistrationStatus("pending")
     setFormData({
-      registerType: "",
       firstName: "",
       lastName: "",
       email: "",
@@ -153,47 +94,26 @@ export function RegisterForm({ className, ...props }: React.ComponentPropsWithou
       business_id: null,
       password: "",
       confirmPassword: "",
-      businessName: "",
-      businessEmail: "",
-      businessPhone: "",
-      industry: "",
       otpCode: "",
     })
   }
 
   const getStepDescription = () => {
-    if (step === 0) return "Select your registration type"
-
-    if (registrationType === "account") {
-      return step === 1 ? "Enter your personal information" : "Create a secure password"
-    }
-
-    if (registrationType === "business") {
-      if (step === 1) return "Enter your business information"
-      if (step === 2 && registrationStatus === "pending") return "Verify your business email"
-      return registrationStatus === "success" ? "Registration successful" : "Registration failed"
-    }
-
+    if (step === 1) return "Nhập thông tin cá nhân của bạn"
+    if (step === 2) return "Tạo mật khẩu an toàn"
     return ""
   }
-
-  // useEffect(()=>{
-  //   console.log(formData);
-  // },[formData])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     try {
-      console.log(formData);
-      axiosAuth.post('/register', formData)
-        .then(res => {
-          if(res.status === 200){
-            toast.success("Register success!")
-            
-          }
-        })
+      console.log(formData)
+      const res = await axiosAuth.post("/register", formData)
+      if (res.status === 200) {
+        toast.success("Đăng ký thành công!")
+      }
     } catch (error) {
-      toast.error("Registration failed")
+      toast.error("Đăng ký thất bại")
     }
   }
 
@@ -201,18 +121,14 @@ export function RegisterForm({ className, ...props }: React.ComponentPropsWithou
     <div className={cn("flex flex-col gap-6", className)} {...props}>
       <Card className="overflow-hidden">
         <CardHeader>
-          <CardTitle className="text-2xl text-primary">Register</CardTitle>
+          <CardTitle className="text-2xl text-primary">Đăng ký</CardTitle>
           <CardDescription>{getStepDescription()}</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit}>
             <div className="relative overflow-hidden">
               <AnimatePresence mode="wait">
-                {step === 0 && (
-                  <RegistrationTypeSelection direction={direction} onSelect={handleRegistrationTypeSelect} />
-                )}
-
-                {registrationType === "account" && step === 1 && (
+                {step === 1 && (
                   <AccountRegistrationForm
                     direction={direction}
                     formData={formData}
@@ -224,7 +140,7 @@ export function RegisterForm({ className, ...props }: React.ComponentPropsWithou
                   />
                 )}
 
-                {registrationType === "account" && step === 2 && (
+                {step === 2 && (
                   <AccountRegistrationForm
                     direction={direction}
                     formData={formData}
@@ -237,34 +153,14 @@ export function RegisterForm({ className, ...props }: React.ComponentPropsWithou
                     step={2}
                   />
                 )}
-
-                {registrationType === "business" && (
-                  <BusinessRegistrationForm
-                    direction={direction}
-                    formData={formData}
-                    onInputChange={handleInputChange}
-                    onSelectChange={handleSelectChange}
-                    onNext={handleNext}
-                    onBack={handleBack}
-                    step={step}
-                    registrationStatus={registrationStatus}
-                    onVerifyOTP={handleVerifyOTP}
-                    onReset={resetForm}
-                    onTryAgain={handleTryAgain}
-                    onOTPChange={handleOTPChange}
-                  />
-                )}
               </AnimatePresence>
             </div>
-
-            {step === 0 && (
-              <div className="mt-4 text-center text-sm">
-                Already have an account?{" "}
-                <a href="/" className="underline underline-offset-4">
-                  Sign in
-                </a>
-              </div>
-            )}
+            <div className="mt-4 text-center text-sm">
+              Đã có tài khoản?{" "}
+              <a href="/" className="underline underline-offset-4">
+                Đăng nhập
+              </a>
+            </div>
           </form>
         </CardContent>
       </Card>

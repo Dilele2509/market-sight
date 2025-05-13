@@ -16,10 +16,12 @@ import { useContext, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { GoogleSheetDialog } from "../../SyncData/googleSheetDialog";
 import clsx from "clsx";
+import { RequestAuth } from "../../SyncData/requestAuthDialog";
 
 const RenderSync = () => {
     const [dialogOpen, setDialogOpen] = useState(false)
-    const { previewData, segmentId } = useSegmentData();
+    const [dialogOpenNotify, setDialogOpenNotify] = useState(false)
+    const { previewData, segmentId, segmentName } = useSegmentData();
     const { token } = useContext(AuthContext)
 
     useEffect(() => {
@@ -52,12 +54,13 @@ const RenderSync = () => {
             if (res.status === 200) {
                 toast.success('Add to state success: ', res.data)
                 const resTokenCheck = await axiosPrivate.get('/auth/status', headerToken)
-                if (resTokenCheck.data.success === true) {
+                console.log('check res token: ',resTokenCheck);
+                if (resTokenCheck.data?.data?.is_connected === true) {
                     toast.success('Verification of rights success')
                     setDialogOpen(true)
                 } else {
                     console.error(resTokenCheck)
-                    toast.error(`Have error when verify your rights: ${resTokenCheck.data.error}`);
+                    setDialogOpenNotify(true)
                 }
             } else {
                 console.log(res);
@@ -74,6 +77,7 @@ const RenderSync = () => {
         if (option === 'create') {
             req = {
                 segment_id: segmentId,
+                segment_name: segmentName,
                 create_new: true,
                 new_file_name: value,
             }
@@ -81,6 +85,7 @@ const RenderSync = () => {
         } else {
             req = {
                 segment_id: segmentId,
+                segment_name: segmentName,
                 create_new: false,
                 sheet_url: value,
             }
@@ -89,6 +94,7 @@ const RenderSync = () => {
 
         try {
             const res = await axiosPrivate.post('/sync', req, headerToken)
+            console.log(res);
 
             if (res.data.success === true) {
                 toast.success('Sync success, check your Google Drive now')
@@ -132,6 +138,7 @@ const RenderSync = () => {
                     </TableBody>
                 </Table>
             </div>
+            <RequestAuth open={dialogOpenNotify} onClose={() => setDialogOpenNotify(false)} />
             <GoogleSheetDialog open={dialogOpen} onClose={() => setDialogOpen(false)} onSync={handleSync} />
         </div>
     );
