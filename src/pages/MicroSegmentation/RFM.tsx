@@ -81,22 +81,22 @@ export default function RFM() {
     <div className="space-y-6">
       <div className="flex items-start justify-between">
         <div className="flex flex-col space-y-2">
-          <h1 className="text-3xl font-bold tracking-tight">RFM Segments</h1>
-          <p className="text-muted-foreground">Customer segmentation based on Recency, Frequency, and Monetary value</p>
+          <h1 className="text-3xl font-bold tracking-tight">Phân khúc RFM</h1>
+          <p className="text-muted-foreground">Phân khúc khách hàng dựa trên thời gian gần nhất mua hàng, tần suất mua hàng và giá trị tiền tệ (Recency, Frequency, Monetary)</p>
         </div>
         <div className="flex items-center gap-4">
           <DateRangePicker />
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
-                <Button variant="outline" className="bg-primary" size="icon" onClick={()=>{
+                <Button variant="outline" className="bg-primary" size="icon" onClick={() => {
                   setDialogOpen(true)
                 }}>
                   <Download className="h-4 w-4" />
                 </Button>
               </TooltipTrigger>
               <TooltipContent>
-                Click to sync data
+                Nhấp để đồng bộ dữ liệu
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>
@@ -107,7 +107,7 @@ export default function RFM() {
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Customers</CardTitle>
+              <CardTitle className="text-sm font-medium">Tổng số khách hàng</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="text-3xl font-bold">{rfmData?.analyzed_customers}</div>
@@ -154,18 +154,17 @@ export default function RFM() {
 
         <Card>
           <CardHeader>
-            <CardTitle>RFM Segments</CardTitle>
+            <CardTitle>Phân khúc RFM</CardTitle>
             <CardDescription>
-              RFM stands for Recency, Frequency, and Monetary value, each corresponding to some key customer trait: number
-              of days since the last order, total number of orders and Lifetime Value. Customers are bucketed in 5 groups
-              on each score to be placed on the map below and each associated with one of ten customer segments.
+              RFM là viết tắt của Recency (Thời gian gần nhất mua hàng), Frequency (Tần suất mua hàng) và Monetary value (Giá trị tiền tệ), mỗi yếu tố này đại diện cho một đặc điểm quan trọng của khách hàng: số ngày kể từ lần mua hàng gần nhất, tổng số đơn hàng và giá trị vòng đời (Lifetime Value).
+              Khách hàng sẽ được phân thành 5 nhóm cho mỗi chỉ số và được hiển thị trên bản đồ bên dưới, mỗi nhóm tương ứng với một trong mười phân khúc khách hàng.
             </CardDescription>
           </CardHeader>
           <CardContent>
             <Tabs defaultValue="treemap" className="space-y-4">
               <TabsList>
                 <TabsTrigger value="treemap">Treemap</TabsTrigger>
-                <TabsTrigger value="table">Table</TabsTrigger>
+                <TabsTrigger value="table">Bảng thông tin</TabsTrigger>
               </TabsList>
               <TabsContent value="treemap" className="space-y-4">
                 {rfmData?.segment_stats.length > 0 &&
@@ -180,12 +179,12 @@ export default function RFM() {
               </TabsContent>
             </Tabs>
           </CardContent>
-          <SyncSettingsDialog open={dialogOpen} onClose={()=>setDialogOpen(false)} inputData={rfmData}/>
+          <SyncSettingsDialog open={dialogOpen} onClose={() => setDialogOpen(false)} inputData={rfmData} />
         </Card>
       </div> : (
         <div className="flex flex-col items-center justify-center py-20 space-y-4">
           <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-card-foreground"></div>
-          <p className="text-sm text-muted-foreground">Loading data...</p>
+          <p className="text-sm text-muted-foreground">Đang tải dữ liệu...</p>
         </div>)}
     </div>
   )

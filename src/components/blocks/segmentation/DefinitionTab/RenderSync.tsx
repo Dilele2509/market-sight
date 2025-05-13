@@ -19,6 +19,7 @@ import clsx from "clsx";
 import { RequestAuth } from "../../SyncData/requestAuthDialog";
 
 const RenderSync = () => {
+    const [isLoading, setIsLoading] = useState(false)
     const [dialogOpen, setDialogOpen] = useState(false)
     const [dialogOpenNotify, setDialogOpenNotify] = useState(false)
     const { previewData, segmentId, segmentName } = useSegmentData();
@@ -30,7 +31,7 @@ const RenderSync = () => {
     }, [previewData]);
 
     if (!previewData || previewData.length === 0) {
-        return <h2>Press on Preview Result button above to show data before sync</h2>;
+        return <h2>Nhấn vào nút Xem trước kết quả ở trên để hiển thị dữ liệu trước khi đồng bộ hóa</h2>;
     }
 
     // Lấy danh sách các keys từ object đầu tiên để làm header
@@ -52,11 +53,11 @@ const RenderSync = () => {
                 }
             })
             if (res.status === 200) {
-                toast.success('Add to state success: ', res.data)
+                toast.success('Thêm vào state thành công')
                 const resTokenCheck = await axiosPrivate.get('/auth/status', headerToken)
-                console.log('check res token: ',resTokenCheck);
+                console.log('check res token: ', resTokenCheck);
                 if (resTokenCheck.data?.data?.is_connected === true) {
-                    toast.success('Verification of rights success')
+                    toast.success('Xác minh quyền thành công')
                     setDialogOpen(true)
                 } else {
                     console.error(resTokenCheck)
@@ -64,7 +65,7 @@ const RenderSync = () => {
                 }
             } else {
                 console.log(res);
-                toast.error('Error when add data to state')
+                toast.error('Lỗi khi thêm dữ liệu vào state')
             }
         } catch (error) {
             console.error(error.message)
@@ -72,6 +73,7 @@ const RenderSync = () => {
     }
 
     const handleSync = async (option: 'create' | 'use', value: string) => {
+        setIsLoading(true)
         let req = {}
 
         if (option === 'create') {
@@ -97,22 +99,25 @@ const RenderSync = () => {
             console.log(res);
 
             if (res.data.success === true) {
-                toast.success('Sync success, check your Google Drive now')
+                toast.success('Đồng bộ thành công, hãy kiểm tra Google Drive của bạn ngay')
             } else {
-                toast.error('An error occurred during sync. See console for details.')
+                toast.error('Đã xảy ra lỗi trong quá trình đồng bộ hóa. Xem bảng điều khiển để biết chi tiết.')
                 console.error(res.data)
             }
         } catch (err) {
-            toast.error('Request failed. Check console for details.')
-            console.error('Sync error:', err)
+            toast.error('Yêu cầu không thành công. Kiểm tra bảng điều khiển để biết chi tiết.')
+            console.error('Lỗi đồng bộ:', err)
+        } finally {
+            setIsLoading(false)
+            setDialogOpen(false)
         }
     }
 
     return (
         <div className="">
             <div className="flex w-full justify-end items-center gap-4">
-                <Label className="text-sm font-medium">Click to sync:</Label>
-                <Button className="text-card bg-primary-dark" onClick={startInsertToState}><Download />Sync Data</Button>
+                <Label className="text-sm font-medium">Nhấp để đồng bộ:</Label>
+                <Button className="text-card bg-primary-dark" onClick={startInsertToState}><Download />Đồng bộ dữ liệu</Button>
             </div>
             <div className="rounded-md border mt-4">
                 <Table>
@@ -139,7 +144,7 @@ const RenderSync = () => {
                 </Table>
             </div>
             <RequestAuth open={dialogOpenNotify} onClose={() => setDialogOpenNotify(false)} />
-            <GoogleSheetDialog open={dialogOpen} onClose={() => setDialogOpen(false)} onSync={handleSync} />
+            <GoogleSheetDialog open={dialogOpen} isLoading={isLoading} onClose={() => setDialogOpen(false)} onSync={handleSync} />
         </div>
     );
 };
