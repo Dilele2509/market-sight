@@ -27,27 +27,27 @@ import ConnectionCard from "@/components/blocks/Connection/ConnectionCard"
 const sources = [
   {
     title: "Database",
-    description: "Connect directly to your database",
+    description: "Kết nối trực tiếp đến cơ sở dữ liệu của bạn",
     icon: Database,
     sources: ["PostgreSQL"],
-    status: "available",
+    status: "có sẵn",
   },
 ]
 
 const comingSoonSources = [
   {
     title: "Cloud Storage",
-    description: "Import data from cloud storage services",
+    description: "Nhập dữ liệu từ dịch vụ lưu trữ đám mây",
     icon: CloudUpload,
     sources: ["Amazon S3", "Google Cloud Storage", "Azure Blob Storage"],
-    status: "coming-soon",
+    status: "sắp ra mắt",
   },
   {
     title: "File Upload",
-    description: "Upload files from your computer",
+    description: "Tải lên các tập tin từ máy tính của bạn",
     icon: Upload,
     sources: ["CSV", "Excel", "JSON"],
-    status: "coming-soon",
+    status: "sắp ra mắt",
   },
 ]
 
@@ -88,7 +88,7 @@ export default function ImportData() {
 
         setRecentConnections([connection])
       } catch (error) {
-        console.error("Error parsing connection URL:", error)
+        console.error("Lỗi khi phân tích URL kết nối:", error)
         setRecentConnections([])
       }
     } else {
@@ -107,9 +107,9 @@ export default function ImportData() {
           <div>
             <h1 className="text-2xl font-semibold tracking-tight flex items-center gap-2">
               <Layers className="h-6 w-6 text-primary" />
-              Data Sources
+              Nguồn dữ liệu
             </h1>
-            <p className="text-muted-foreground mt-1">Connect your data from various sources to power your analytics</p>
+            <p className="text-muted-foreground mt-1">Kết nối dữ liệu của bạn để ánh xạ vào mô hình của hệ thống</p>
           </div>
         </div>
 
@@ -118,20 +118,20 @@ export default function ImportData() {
             <TabsList>
               <TabsTrigger value="all" className="gap-2">
                 <Layers className="h-4 w-4" />
-                All Sources
+                Tất cả các nguồn
               </TabsTrigger>
               <TabsTrigger value="connected" className="gap-2">
                 <CheckCircle2 className="h-4 w-4" />
-                Connected
+                Đã kết nối
               </TabsTrigger>
               <TabsTrigger value="coming-soon" className="gap-2">
                 <Clock className="h-4 w-4" />
-                Coming Soon
+                Sắp ra mắt
               </TabsTrigger>
             </TabsList>
             <Button onClick={() => renderConnectionDialog()} className="gap-2">
               <Database className="h-4 w-4" />
-              Connect Database
+              Kết nối cơ sở dữ liệu
             </Button>
           </div>
 
@@ -140,11 +140,11 @@ export default function ImportData() {
               <div className="space-y-4">
                 <h2 className="text-lg font-medium flex items-center gap-2">
                   <CheckCircle2 className="h-5 w-5 text-green-500" />
-                  Connected Data Sources
+                  Nguồn dữ liệu được kết nối
                 </h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   {recentConnections.map((connection, index) => (
-                    <ConnectionCard connection={connection} index={index}/>
+                    <ConnectionCard connection={connection} index={index} />
                   ))}
                 </div>
               </div>
@@ -153,7 +153,7 @@ export default function ImportData() {
             <div className="space-y-4">
               <h2 className="text-lg font-medium flex items-center gap-2">
                 <Database className="h-5 w-5 text-primary" />
-                Available Data Sources
+                Nguồn dữ liệu có sẵn
               </h2>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {sources.map((source) => (
@@ -210,7 +210,7 @@ export default function ImportData() {
                         <div className="flex items-center gap-2">
                           <CardTitle className="text-lg text-muted-foreground">{source.title}</CardTitle>
                           <Badge variant="outline" className="ml-2 text-xs">
-                            Coming Soon
+                            Sắp ra mắt
                           </Badge>
                         </div>
                       </div>
@@ -252,10 +252,10 @@ export default function ImportData() {
                           <CardTitle className="text-base">{connection.name}</CardTitle>
                         </div>
                         <Badge variant="outline" className="bg-green-100 text-green-700 border-green-200">
-                          Active
+                          Đang hoạt động
                         </Badge>
                       </div>
-                      <CardDescription>{connection.type} Database</CardDescription>
+                      <CardDescription>Cơ sở dữ liệu {connection.type}</CardDescription>
                     </CardHeader>
                     <CardContent className="pb-2">
                       <div className="grid grid-cols-1 gap-2 text-sm">
@@ -280,10 +280,10 @@ export default function ImportData() {
                         <Clock className="h-3 w-3" />
                         {connection.lastSync}
                       </p>
-                      <Button variant="ghost" size="sm" className="h-7 gap-1">
+                      {/* <Button variant="ghost" size="sm" className="h-7 gap-1">
                         Manage
                         <ArrowRight className="h-3 w-3" />
-                      </Button>
+                      </Button> */}
                     </CardFooter>
                   </Card>
                 ))}
@@ -291,9 +291,9 @@ export default function ImportData() {
             ) : (
               <Alert className="bg-blue-50 border-blue-200">
                 <AlertCircle className="h-4 w-4 text-blue-600" />
-                <AlertTitle className="text-blue-800">No connected data sources</AlertTitle>
+                <AlertTitle className="text-blue-800">Không có nguồn dữ liệu được kết nối</AlertTitle>
                 <AlertDescription className="text-blue-700">
-                  You haven't connected any data sources yet. Click the "Connect Database" button to get started.
+                  Bạn chưa kết nối bất kỳ nguồn dữ liệu nào. Nhấp vào nút "Kết nối cơ sở dữ liệu" để bắt đầu.
                 </AlertDescription>
               </Alert>
             )}
@@ -303,9 +303,9 @@ export default function ImportData() {
             <div className="space-y-6">
               <Alert className="bg-amber-50 border-amber-200">
                 <AlertCircle className="h-4 w-4 text-amber-600" />
-                <AlertTitle className="text-amber-800">Coming Soon</AlertTitle>
+                <AlertTitle className="text-amber-800">Sắp ra mắt</AlertTitle>
                 <AlertDescription className="text-amber-700">
-                  These data sources are currently in development and will be available soon. Stay tuned for updates!
+                  Các nguồn dữ liệu này hiện đang được phát triển và sẽ sớm có sẵn. Hãy theo dõi để cập nhật!
                 </AlertDescription>
               </Alert>
 
@@ -324,7 +324,7 @@ export default function ImportData() {
                         <div className="flex items-center gap-2">
                           <CardTitle className="text-lg text-muted-foreground">{source.title}</CardTitle>
                           <Badge variant="outline" className="ml-2 text-xs">
-                            Coming Soon
+                            Sắp ra mắt
                           </Badge>
                         </div>
                       </div>

@@ -14,7 +14,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 
 import { OPERATORS } from "@/types/constant";
 
-import { EventCondition, ConditionGroup, AttributeCondition } from "./ConditionState";
+import { ConditionGroup, AttributeCondition } from "./ConditionState";
 import { InclusionExclusion, SegmentSelectorDialog } from "./InclusionExclusionState";
 import { SQLDialog, SQLPreview } from "./SQLState";
 import { DiscardConfirmDialog, PreviewDialog } from "./InforSetupState";
@@ -22,6 +22,7 @@ import { useSegmentToggle } from "@/context/SegmentToggleContext";
 import { useSegmentData } from "@/context/SegmentDataContext";
 import { defineDatasetName } from "@/utils/segmentFunctionHelper";
 import { Skeleton } from "@/components/ui/skeleton";
+import EventCondition, { EventConditionType } from "./ConditionState/EventCondition";
 
 
 interface SegmentDefinitionProps {
@@ -66,9 +67,10 @@ const RenderDefinition: React.FC<SegmentDefinitionProps> = ({
     useEffect(() => {
         fetchAttributes(selectedDataset)
     }, [selectedDataset])
+
     // useEffect(()=>{
-    //     console.log('check condition: ', conditions, ' check condition group: ', conditionGroups);
-    // },[conditions, conditionGroups])
+    //     console.log('check condition: ', conditions);
+    // },[conditions])
 
     const fetchAttributes = async (dataset: any, showToast = true) => {
         try {
@@ -144,7 +146,7 @@ const RenderDefinition: React.FC<SegmentDefinitionProps> = ({
             return 'text';
         }
     };
-    
+
     useEffect(() => {
         if (!editSegment) {
             const slug = segmentName
@@ -155,7 +157,7 @@ const RenderDefinition: React.FC<SegmentDefinitionProps> = ({
             setSegmentId(`segment:${slug}`);
         }
     }, [segmentName, editSegment]);
-    
+
 
     //handle changes
     const handleDatasetChange = (value: string) => {
@@ -223,7 +225,7 @@ const RenderDefinition: React.FC<SegmentDefinitionProps> = ({
                     id: newId,
                     type: 'attribute',
                     field: '',
-                    operator: '',
+                    operator: "AND",
                     value: null
                 }
             ]);
@@ -240,6 +242,7 @@ const RenderDefinition: React.FC<SegmentDefinitionProps> = ({
                     count: 1,
                     timePeriod: 'days',
                     timeValue: 30,
+                    attributeOperator: 'AND',
                     operator: 'AND',
                     attributeConditions: [],
                     relatedConditions: []
@@ -290,15 +293,27 @@ const RenderDefinition: React.FC<SegmentDefinitionProps> = ({
         setConditions(conditions.filter(condition => condition.id !== id));
     };
     const handleUpdateCondition = (id, field, value) => {
-        setConditions(prevConditions =>
-            prevConditions.map(condition => {
+        setConditions(prevConditions => {
+            const updatedConditions = prevConditions.map(condition => {
                 if (condition.id === id) {
                     return { ...condition, [field]: value };
                 }
                 return condition;
-            })
-        );
+            });
+
+            // 👉 Log hoặc kiểm tra ở đây trước khi cập nhật:
+            console.log("[DEBUG] New conditions before set:", updatedConditions);
+
+            // Ví dụ kiểm tra nếu relatedConditions bị mất
+            const updated = updatedConditions.find(c => c.id === id);
+            if (updated.relatedConditions?.length === 0 && field !== 'relatedConditions') {
+                console.warn("[WARNING] relatedConditions bị mất!", updated);
+            }
+
+            return updatedConditions;
+        });
     };
+
 
     //render function
     const renderAttributeCondition = (condition, isInGroup = false, groupId = null) => {
@@ -322,7 +337,7 @@ const RenderDefinition: React.FC<SegmentDefinitionProps> = ({
             </div>
         );
     };
-    const renderEventCondition = (condition, isInGroup = false, groupId = null) => {
+    const renderEventCondition = (condition: EventConditionType, isInGroup = false, groupId = null) => {
         return (
             <div key={condition.id}>
                 <EventCondition
@@ -476,7 +491,24 @@ const RenderDefinition: React.FC<SegmentDefinitionProps> = ({
 
 
                             {/* Condition groups */}
-                            {conditionGroups.map((group) => renderConditionGroup(group))}
+                            <div className="relative">
+                                {conditionGroups.length > 1 && (<div className={`border-2 ${rootOperator === "AND" ? 'border-primary-dark' : 'border-red-400'} pl-2 w-6 border-r-0 rounded-xl rounded-r-none top-8 bottom-5 -left-6 absolute transition-colors duration-300`}>
+                                    <Select
+                                        value={rootOperator}
+                                        onValueChange={handleRootOperatorChange}
+                                        defaultValue="AND"
+                                    >
+                                        <SelectTrigger className={`z-10 absolute top-1/2 -left-6 min-w-fit transform -translate-y-1/2 text-white text-[10px] px-1.5 py-0.5 rounded-md shadow-sm border transition-colors duration-300 ${rootOperator === "AND" ? "bg-primary-dark" : "bg-red-500"}`}>
+                                            {rootOperator}
+                                        </SelectTrigger>
+                                        <SelectContent className="bg-card border-[0.5px] border-card-foreground shadow-lg rounded-md z-50">
+                                            <SelectItem value="AND" className="hover:bg-background hover:rounded-md cursor-pointer">AND</SelectItem>
+                                            <SelectItem value="OR" className="hover:bg-background hover:rounded-md cursor-pointer">OR</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                </div>)}
+                                {conditionGroups.map((group) => renderConditionGroup(group))}
+                            </div>
 
                             {/* Add buttons */}
                             <div className="flex gap-2 mt-3 flex-wrap">
@@ -508,14 +540,6 @@ const RenderDefinition: React.FC<SegmentDefinitionProps> = ({
                         </div>
                     </CardContent>
                 </Card>
-
-                {/* Inclusion/Exclusion section */}
-                {/* <Card className="mb-4 p-4">
-                    <CardContent>
-                        <InclusionExclusion />
-                    </CardContent>
-                    <SegmentSelectorDialog />
-                </Card> */}
 
                 <Card className="mb-4 p-4 bg-card rounded-md font-mono whitespace-pre-wrap">
                     <CardContent>

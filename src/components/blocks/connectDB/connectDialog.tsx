@@ -30,7 +30,7 @@ export default function ConnectionDialog() {
             setTables(response.data);
             setError(null);
         } catch (err) {
-            const errorMessage = err.response?.data?.detail || 'Failed to fetch tables';
+            const errorMessage = err.response?.data?.detail || 'Không thể tải bảng';
             setError(errorMessage);
             toast.error(errorMessage);
         } finally {
@@ -40,7 +40,7 @@ export default function ConnectionDialog() {
 
     const testConnection = async () => {
         if (!connectionUrl.trim()) {
-            toast.error('Please provide a connection URL');
+            toast.error('Vui lòng cung cấp URL kết nối');
             return;
         }
 
@@ -49,7 +49,7 @@ export default function ConnectionDialog() {
 
             // Basic validation of URL format
             if (!connectionUrl.startsWith('postgresql://')) {
-                toast.error('Connection URL must start with postgresql://');
+                toast.error('URL kết nối phải bắt đầu bằng postgresql://');
                 return;
             }
 
@@ -65,12 +65,12 @@ export default function ConnectionDialog() {
             console.log('Connection test response:', response.data);
 
             if (response.data.success) {
-                toast.success('Connection successful!');
+                toast.success('Kết nối thành công!');
             }
         } catch (err) {
             console.error('Connection test error:', err);
             console.error('Error response:', err.response?.data);
-            const errorMessage = err.response?.data?.detail || 'Connection test failed';
+            const errorMessage = err.response?.data?.detail || 'Kiểm tra kết nối không thành công';
             toast.error(errorMessage);
         } finally {
             setLoading(false);
@@ -86,19 +86,20 @@ export default function ConnectionDialog() {
         // Validate PostgreSQL connection URL format
         const urlRegex = /^postgresql:\/\/[^:]+:[^@]+@[^:]+:[0-9]+\/[^/]+$/;
         if (!urlRegex.test(connectionUrl)) {
-            toast.error('Invalid PostgreSQL connection URL format. Expected: postgresql://user:password@host:port/database');
+            toast.error('Định dạng URL kết nối PostgreSQL không hợp lệ. Mong muốn: postgresql://user:password@host:port/database');
             return;
         }
 
         // Store connection URL with expiry time
-        const now = new Date().getTime();
+        const ONE_HOUR_MS = 60 * 60 * 1000;
+        const now = Date.now();
         const expiryTime = now + ONE_HOUR_MS;
 
         localStorage.setItem(CONNECTION_STORAGE_KEY, connectionUrl);
         localStorage.setItem(CONNECTION_EXPIRY_KEY, expiryTime.toString());
 
         setConnectionDialog(!connectionDialog);
-        toast.success('Connection details saved for 1 hour');
+        toast.success('Chi tiết kết nối được lưu trong 1 giờ');
 
         // Fetch tables after successful connection
         fetchTables();
@@ -108,13 +109,13 @@ export default function ConnectionDialog() {
         <Dialog open={connectionDialog} onOpenChange={() => setConnectionDialog(!connectionDialog)}>
             <DialogContent className="min-w-fit rounded-lg shadow-lg">
                 <DialogHeader>
-                    <DialogTitle>PostgreSQL Connection Details</DialogTitle>
+                    <DialogTitle>Chi tiết kết nối PostgreSQL</DialogTitle>
                     <DialogDescription>
-                        Provide your PostgreSQL connection details to continue.
+                        Cung cấp thông tin kết nối PostgreSQL của bạn để tiếp tục.
                     </DialogDescription>
                 </DialogHeader>
                 <div className="space-y-4">
-                    <h3 className="text-lg font-medium">Connection URL Format</h3>
+                    <h3 className="text-lg font-medium">Định dạng URL kết nối</h3>
                     <Card className="p-4 bg-background border border-gray-300 rounded-md">
                         <p className="font-mono break-all text-sm">
                             postgresql://postgres.cyjehsjjvcakeizrehjy:[YOUR-PASSWORD]@aws-0-ap-southeast-1.pooler.supabase.com:6543/postgres

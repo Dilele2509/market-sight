@@ -1,6 +1,6 @@
 import { axiosPrivate } from "@/API/axios";
 import { Segment } from "@/types/segmentTypes";
-import { defineDatasetName } from "@/utils/segmentFunctionHelper";
+import { Condition, defineDatasetName } from "@/utils/segmentFunctionHelper";
 import React, { createContext, useState, useContext, ReactNode, useEffect } from "react";
 import { useSegmentToggle } from "./SegmentToggleContext";
 
@@ -19,8 +19,8 @@ interface SegmentDataContextProps {
     setPreviewData: React.Dispatch<React.SetStateAction<any[]>>;
     rootOperator: string;
     setRootOperator: React.Dispatch<React.SetStateAction<string>>;
-    conditions: any[];
-    setConditions: React.Dispatch<React.SetStateAction<any[]>>;
+    conditions: Condition[];
+    setConditions: React.Dispatch<React.SetStateAction<Condition[]>>;
     conditionGroups: any[];
     setConditionGroups: React.Dispatch<React.SetStateAction<any[]>>;
     description: string;
@@ -135,6 +135,17 @@ export const SegmentDataProvider: React.FC<{ children: ReactNode }> = ({ childre
     });
     const [editSegment, setEditSegment] = useState(null);
 
+    const [segmentName, setSegmentName] = useState<string>("High Value Users (new)");
+    const [segmentId, setSegmentId] = useState<string>("segment:high-value-users-new");
+    const [attributes, setAttributes] = useState<any[]>([]);
+
+    const [previewData, setPreviewData] = useState<any[]>([]);
+    const [rootOperator, setRootOperator] = useState<string>("AND");
+    const [conditions, setConditions] = useState<Condition[]>([]);
+    const [conditionGroups, setConditionGroups] = useState<any[]>([]);
+    const [description, setDescription] = useState<string>('');
+    const [estimatedSize, setEstimatedSize] = useState<any>({ count: 88, percentage: 22 });
+
     //fetch 4 tables of dataset
     useEffect(() => {
         const fetchTables = async () => {
@@ -155,7 +166,7 @@ export const SegmentDataProvider: React.FC<{ children: ReactNode }> = ({ childre
 
     useEffect(() => {
         if (!datasets || Object.keys(datasets).length === 0) return;
-        console.log('check segment in context: ', editSegment);
+        console.log('check segment in context: ', editSegment?.filter_criteria.conditions);
 
         setSegmentName(editSegment ? editSegment.segment_name : "High Value Users (new)");
         setSegmentId(editSegment ? editSegment.segment_id : "segment:high-value-users-new");
@@ -194,7 +205,7 @@ export const SegmentDataProvider: React.FC<{ children: ReactNode }> = ({ childre
                 }
                 : { count: 88, percentage: 22 }
         );
-    }, [editSegment, datasets]);
+    }, [editSegment]);
 
     useEffect(() => {
         const fetchRelated = async () => {
@@ -237,23 +248,11 @@ export const SegmentDataProvider: React.FC<{ children: ReactNode }> = ({ childre
         }
     }, [datasets, logged]);
 
-
-    const [segmentName, setSegmentName] = useState<string>("High Value Users (new)");
-    const [segmentId, setSegmentId] = useState<string>("segment:high-value-users-new");
-    const [attributes, setAttributes] = useState<any[]>([]);
-
-    const [previewData, setPreviewData] = useState<any[]>([]);
-    const [rootOperator, setRootOperator] = useState<string>("AND");
-    const [conditions, setConditions] = useState<any[]>([]);
-    const [conditionGroups, setConditionGroups] = useState<any[]>([]);
-    const [description, setDescription] = useState<string>('');
-    const [estimatedSize, setEstimatedSize] = useState<any>({ count: 88, percentage: 22 });
-
-    // useEffect(() => {
-    //     if ( logged ) {//console.log('check selected dataset: ', selectedDataset);
-    //     console.log('check all Condition: ', conditions);
-    //     console.log('check all condition group: ', conditionGroups);}
-    // }, [conditions || conditionGroups || logged])
+    useEffect(() => {
+        if (logged && editSegment) {
+            console.log('check all Condition of edit segment: ', conditions);
+        }
+    }, [conditions || logged || editSegment])
 
     const [editableSql, setEditableSql] = useState<string>("");
     const [sqlError, setSqlError] = useState<any>(null);

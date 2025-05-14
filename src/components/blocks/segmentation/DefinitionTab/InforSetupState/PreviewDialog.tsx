@@ -40,9 +40,9 @@ const PreviewDialog: React.FC<PreviewDialogProps> = ({
         console.log("SQL Query:", sql);
     };
 
-    useEffect(()=>{
-        console.log('preview data: ',previewData);
-    },[previewData])
+    // useEffect(()=>{
+    //     console.log('preview data: ',previewData);
+    // },[previewData])
 
     // PREVIEW
     const handleClosePreview = () => {

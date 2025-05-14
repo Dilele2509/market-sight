@@ -10,32 +10,28 @@ import { useEffect, useState } from "react";
 import RelatedDatasetCondition from "./RelatedDatasetCondition";
 import { ReactSortable } from "react-sortablejs";
 import { useSegmentToggle } from "@/context/SegmentToggleContext";
-import { defineDatasetName } from "@/utils/segmentFunctionHelper";
+import { defineDatasetName, relatedConditions } from "@/utils/segmentFunctionHelper";
+import { AttributeCondition } from "@/components/blocks/segmentation/DefinitionTab/ConditionState/AttributeCondition";
 import { toast } from "sonner";
 
-type AttributeCondition = {
-  id: number,
-  field: string,
-  operator: string,
-  value: string,
-  value2: string
+export type EventConditionType = {
+  id: number;
+  type: string;
+  columnKey?: string,
+  relatedColKey?: string,
+  eventType?: string;
+  frequency?: string;
+  count?: number;
+  timeValue?: number;
+  timePeriod?: string;
+  operator?: 'AND' | 'OR' | string;
+  attributeOperator?: 'AND' | 'OR';
+  attributeConditions?: AttributeCondition[];
+  relatedConditions?: relatedConditions[];
 }
 
 type EventConditionProps = {
-  condition: {
-    id: number;
-    type: string;
-    columnKey: string,
-    relatedColKey: string,
-    eventType: string;
-    frequency?: string;
-    count?: number;
-    timeValue?: number;
-    timePeriod?: string;
-    operator?: 'AND' | 'OR';
-    attributeConditions: AttributeCondition[];
-    relatedConditions: any;
-  };
+  condition: EventConditionType;
   isInGroup?: boolean;
   groupId?: string | null;
   handleUpdateCondition: (id: number, field: string, value: any) => void;
@@ -53,22 +49,33 @@ const EventCondition: React.FC<EventConditionProps> = ({
   handleUpdateGroupCondition,
   handleRemoveGroupCondition,
 }) => {
-  const { datasets, selectedDataset, relatedDatasetNames, setConditions } = useSegmentData()
+  const { datasets, selectedDataset, relatedDatasetNames, setConditions, editSegment } = useSegmentData()
   const { isDisableRelatedAdd, setIsDisableRelatedAdd } = useSegmentToggle();
-  const [relatedConditionsState, setRelatedConditionsState] = useState([])
+  const [relatedConditionsState, setRelatedConditionsState] = useState(editSegment? condition?.relatedConditions : [])
   const [attributes, setAttributes] = useState<any[]>([]);
 
   const attribute = attributes.find((attr) => attr.name === datasets['Transactions'].fields[0]);
   const attributeType = attribute ? attribute.type : "text";
   const operators = OPERATORS[attributeType] || OPERATORS.text;
 
-  useEffect(() => {
-    updateCondition('relatedConditions', relatedConditionsState);
-  }, [relatedConditionsState])
+  // useEffect(() => {
+  //   if (JSON.stringify(condition?.relatedConditions) !== JSON.stringify(relatedConditionsState)) {
+  //     setRelatedConditionsState(condition?.relatedConditions || []);
+  //   }
+  // }, [condition]);
 
   useEffect(() => {
-    console.log(condition);
-  })
+    if (!editSegment && JSON.stringify(condition?.relatedConditions) !== JSON.stringify(relatedConditionsState)) {
+      updateCondition('relatedConditions', relatedConditionsState);
+    }
+  }, [relatedConditionsState])
+
+
+  // useEffect(() => {
+  //   console.log("Event condition updated:", condition);
+  //   setRelatedConditionsState(condition?.relatedConditions)
+  // }, [condition]);
+
   useEffect(() => {
     fetchAttributes({
       name: 'Transactions',
@@ -102,10 +109,6 @@ const EventCondition: React.FC<EventConditionProps> = ({
       toast.error("Cannot run fetch attribute function");
     }
   };
-
-  useEffect(() => {
-    console.log(condition);
-  }, [])
 
   const determineFieldType = (fieldName: string, dataType = null) => {
     if (dataType) {
@@ -144,7 +147,7 @@ const EventCondition: React.FC<EventConditionProps> = ({
       id: newId,
       type: type || 'related',
       relatedDataset: firstValidData,
-      joinWithKey: relatedFields[0],
+      joinWithKey: relatedFields.length > 0 ? relatedFields[0] : null,
       fields: relatedFields,
       operator: 'AND',
       relatedAttributeConditions: []
@@ -152,6 +155,7 @@ const EventCondition: React.FC<EventConditionProps> = ({
 
     // Cập nhật relatedConditions
     setRelatedConditionsState([...existingRelated, newCondition]);
+    updateCondition('relatedConditions', [...existingRelated, newCondition])
 
     // Kiểm tra nếu sau khi thêm thì không còn dataset hợp lệ nữa -> disable nút
     const nextUsedDatasets = [...usedDatasets, firstValidData];
@@ -166,15 +170,22 @@ const EventCondition: React.FC<EventConditionProps> = ({
   };
 
   const updateCondition = (field: string, value: any) => {
+    console.log('event ddang goi ham');
     if (isInGroup && handleUpdateGroupCondition) {
       handleUpdateGroupCondition(groupId, condition.id, field, value);
     } else {
       handleUpdateCondition(condition.id, field, value);
     }
   };
-  const handleRootOperatorChange = (newValue) => {
+  const handleRootAttributeOperatorChange = (newValue) => {
     if (newValue !== null) {
-      updateCondition('operator', newValue);
+      updateCondition('attributeOperator', newValue);
+    }
+  };
+
+  const handleRootRelatedOperatorChange = (newValue) => {
+    if (newValue !== null) {
+      updateCondition('relatedOperator', newValue);
     }
   };
 
@@ -182,39 +193,21 @@ const EventCondition: React.FC<EventConditionProps> = ({
     handleUpdateAttributeCondition(condition.id, key, value, index);
   };
   const handleUpdateAttributeCondition = (id, field, value, index) => {
-    setConditions(prevConditions =>
-      prevConditions.map(condition => {
-        if (condition.id === id) {
-          const updatedAttributes = [...condition.attributeConditions];
-          updatedAttributes[index] = {
-            ...updatedAttributes[index],
-            [field]: value,
-          };
-          return {
-            ...condition,
-            attributeConditions: updatedAttributes,
-          };
-        }
-        return condition;
-      })
-    );
+    const updatedAttributes = [...condition.attributeConditions];
+    updatedAttributes[index] = {
+      ...updatedAttributes[index],
+      [field]: value,
+    };
+    updateCondition('attributeConditions', updatedAttributes);
   };
 
+
   const handleRemoveAttributeCondition = (conditionId: number, index: number) => {
-    setConditions(prevConditions =>
-      prevConditions.map(condition => {
-        if (condition.id === conditionId) {
-          const updatedAttributes = [...condition.attributeConditions];
-          updatedAttributes.splice(index, 1);
-          return {
-            ...condition,
-            attributeConditions: updatedAttributes,
-          };
-        }
-        return condition;
-      })
-    );
+    const updatedAttributes = [...condition.attributeConditions];
+    updatedAttributes.splice(index, 1);
+    updateCondition('attributeConditions', updatedAttributes);
   };
+
 
   const removeAttributeCondition = (index: number) => {
     handleRemoveAttributeCondition(condition.id, index);
@@ -302,7 +295,7 @@ const EventCondition: React.FC<EventConditionProps> = ({
                   </SelectContent>
                 </Select>
               )}
-  
+
               {/* Operator select */}
               <Select
                 value={attCon.operator || ""}
@@ -324,7 +317,7 @@ const EventCondition: React.FC<EventConditionProps> = ({
                   ))}
                 </SelectContent>
               </Select>
-  
+
             </div>
             <div>
               {/* Value input */}
@@ -337,7 +330,7 @@ const EventCondition: React.FC<EventConditionProps> = ({
                     className="flex-grow"
                   />
                 )}
-  
+
               {/* Additional value input for "between" operator */}
               {attCon.operator === "between" && (
                 <>
@@ -366,7 +359,7 @@ const EventCondition: React.FC<EventConditionProps> = ({
         {relatedConditionsState.length > 0 && (<div className={`border-2 ${condition.operator === "AND" ? 'border-primary-dark' : 'border-red-400'} pl-2 w-6 border-l-0 rounded-xl rounded-l-none top-1/4 bottom-[20%] -right-6 absolute transition-colors duration-300`}>
           <Select
             value={condition.operator}
-            onValueChange={(newValue) => handleRootOperatorChange(newValue)}
+            onValueChange={(newValue) => handleRootRelatedOperatorChange(newValue)}
             defaultValue="AND"
           >
             <SelectTrigger className={`absolute top-1/2 -right-6 min-w-fit transform -translate-y-1/2 text-white text-[10px] px-1.5 py-0.5 rounded-md shadow-sm border transition-colors duration-300 ${condition.operator === "AND" ? "bg-primary-dark" : "bg-red-500"}`}>
@@ -509,14 +502,14 @@ const EventCondition: React.FC<EventConditionProps> = ({
           <CardContent className="grid grid-cols-10 gap-4">
             <Label className="text-sm font-medium col-span-1">Where</Label>
             <div className="relative col-span-9">
-              {condition.attributeConditions.length > 1 && (<div className={`border-2 ${condition.operator === "AND" ? 'border-primary' : 'border-yellow-400'} pl-2 w-6 border-l-0 rounded-xl rounded-l-none top-1/4 bottom-[20%] -right-6 absolute transition-colors duration-300`}>
+              {condition.attributeConditions.length > 1 && (<div className={`border-2 ${condition.attributeOperator === "AND" ? 'border-primary' : 'border-yellow-400'} pl-2 w-6 border-l-0 rounded-xl rounded-l-none top-1/4 bottom-[20%] -right-6 absolute transition-colors duration-300`}>
                 <Select
-                  value={condition.operator}
-                  onValueChange={handleRootOperatorChange}
+                  value={condition.attributeOperator}
+                  onValueChange={handleRootAttributeOperatorChange}
                   defaultValue="AND"
                 >
-                  <SelectTrigger className={`absolute top-1/2 -right-6 min-w-fit transform -translate-y-1/2 text-white text-[10px] px-1.5 py-0.5 rounded-md shadow-sm border transition-colors duration-300 ${condition.operator === "AND" ? "bg-primary" : "bg-yellow-500"}`}>
-                    {condition.operator}
+                  <SelectTrigger className={`absolute top-1/2 -right-6 min-w-fit transform -translate-y-1/2 text-white text-[10px] px-1.5 py-0.5 rounded-md shadow-sm border transition-colors duration-300 ${condition.attributeOperator === "AND" ? "bg-primary" : "bg-yellow-500"}`}>
+                    {condition.attributeOperator}
                   </SelectTrigger>
                   <SelectContent className="bg-card border-[0.5px] border-card-foreground shadow-lg rounded-md z-50">
                     <SelectItem value="AND" className="hover:bg-background hover:rounded-md cursor-pointer">AND</SelectItem>
@@ -527,7 +520,7 @@ const EventCondition: React.FC<EventConditionProps> = ({
               {condition.attributeConditions.length > 0 ? (
                 <ReactSortable
                   list={condition.attributeConditions}
-                  setList={(newList) => updateCondition("relatedAttributeConditions", newList)}
+                  setList={(newList) => updateCondition("attributeConditions", newList)}
                   animation={200}
                   className="space-y-2 w-full pl-4"
                 >

@@ -3,11 +3,8 @@ import { Button } from "@/components/ui/button";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useSegmentData } from "@/context/SegmentDataContext";
-
-interface Condition {
-    id: string;
-    type: "attribute" | "event" | "related";
-}
+import { EventConditionType } from "./EventCondition";
+import { Condition } from "@/utils/segmentFunctionHelper";
 
 interface ConditionGroupProps {
     group: {
@@ -16,7 +13,7 @@ interface ConditionGroupProps {
         conditions: Condition[];
     };
     renderAttributeCondition: (condition: Condition, isInGroup: boolean, groupId: string) => JSX.Element | null;
-    renderEventCondition: (condition: Condition, isInGroup: boolean, groupId: string) => JSX.Element | null;
+    renderEventCondition: (condition: EventConditionType, isInGroup: boolean, groupId: string) => JSX.Element | null;
 }
 
 const ConditionGroup: React.FC<ConditionGroupProps> = ({

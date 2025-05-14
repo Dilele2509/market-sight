@@ -2,6 +2,7 @@ import { GripVertical, Trash } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useEffect } from "react";
 
 interface Attribute {
   name: string;
@@ -13,7 +14,7 @@ interface Operator {
   label: string;
 }
 
-interface Condition {
+export interface AttributeCondition {
   id: number;
   type?: string;
   field?: string;
@@ -23,7 +24,7 @@ interface Condition {
 }
 
 interface AttributeConditionProps {
-  condition: Condition;
+  condition: AttributeCondition;
   attributes: Attribute[];
   operators: Operator[];
   isInGroup?: boolean;
@@ -47,6 +48,7 @@ const AttributeCondition: React.FC<AttributeConditionProps> = ({
 }) => {
 
   const updateCondition = (key: string, value: string) => {
+    console.log('Attribute dang goi ham');
     if (isInGroup && groupId !== undefined && handleUpdateGroupCondition) {
       handleUpdateGroupCondition(groupId, condition.id, key, value);
     } else {

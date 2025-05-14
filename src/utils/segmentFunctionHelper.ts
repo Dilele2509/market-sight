@@ -1,15 +1,24 @@
-type Condition = {
+import { AttributeCondition } from "@/components/blocks/segmentation/DefinitionTab/ConditionState/AttributeCondition";
+
+export type Condition = {
+    id: number;
     type: "attribute" | "event" | "group";
+    eventType?: string;
+    frequency?: string;
+    count?: number;
+    timePeriod?: string;
+    timeValue?: number;
     field?: string;
-    operator?: string;
+    operator?: 'AND' | 'OR' | string;
+    attributeOperator?: 'AND' | 'OR';
     value?: any;
     value2?: any;
     columnKey?: string;
     relatedColKey?: string;
     relatedDataset?: string;
     joinWithKey?: string;
-    relatedConditions?: any[];
-    relatedAttributeConditions?: relatedConditions[];
+    attributeConditions?: AttributeCondition[]
+    relatedConditions?: relatedConditions[];
 };
 
 type RelatedAttributeCondition = {
@@ -20,17 +29,18 @@ type RelatedAttributeCondition = {
     value2: string
 }
 
-type relatedConditions = {
+export type relatedConditions = {
     id: number,
     type: string,
     relatedDataset: string,
     joinWithKey: string
     fields: any
-    operator: 'AND' | 'OR'
+    operator: 'AND' | 'OR' | string
     relatedAttributeConditions: RelatedAttributeCondition[]
 }
 
 type GroupCondition = {
+    id: number;
     type: "group";
     operator: "AND" | "OR";
     conditions: Condition[];
@@ -41,30 +51,69 @@ type Attribute = {
     type: string;
 };
 
+function escapeValue(val: any): string {
+    if (typeof val === 'string') {
+        return `'${val.replace(/'/g, "''")}'`; // escape dấu '
+    }
+    return String(val);
+}
+
 function getClause(tableName: string, condition: any): string {
     const { field, operator, value, value2 } = condition;
 
     switch (operator) {
+        // Text & Boolean & Number
         case "equals":
-            return `${tableName}.${field} = '${value}'`;
+            return `${tableName}.${field} = ${escapeValue(value)}`;
         case "not_equals":
-            return `${tableName}.${field} != '${value}'`;
+            return `${tableName}.${field} != ${escapeValue(value)}`;
+
+        // Text
+        case "contains":
+            return `${tableName}.${field} LIKE ${escapeValue(`%${value}%`)}`;
+        case "not_contains":
+            return `${tableName}.${field} NOT LIKE ${escapeValue(`%${value}%`)}`;
+        case "starts_with":
+            return `${tableName}.${field} LIKE ${escapeValue(`${value}%`)}`;
+        case "ends_with":
+            return `${tableName}.${field} LIKE ${escapeValue(`%${value}`)}`;
+
+        // Number
         case "greater_than":
-            return `${tableName}.${field} > ${value}`;
+            return `${tableName}.${field} > ${escapeValue(value)}`;
         case "less_than":
-            return `${tableName}.${field} < ${value}`;
+            return `${tableName}.${field} < ${escapeValue(value)}`;
+        case "between":
+            return `${tableName}.${field} BETWEEN ${escapeValue(value)} AND ${escapeValue(value2)}`;
+
+        // Datetime
+        case "after":
+            return `${tableName}.${field} > ${escapeValue(value)}`;
+        case "before":
+            return `${tableName}.${field} < ${escapeValue(value)}`;
+        case "on":
+            return `${tableName}.${field} = ${escapeValue(value)}`;
+        case "not_on":
+            return `${tableName}.${field} != ${escapeValue(value)}`;
+        case "relative_days_ago":
+            // Assumes value = number of days ago, translated to SQL interval
+            return `${tableName}.${field} >= DATE_SUB(CURRENT_DATE, INTERVAL ${escapeValue(value)} DAY)`;
+
+        // Null checks
         case "is_null":
             return `${tableName}.${field} IS NULL`;
         case "is_not_null":
             return `${tableName}.${field} IS NOT NULL`;
-        case "contains":
-            return `${tableName}.${field} LIKE '%${value}%'`;
-        case "starts_with":
-            return `${tableName}.${field} LIKE '${value}%'`;
-        case "ends_with":
-            return `${tableName}.${field} LIKE '%${value}'`;
-        case "between":
-            return `${tableName}.${field} BETWEEN ${value} AND ${value2}`;
+
+        // Array
+        case "contains_all":
+            // For JSON arrays, ensure all values are present
+            return value.map((v: any) => `${tableName}.${field} LIKE ${escapeValue(`%${v}%`)}`).join(" AND ");
+        case "is_empty":
+            return `JSON_LENGTH(${tableName}.${field}) = 0`;
+        case "is_not_empty":
+            return `JSON_LENGTH(${tableName}.${field}) > 0`;
+
         default:
             return "";
     }
@@ -94,8 +143,11 @@ function getClauseEvent(parentTable: string, eventCondition: any): string {
     }
 
     if (attributeConditions && attributeConditions.length > 0) {
-        for (const attr of attributeConditions) {
-            whereClauses.push(getClause(baseTable, attr));
+        const attrClauses = attributeConditions.map(attr => getClause(baseTable, attr)).filter(Boolean);
+        const attrOperator = eventCondition.attributeOperator || "AND"; // fallback nếu thiếu
+        const joinedAttrClause = buildClauses(attrClauses, attrOperator);
+        if (joinedAttrClause) {
+            whereClauses.push(joinedAttrClause);
         }
     }
 
@@ -107,8 +159,15 @@ function getClauseEvent(parentTable: string, eventCondition: any): string {
         const joinKey = rel.joinWithKey;
         joins.push(`INNER JOIN ${relTable} ON ${baseTable}.${joinKey} = ${relTable}.${joinKey}`);
 
-        for (const attr of rel.relatedAttributeConditions || []) {
-            relatedWhere.push(getClause(relTable, attr));
+        const relAttrClauses = (rel.relatedAttributeConditions || [])
+            .map((attr: RelatedAttributeCondition) => getClause(relTable, attr))
+            .filter(Boolean);
+
+        const relOperator = rel.operator || 'AND'; // fallback
+        const joinedRelAttrs = buildClauses(relAttrClauses, relOperator);
+
+        if (joinedRelAttrs) {
+            relatedWhere.push(joinedRelAttrs);
         }
     }
 
@@ -170,13 +229,20 @@ EXISTS (
 function buildClauses(conditions: (string | null)[], operator: string): string {
     const valid = conditions.filter(Boolean);
     if (!valid.length) return "";
+    // Check how the clauses look
+    //console.log("Clauses to join with", operator, valid);
+
     return valid.map((c) => `(${c})`).join(` ${operator} `);
+}
+
+function isGroupCondition(cond: Condition): cond is GroupCondition {
+    return cond.type === "group" && Array.isArray((cond as any).conditions);
 }
 
 function buildGroupClause(group: GroupCondition, tableName: string): string {
     const clauses = group.conditions.map((cond) => {
-        if (cond.type === "group") {
-            return buildGroupClause(cond as GroupCondition, tableName);
+        if (isGroupCondition(cond)) {
+            return buildGroupClause(cond, tableName);
         } else if (cond.type === "attribute") {
             return getClause(tableName, cond);
         } else if (cond.type === "event") {

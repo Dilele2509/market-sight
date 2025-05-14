@@ -222,27 +222,27 @@ export default function SegmentBuilder({ onBack, editSegment }: SegmentBuilderPr
                 }
             };
 
-            //console.log('[SegmentBuilder] Sending segment to API:', segment);
+            console.log('[SegmentBuilder] Sending segment to API:', segment);
 
-            await axiosPrivate.post('/segment/save-segment', segment, {
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                }
-            }).then(() => {
-                toast.success(`Segment ${editSegment ? 'updated' : 'created'} successfully!`);
-                setHasUnsavedChanges(false);
-                setConditionGroups([]);
-                setConditions([])
+            // await axiosPrivate.post('/segment/save-segment', segment, {
+            //     headers: {
+            //         Authorization: `Bearer ${token}`,
+            //     }
+            // }).then(() => {
+            //     toast.success(`Segment ${editSegment ? 'updated' : 'created'} successfully!`);
+            //     setHasUnsavedChanges(false);
+            //     setConditionGroups([]);
+            //     setConditions([])
 
-                //console.log('[SegmentBuilder] Calling onBack with segment:', segment);
-                if (onBack) {
-                    onBack(segment);
-                } else {
-                    console.warn('[SegmentBuilder] onBack function is not provided');
-                }
-            }).catch((err) => {
-                toast.error('Failed to save segment: ', err);
-            });
+            //     //console.log('[SegmentBuilder] Calling onBack with segment:', segment);
+            //     if (onBack) {
+            //         onBack(segment);
+            //     } else {
+            //         console.warn('[SegmentBuilder] onBack function is not provided');
+            //     }
+            // }).catch((err) => {
+            //     toast.error('Failed to save segment: ', err);
+            // });
 
         } catch (error) {
             console.error('[SegmentBuilder] Error saving segment:', error);
