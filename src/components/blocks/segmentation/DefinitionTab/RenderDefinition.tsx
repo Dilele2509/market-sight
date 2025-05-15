@@ -67,10 +67,9 @@ const RenderDefinition: React.FC<SegmentDefinitionProps> = ({
     useEffect(() => {
         fetchAttributes(selectedDataset)
     }, [selectedDataset])
-
     // useEffect(()=>{
-    //     console.log('check condition: ', conditions);
-    // },[conditions])
+    //     console.log('check condition: ', conditions, ' check condition group: ', conditionGroups);
+    // },[conditions, conditionGroups])
 
     const fetchAttributes = async (dataset: any, showToast = true) => {
         try {
@@ -165,7 +164,7 @@ const RenderDefinition: React.FC<SegmentDefinitionProps> = ({
         console.log("Dataset changed to:", datasetName);
         setSelectedDataset(datasets[datasetName]);
     };
-    const handleRootOperatorChange = (newValue) => {
+    const handleRootOperatorChange = (newValue : 'AND' | 'OR' | string) => {
         if (newValue !== null) {
             setRootOperator(newValue);
         }
@@ -293,27 +292,15 @@ const RenderDefinition: React.FC<SegmentDefinitionProps> = ({
         setConditions(conditions.filter(condition => condition.id !== id));
     };
     const handleUpdateCondition = (id, field, value) => {
-        setConditions(prevConditions => {
-            const updatedConditions = prevConditions.map(condition => {
+        setConditions(prevConditions =>
+            prevConditions.map(condition => {
                 if (condition.id === id) {
                     return { ...condition, [field]: value };
                 }
                 return condition;
-            });
-
-            // 👉 Log hoặc kiểm tra ở đây trước khi cập nhật:
-            console.log("[DEBUG] New conditions before set:", updatedConditions);
-
-            // Ví dụ kiểm tra nếu relatedConditions bị mất
-            const updated = updatedConditions.find(c => c.id === id);
-            if (updated.relatedConditions?.length === 0 && field !== 'relatedConditions') {
-                console.warn("[WARNING] relatedConditions bị mất!", updated);
-            }
-
-            return updatedConditions;
-        });
+            })
+        );
     };
-
 
     //render function
     const renderAttributeCondition = (condition, isInGroup = false, groupId = null) => {
@@ -337,7 +324,7 @@ const RenderDefinition: React.FC<SegmentDefinitionProps> = ({
             </div>
         );
     };
-    const renderEventCondition = (condition: EventConditionType, isInGroup = false, groupId = null) => {
+    const renderEventCondition = (condition : EventConditionType, isInGroup = false, groupId = null) => {
         return (
             <div key={condition.id}>
                 <EventCondition

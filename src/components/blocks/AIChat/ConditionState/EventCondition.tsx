@@ -11,8 +11,9 @@ import RelatedDatasetCondition from "./RelatedDatasetCondition";
 import { ReactSortable } from "react-sortablejs";
 import { useSegmentToggle } from "@/context/SegmentToggleContext";
 import { defineDatasetName, relatedConditions, translateLabelToVietnamese } from "@/utils/segmentFunctionHelper";
-import { AttributeCondition } from "@/components/blocks/segmentation/DefinitionTab/ConditionState/AttributeCondition";
+import { AttributeCondition } from "./AttributeCondition";
 import { toast } from "sonner";
+import { useAiChatContext } from "@/context/AiChatContext";
 
 export type EventConditionType = {
   id: number;
@@ -49,9 +50,9 @@ const EventCondition: React.FC<EventConditionProps> = ({
   handleUpdateGroupCondition,
   handleRemoveGroupCondition,
 }) => {
-  const { datasets, selectedDataset, relatedDatasetNames, setConditions, editSegment } = useSegmentData()
+  const { datasets, selectedDataset, relatedDatasetNames, responseData } = useAiChatContext()
   const { isDisableRelatedAdd, setIsDisableRelatedAdd } = useSegmentToggle();
-  const [relatedConditionsState, setRelatedConditionsState] = useState(editSegment ? condition?.relatedConditions : [])
+  const [relatedConditionsState, setRelatedConditionsState] = useState(responseData ? condition?.relatedConditions : [])
   const [attributes, setAttributes] = useState<any[]>([]);
 
   const attribute = attributes.find((attr) => attr.name === datasets['Transactions'].fields[0]);
@@ -65,8 +66,14 @@ const EventCondition: React.FC<EventConditionProps> = ({
   // }, [condition]);
 
   useEffect(() => {
-    updateCondition('relatedConditions', relatedConditionsState);
+    if (!responseData && JSON.stringify(condition?.relatedConditions) !== JSON.stringify(relatedConditionsState)) {
+      updateCondition('relatedConditions', relatedConditionsState);
+    }
   }, [relatedConditionsState])
+
+  // useEffect(() => {
+  //   updateCondition('relatedConditions', relatedConditionsState);
+  // }, [relatedConditionsState])
 
 
   // useEffect(() => {

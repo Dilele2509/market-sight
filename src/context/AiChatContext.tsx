@@ -1,19 +1,21 @@
-import { ResponseData } from "@/types/aichat";
+import { axiosPrivate } from "@/API/axios";
 import { Segment } from "@/types/segmentTypes";
-import { Condition } from "@/utils/segmentFunctionHelper";
+import { Condition, defineDatasetName } from "@/utils/segmentFunctionHelper";
 import React, { createContext, useState, useContext, ReactNode, useEffect } from "react";
+import { useSegmentToggle } from "./SegmentToggleContext";
+import { ResponseData } from "@/types/aichat";
 
 interface AiChatContextProps {
-    editSegment: Segment;
-    setEditSegment: React.Dispatch<React.SetStateAction<Segment>>;
     segmentName: string;
     setSegmentName: React.Dispatch<React.SetStateAction<string>>;
     segmentId: string;
     setSegmentId: React.Dispatch<React.SetStateAction<string>>;
     attributes: any[];
     setAttributes: React.Dispatch<React.SetStateAction<any[]>>;
-    sqlQuery: string;
-    setSqlQuery: React.Dispatch<React.SetStateAction<string>>
+    selectedDataset: any;
+    setSelectedDataset: React.Dispatch<React.SetStateAction<any>>;
+    datasets: Record<string, any>;
+    setDatasets: React.Dispatch<React.SetStateAction<Record<string, any>>>;
     previewData: any[];
     setPreviewData: React.Dispatch<React.SetStateAction<any[]>>;
     rootOperator: string;
@@ -22,44 +24,260 @@ interface AiChatContextProps {
     setConditions: React.Dispatch<React.SetStateAction<Condition[]>>;
     conditionGroups: any[];
     setConditionGroups: React.Dispatch<React.SetStateAction<any[]>>;
-    responseData: ResponseData,
+    description: string;
+    setDescription: React.Dispatch<React.SetStateAction<string>>;
+    estimatedSize: any;
+    setEstimatedSize: React.Dispatch<React.SetStateAction<any>>;
+    editableSql: string;
+    setEditableSql: React.Dispatch<React.SetStateAction<string>>;
+    sqlError: any;
+    setSqlError: React.Dispatch<React.SetStateAction<any>>;
+    initialConditions: any[];
+    setInitialConditions: React.Dispatch<React.SetStateAction<any[]>>;
+    initialConditionGroups: any[];
+    setInitialConditionGroups: React.Dispatch<React.SetStateAction<any[]>>;
+    initialRootOperator: string;
+    setInitialRootOperator: React.Dispatch<React.SetStateAction<string>>;
+    initialSegmentName: string;
+    setInitialSegmentName: React.Dispatch<React.SetStateAction<string>>;
+    initialDescription: string;
+    setInitialDescription: React.Dispatch<React.SetStateAction<string>>;
+    relatedDatasetNames: any;
+    setRelatedDatasetNames: React.Dispatch<React.SetStateAction<any>>;
+    selectRelatedDataset: any;
+    setSelectRelatedDataset: React.Dispatch<React.SetStateAction<any>>;
+    availableSegments: any;
+    setAvailableSegments: Record<string, any>;
+    selectionMode: string
+    setSelectionMode: React.Dispatch<React.SetStateAction<string>>;
+    connectionUrl: string;
+    setConnectionUrl: React.Dispatch<React.SetStateAction<string>>;
+    CONNECTION_STORAGE_KEY: string;
+    CONNECTION_EXPIRY_KEY: string;
+    ONE_HOUR_MS: number;
+    sqlQuery: string;
+    setSqlQuery: React.Dispatch<React.SetStateAction<string>>;
+    selectedTable: string;
+    setSelectedTable: React.Dispatch<React.SetStateAction<string>>;
+    tables: Record<string, any>;
+    setTables: React.Dispatch<React.SetStateAction<Record<string, any>>>;
+    responseData: ResponseData;
     setResponseData: React.Dispatch<React.SetStateAction<ResponseData>>;
-    hasTypedSqlOnce: boolean,
-    setHasTypedSqlOnce: React.Dispatch<React.SetStateAction<boolean>>;
     inputMessage: string;
     setInputMessage: React.Dispatch<React.SetStateAction<string>>;
 }
 
 const AiChatContext = createContext<AiChatContextProps | undefined>(undefined);
 
+const formattedData = async (inputData: any) => {
+    return {
+        "Customer Profile": {
+            name: "customers",
+            description: "Customer information",
+            fields: Object.keys(inputData.customers).filter(key => key !== "business_id"),
+            schema: "public"
+        },
+        "Transactions": {
+            name: "transactions",
+            description: "Transaction records",
+            fields: Object.keys(inputData.transactions).filter(key => key !== "business_id"),
+            schema: "public"
+        },
+        "Stores": {
+            name: "stores",
+            description: "Store information",
+            fields: Object.keys(inputData.stores).filter(key => key !== "business_id"),
+            schema: "public"
+        },
+        "Product Line": {
+            name: "product_lines",
+            description: "Product information",
+            fields: Object.keys(inputData.product_lines),
+            schema: "public"
+        }
+    };
+};
+
 
 export const AiChatContextProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-    const [inputMessage, setInputMessage] = useState("")
-    const [hasTypedSqlOnce, setHasTypedSqlOnce] = useState(false)
-    const [responseData, setResponseData] = useState<ResponseData | null>(null)
-    const [editSegment, setEditSegment] = useState(null);
+    const { logged } = useSegmentToggle()
+    const [connectionUrl, setConnectionUrl] = useState();
+    const CONNECTION_STORAGE_KEY = 'postgres_connection';
+    const CONNECTION_EXPIRY_KEY = 'postgres_connection_expiry';
+    const ONE_HOUR_MS = 60 * 60 * 1000; // 1 hour in milliseconds
+
+    const [datasets, setDatasets] = useState<Record<string, any>>({});
+    const [inputMessage, setInputMessage] = useState<string>("")
+    const [selectedDataset, setSelectedDataset] = useState<any>({
+        name: "customers",
+        fields: [
+            "customer_id",
+            "first_name",
+            "last_name",
+            "email",
+            "phone",
+            "gender",
+            "birth_date",
+            "registration_date",
+            "address",
+            "city"
+        ],
+        description: "Customer information",
+        schema: "public"
+    });
+    const [responseData, setResponseData] = useState(null);
+
     const [segmentName, setSegmentName] = useState<string>("High Value Users (new)");
     const [segmentId, setSegmentId] = useState<string>("segment:high-value-users-new");
     const [attributes, setAttributes] = useState<any[]>([]);
-    const [sqlQuery, setSqlQuery] = useState<string>("")
+
     const [previewData, setPreviewData] = useState<any[]>([]);
     const [rootOperator, setRootOperator] = useState<string>("AND");
     const [conditions, setConditions] = useState<Condition[]>([]);
     const [conditionGroups, setConditionGroups] = useState<any[]>([]);
+    const [description, setDescription] = useState<string>('');
+    const [estimatedSize, setEstimatedSize] = useState<any>({ count: 88, percentage: 22 });
+
+    //fetch 4 tables of dataset
+    useEffect(() => {
+        const fetchTables = async () => {
+            try {
+                const tables = await axiosPrivate.get('/data/tables');
+
+                if (tables.status === 200) {
+                    const formatted = await formattedData(tables.data.data);
+                    setDatasets(formatted);
+                }
+            } catch (error) {
+                console.error("Failed to fetch tables:", error);
+            }
+        };
+        if (logged) fetchTables();
+    }, [connectionUrl, logged]);
+    //fetch info if had responseData
+
+    useEffect(() => {
+        if (!datasets || Object.keys(datasets).length === 0) return;
+        console.log('check segment in context: ', responseData?.filter_criteria.conditions);
+
+        setSegmentName(responseData ? responseData.segment_name : "High Value Users (new)");
+        setSegmentId(responseData ? responseData.segment_id : "segment:high-value-users-new");
+
+        const datasetKey = responseData
+            ? defineDatasetName(responseData.dataset)
+            : defineDatasetName("customer");
+
+        setSelectedDataset(datasets ? datasets[datasetKey] : {
+            name: "customers",
+            fields: [
+                "customer_id",
+                "first_name",
+                "last_name",
+                "email",
+                "phone",
+                "gender",
+                "birth_date",
+                "registration_date",
+                "address",
+                "city"
+            ],
+            description: "Customer information",
+            schema: "public"
+        });
+
+        setRootOperator(responseData ? responseData.filter_criteria.rootOperator : "AND");
+        setConditions(responseData ? responseData.filter_criteria.conditions : []);
+        setConditionGroups(responseData ? responseData.filter_criteria.conditionGroups : []);
+        setDescription(responseData ? responseData.description : "");
+        setEstimatedSize({ count: 88, percentage: 22 });
+    }, [responseData]);
+
+    useEffect(() => {
+        const fetchRelated = async () => {
+            try {
+                const res = await axiosPrivate.post('/data/related-tables', { tableName: 'transactions' });
+
+                if (res.status === 200 && res.data.data) {
+                    //console.log('Related tables data:', res.data.data);
+                    setRelatedDatasetNames(res.data.data);
+
+                    const firstValidData = res.data.data.find((data) => data.trim() !== 'customers');
+
+                    if (firstValidData) {
+                        const datasetKey = defineDatasetName(firstValidData);
+                        const dataset = datasets[datasetKey];
+
+                        //console.log('Trying to select dataset key:', datasetKey);
+                        //console.log('Dataset selected:', dataset);
+
+                        if (dataset) {
+                            setSelectRelatedDataset(dataset);
+                        } else {
+                            console.warn('Dataset not found in datasets object');
+                            setSelectRelatedDataset(undefined);
+                        }
+                    } else {
+                        console.warn('No valid related dataset found');
+                        setSelectRelatedDataset(undefined);
+                    }
+                } else {
+                    console.error('Error when fetching related tables');
+                }
+            } catch (error) {
+                console.error(error);
+            }
+        };
+
+        if (logged && Object.keys(datasets).length > 0) {
+            fetchRelated();
+        }
+    }, [datasets, logged]);
+
+    useEffect(() => {
+        if (logged && responseData) {
+            console.log('check all Condition of edit segment: ', conditions);
+        }
+    }, [conditions || logged || responseData])
+
+    const [editableSql, setEditableSql] = useState<string>("");
+    const [sqlError, setSqlError] = useState<any>(null);
+
+    const [initialConditions, setInitialConditions] = useState([]);
+    const [initialConditionGroups, setInitialConditionGroups] = useState([]);
+    const [initialRootOperator, setInitialRootOperator] = useState('AND');
+    const [initialSegmentName, setInitialSegmentName] = useState('High Value Users (new)');
+    const [initialDescription, setInitialDescription] = useState('');
+
+    // General state
+    const [relatedDatasetNames, setRelatedDatasetNames] = useState([]);
+    const [selectRelatedDataset, setSelectRelatedDataset] = useState<any>({})
+
+    const [availableSegments, setAvailableSegments] = useState([
+        { id: "segment:recent-customers", name: "Recent Customers", count: 456 },
+        { id: "segment:vip-users", name: "VIP Users", count: 123 },
+        { id: "segment:high-spenders", name: "High Spenders", count: 78 }
+    ]);
+
+    const [selectionMode, setSelectionMode] = useState("include"); // 'include' or 'exclude'
+
+    const [selectedTable, setSelectedTable] = useState('');
+    const [sqlQuery, setSqlQuery] = useState('');
+    const [tables, setTables] = useState<Record<string, any>>({});
+
 
     return (
         <AiChatContext.Provider
             value={{
-                editSegment,
-                setEditSegment,
                 segmentName,
                 setSegmentName,
                 segmentId,
                 setSegmentId,
                 attributes,
                 setAttributes,
-                sqlQuery,
-                setSqlQuery,
+                selectedDataset,
+                setSelectedDataset,
+                datasets,
+                setDatasets,
                 previewData,
                 setPreviewData,
                 rootOperator,
@@ -68,10 +286,45 @@ export const AiChatContextProvider: React.FC<{ children: ReactNode }> = ({ child
                 setConditions,
                 conditionGroups,
                 setConditionGroups,
+                description,
+                setDescription,
+                estimatedSize,
+                setEstimatedSize,
+                editableSql,
+                setEditableSql,
+                sqlError,
+                setSqlError,
+                initialConditions,
+                setInitialConditions,
+                initialConditionGroups,
+                setInitialConditionGroups,
+                initialRootOperator,
+                setInitialRootOperator,
+                initialSegmentName,
+                setInitialSegmentName,
+                initialDescription,
+                setInitialDescription,
+                availableSegments,
+                setAvailableSegments,
+                selectionMode,
+                setSelectionMode,
+                connectionUrl,
+                setConnectionUrl,
+                CONNECTION_STORAGE_KEY,
+                CONNECTION_EXPIRY_KEY,
+                ONE_HOUR_MS,
+                selectedTable,
+                setSelectedTable,
+                sqlQuery,
+                setSqlQuery,
+                tables,
+                setTables,
                 responseData,
                 setResponseData,
-                hasTypedSqlOnce,
-                setHasTypedSqlOnce,
+                relatedDatasetNames,
+                setRelatedDatasetNames,
+                selectRelatedDataset,
+                setSelectRelatedDataset,
                 inputMessage,
                 setInputMessage
             }}
@@ -84,7 +337,7 @@ export const AiChatContextProvider: React.FC<{ children: ReactNode }> = ({ child
 export const useAiChatContext = () => {
     const context = useContext(AiChatContext);
     if (!context) {
-        throw new Error("useSegment must be used within a AiChatContext");
+        throw new Error("useSegment must be used within a AiChatProvider");
     }
     return context;
 };

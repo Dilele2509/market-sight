@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { useSegmentData } from "@/context/SegmentDataContext";
 import { SlidersHorizontal, Group, Calendar, Table } from "lucide-react";
 import { OPERATORS } from "@/types/constant";
-import { AttributeCondition, ConditionGroup, EventCondition } from "../segmentation/DefinitionTab/ConditionState";
+import { AttributeCondition, EventCondition, ConditionGroup } from "./ConditionState";
 import { EventConditionType } from "../segmentation/DefinitionTab/ConditionState/EventCondition";
 import { toast } from "sonner";
 import { useEffect, useState } from "react";
@@ -15,11 +15,10 @@ import { ResponseData } from "@/types/aichat";
 import { useAiChatContext } from "@/context/AiChatContext";
 
 interface ModelEditorProps {
-    responseData: ResponseData
 }
 
-export function ModelEditor({ responseData }: ModelEditorProps) {
-    const { selectedDataset } = useSegmentData();
+export function ModelEditor({ }: ModelEditorProps) {
+    const { selectedDataset, responseData } = useAiChatContext();
     const { setLoading } = useSegmentToggle();
     const { conditions, setConditions, conditionGroups, setConditionGroups, rootOperator, setRootOperator, setSqlQuery, attributes, setAttributes } = useAiChatContext();
 
@@ -27,6 +26,10 @@ export function ModelEditor({ responseData }: ModelEditorProps) {
     useEffect(() => {
         fetchAttributes(selectedDataset)
     }, [selectedDataset])
+
+    useEffect(() => {
+        console.log('update data conditions: ', conditions);
+    }, [conditions || conditionGroups || rootOperator])
 
     useEffect(() => {
         setSqlQuery(generateSQLPreview(selectedDataset, conditions, conditionGroups, rootOperator))
@@ -326,7 +329,7 @@ export function ModelEditor({ responseData }: ModelEditorProps) {
                             className="px-2 py-1 text-xs w-auto"
                             onClick={() => handleAddCondition("attribute")}
                         >
-                            <SlidersHorizontal className="w-3 h-3 mr-1" /> Add attribute condition
+                            <SlidersHorizontal className="w-3 h-3 mr-1" /> Thêm điều kiện cho cột dữ liệu
                         </Button>
                         <Button
                             variant="outline"
@@ -334,7 +337,7 @@ export function ModelEditor({ responseData }: ModelEditorProps) {
                             className="px-2 py-1 text-xs w-auto"
                             onClick={() => handleAddCondition("event")}
                         >
-                            <Calendar className="w-3 h-3 mr-1" /> Add event condition
+                            <Calendar className="w-3 h-3 mr-1" /> Thêm sự kiện mua hàng
                         </Button>
                         <Button
                             variant="outline"
@@ -342,7 +345,7 @@ export function ModelEditor({ responseData }: ModelEditorProps) {
                             className="px-2 py-1 text-xs w-auto"
                             onClick={handleAddConditionGroup}
                         >
-                            <Group className="w-3 h-3 mr-1" /> Add condition group
+                            <Group className="w-3 h-3 mr-1" /> Nhóm điều kiện
                         </Button>
                     </div>
                 </div> :

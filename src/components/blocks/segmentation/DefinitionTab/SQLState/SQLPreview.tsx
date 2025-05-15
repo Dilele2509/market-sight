@@ -7,7 +7,7 @@ const SQLPreview = () => {
   const { selectedDataset, conditions, attributes, rootOperator, conditionGroups } = useSegmentData();
 
   const sql = useMemo(() => {
-    const rawSQL = generateSQLPreview(selectedDataset, conditions, conditionGroups, attributes, rootOperator);
+    const rawSQL = generateSQLPreview(selectedDataset, conditions, conditionGroups, rootOperator);
     return highlightSQLWithTailwind(rawSQL);
   }, [selectedDataset, conditions, conditionGroups, attributes, rootOperator]);
 

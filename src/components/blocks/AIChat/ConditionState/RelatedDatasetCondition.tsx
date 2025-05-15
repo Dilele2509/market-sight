@@ -11,6 +11,7 @@ import { toast } from "sonner";
 import { OPERATORS } from "@/types/constant";
 import { ReactSortable } from "react-sortablejs";
 import { defineDatasetName, translateLabelToVietnamese } from "@/utils/segmentFunctionHelper";
+import { useAiChatContext } from "@/context/AiChatContext";
 
 type RelatedAttributeCondition = {
     id: number,
@@ -38,7 +39,7 @@ interface RelatedDatasetConditionProps {
 
 const RelatedDatasetCondition: React.FC<RelatedDatasetConditionProps> = ({ condition, relatedConditionsState, setRelatedConditionsState }) => {
     const { setLoading, setIsDisableRelatedAdd } = useSegmentToggle();
-    const { datasets, relatedDatasetNames } = useSegmentData();
+    const { datasets, relatedDatasetNames } = useAiChatContext();
     const [attributes, setAttributes] = useState<any[]>([]);
 
     const attribute = attributes.find((attr) => attr.name === condition.fields?.[0]);
@@ -85,8 +86,8 @@ const RelatedDatasetCondition: React.FC<RelatedDatasetConditionProps> = ({ condi
     };
 
     useEffect(() => {
-        console.log(condition);
-    }, [])
+        console.log('from related: ', condition);
+    }, [condition])
 
     const determineFieldType = (fieldName: string, dataType = null) => {
         if (dataType) {
@@ -118,6 +119,7 @@ const RelatedDatasetCondition: React.FC<RelatedDatasetConditionProps> = ({ condi
                 return condition;
             })
         );
+
     };
 
     const updateRelatedAttributeCondition = (key: string, value: string, index: number) => {

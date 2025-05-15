@@ -258,6 +258,8 @@ function generateSQLPreview(
     const tableName = selectedDataset.name;
     const whereClauses: string[] = [];
 
+    console.log('check root in generate: ', rootOperator);
+
     for (const condition of conditions) {
         if (condition.type === "attribute") {
             whereClauses.push(getClause(tableName, condition));
@@ -302,7 +304,62 @@ const highlightSQLWithTailwind = (sql: string): string => {
     return highlighted;
 }
 
-export { generateSQLPreview, highlightSQLWithTailwind };
+function translateLabelToVietnamese(label: string): string {
+    const translations: Record<string, string> = {
+        // Text operators
+        'is': 'là',
+        'is not': 'không là',
+        'contains': 'chứa',
+        'does not contain': 'không chứa',
+        'starts with': 'bắt đầu với',
+        'ends with': 'kết thúc với',
+        'is blank': 'rỗng',
+        'is not blank': 'không rỗng',
+
+        // Number operators
+        'equals': 'bằng',
+        'does not equal': 'không bằng',
+        'more than': 'lớn hơn',
+        'less than': 'nhỏ hơn',
+        'between': 'trong khoảng',
+
+        // Datetime operators
+        'after': 'sau',
+        'before': 'trước',
+        'on': 'vào ngày',
+        'not on': 'không vào ngày',
+        'in the last...': 'lần cuối vào...',
+
+        // Boolean
+        // 'is' and 'is not' are already mapped above
+
+        // Array operators
+        'contains all of': 'chứa tất cả',
+        'is empty': 'rỗng',
+        'is not empty': 'không rỗng',
+
+        // Event condition types
+        'Performed': 'Đã thực hiện',
+        'Not Performed': 'Chưa thực hiện',
+        'First Time': 'Lần đầu',
+        'Last Time': 'Lần cuối',
+
+        // Frequency options
+        'at least': 'ít nhất',
+        'at most': 'nhiều nhất',
+        'exactly': 'chính xác',
+
+        // Time period
+        'days': 'ngày',
+        'weeks': 'tuần',
+        'months': 'tháng'
+    }
+
+    return translations[label] || label
+}
+
+
+export { generateSQLPreview, highlightSQLWithTailwind, translateLabelToVietnamese };
 
 export const defineDatasetName = (value: string) => {
     switch (value.toLowerCase()) {

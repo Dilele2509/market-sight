@@ -13,8 +13,7 @@ interface DataTableProps {
 }
 
 export function DataTable({ }: DataTableProps) {
-    const { CONNECTION_STORAGE_KEY, selectedDataset } = useSegmentData()
-    const { sqlQuery, setPreviewData, previewData } = useAiChatContext()
+    const { sqlQuery, setPreviewData, previewData, CONNECTION_STORAGE_KEY, selectedDataset } = useAiChatContext()
     const { token } = useContext(AuthContext)
     const [previewLoading, setPreviewLoading] = useState(false)
     // Function to fetch preview data based on current conditions
@@ -121,7 +120,7 @@ export function DataTable({ }: DataTableProps) {
     };
 
     useEffect(() => {
-        if (previewData.length === 0) fetchPreviewData()
+        fetchPreviewData()
     }, [sqlQuery])
 
     return (

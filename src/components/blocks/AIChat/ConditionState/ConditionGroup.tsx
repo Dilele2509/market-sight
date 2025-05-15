@@ -1,10 +1,10 @@
 import { Trash, SlidersHorizontal, Calendar, Link } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useSegmentData } from "@/context/SegmentDataContext";
 import { EventConditionType } from "./EventCondition";
 import { Condition } from "@/utils/segmentFunctionHelper";
+import { useAiChatContext } from "@/context/AiChatContext";
 
 interface ConditionGroupProps {
     group: {
@@ -21,8 +21,7 @@ const ConditionGroup: React.FC<ConditionGroupProps> = ({
     renderAttributeCondition,
     renderEventCondition,
 }) => {
-    const { selectedDataset } = useSegmentData()
-    const { setConditionGroups, conditionGroups, conditions } = useSegmentData()
+    const { selectedDataset,setConditionGroups, conditionGroups, conditions } = useAiChatContext()
 
     const handleAddConditionToGroup = (groupId, type = 'attribute') => {
         setConditionGroups(conditionGroups.map(group => {
