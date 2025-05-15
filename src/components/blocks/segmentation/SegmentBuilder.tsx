@@ -51,6 +51,7 @@ export default function SegmentBuilder({ onBack, editSegment }: SegmentBuilderPr
 
     useEffect(() => {
         setEditSegment(editSegment)
+        setPreviewData([])
     }, [])
 
     //dùng để set trạng thái unchange
@@ -63,15 +64,16 @@ export default function SegmentBuilder({ onBack, editSegment }: SegmentBuilderPr
             segmentName !== initialSegmentName ||
             description !== initialDescription;
 
-        setHasUnsavedChanges(!hasUnsavedChanges);
+        setHasUnsavedChanges(hasChanged);
     }, [
         conditions, conditionGroups, rootOperator, segmentName, description,
         initialConditions, initialConditionGroups, initialRootOperator, initialSegmentName, initialDescription
     ]);
 
+
     //SQL Preview
     const generateSQL = () => {
-        return generateSQLPreview(selectedDataset, conditions, conditionGroups, attributes, rootOperator)
+        return generateSQLPreview(selectedDataset, conditions, conditionGroups, rootOperator)
     }
     // Function to open SQL dialog
     const handleOpenSqlDialog = () => {
@@ -86,12 +88,9 @@ export default function SegmentBuilder({ onBack, editSegment }: SegmentBuilderPr
         setPreviewOpen(true); // Open dialog immediately to show loading state
 
         try {
-            const sqlQuery = generateSQLPreview(selectedDataset, conditions, conditionGroups, attributes, rootOperator);
-
-            //console.log('condition: ', conditions, ' sql query: ', sqlQuery);
+            const sqlQuery = generateSQLPreview(selectedDataset, conditions, conditionGroups, rootOperator);
 
             const connectionUrl = localStorage.getItem(CONNECTION_STORAGE_KEY)
-            //console.log('connection: ', connectionUrl);
 
             if (!connectionUrl) {
                 toast.error("Connection URL not configured. Please set the connection URL first.");
@@ -99,13 +98,12 @@ export default function SegmentBuilder({ onBack, editSegment }: SegmentBuilderPr
                 return;
             }
 
-            // Only log the query, not the connection details
-            console.log("Executing SQL query for preview:", sqlQuery);
+            // console.log("Executing SQL query for preview:", sqlQuery);
 
             try {
                 const url = new URL(connectionUrl);
                 const username = url.username;
-                const password = url.password; // Will be sent securely but not logged
+                const password = url.password; 
                 const host = url.hostname;
                 const port = url.port;
                 const database = url.pathname.replace('/', '');
@@ -125,18 +123,18 @@ export default function SegmentBuilder({ onBack, editSegment }: SegmentBuilderPr
                 };
 
                 // Log request WITHOUT showing password
-                console.log("Sending request to API with connection details:", {
-                    table: requestData.table,
-                    query: requestData.query,
-                    connection_details: {
-                        url: requestData.connection_details.url,
-                        host: requestData.connection_details.host,
-                        port: requestData.connection_details.port,
-                        database: requestData.connection_details.database,
-                        username: requestData.connection_details.username,
-                        password: "********" // Mask password in logs
-                    }
-                });
+                // console.log("Sending request to API with connection details:", {
+                //     table: requestData.table,
+                //     query: requestData.query,
+                //     connection_details: {
+                //         url: requestData.connection_details.url,
+                //         host: requestData.connection_details.host,
+                //         port: requestData.connection_details.port,
+                //         database: requestData.connection_details.database,
+                //         username: requestData.connection_details.username,
+                //         password: "********" // Mask password in logs
+                //     }
+                // });
 
                 // Call the API endpoint
                 const response = await axiosPrivate.post(`/data/query`, requestData, {
@@ -215,7 +213,6 @@ export default function SegmentBuilder({ onBack, editSegment }: SegmentBuilderPr
                 updated_at: new Date().toISOString(),
                 status: editSegment ? editSegment.status : 'active',
                 filter_criteria: {
-                    size: estimatedSize.count,
                     conditions: conditions,
                     conditionGroups: conditionGroups,
                     rootOperator: rootOperator
@@ -224,25 +221,24 @@ export default function SegmentBuilder({ onBack, editSegment }: SegmentBuilderPr
 
             console.log('[SegmentBuilder] Sending segment to API:', segment);
 
-            // await axiosPrivate.post('/segment/save-segment', segment, {
-            //     headers: {
-            //         Authorization: `Bearer ${token}`,
-            //     }
-            // }).then(() => {
-            //     toast.success(`Segment ${editSegment ? 'updated' : 'created'} successfully!`);
-            //     setHasUnsavedChanges(false);
-            //     setConditionGroups([]);
-            //     setConditions([])
+            await axiosPrivate.post('/segment/save-segment', segment, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                }
+            }).then(() => {
+                toast.success(`Segment ${editSegment ? 'updated' : 'created'} successfully!`);
+                setHasUnsavedChanges(false);
+                setConditionGroups([]);
+                setConditions([])
 
-            //     //console.log('[SegmentBuilder] Calling onBack with segment:', segment);
-            //     if (onBack) {
-            //         onBack(segment);
-            //     } else {
-            //         console.warn('[SegmentBuilder] onBack function is not provided');
-            //     }
-            // }).catch((err) => {
-            //     toast.error('Failed to save segment: ', err);
-            // });
+                if (onBack) {
+                    onBack(segment);
+                } else {
+                    console.warn('[SegmentBuilder] onBack function is not provided');
+                }
+            }).catch((err) => {
+                toast.error('Failed to save segment: ', err);
+            });
 
         } catch (error) {
             console.error('[SegmentBuilder] Error saving segment:', error);

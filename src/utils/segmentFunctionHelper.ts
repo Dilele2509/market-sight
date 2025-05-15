@@ -46,11 +46,6 @@ type GroupCondition = {
     conditions: Condition[];
 };
 
-type Attribute = {
-    name: string;
-    type: string;
-};
-
 function escapeValue(val: any): string {
     if (typeof val === 'string') {
         return `'${val.replace(/'/g, "''")}'`; // escape dấu '
@@ -258,7 +253,6 @@ function generateSQLPreview(
     selectedDataset: any,
     conditions: Condition[],
     conditionGroups: GroupCondition[],
-    attributes: Attribute[],
     rootOperator: string
 ): string {
     const tableName = selectedDataset.name;

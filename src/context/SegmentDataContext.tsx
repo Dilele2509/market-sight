@@ -197,14 +197,7 @@ export const SegmentDataProvider: React.FC<{ children: ReactNode }> = ({ childre
         setConditions(editSegment ? editSegment.filter_criteria.conditions : []);
         setConditionGroups(editSegment ? editSegment.filter_criteria.conditionGroups : []);
         setDescription(editSegment ? editSegment.description : "");
-        setEstimatedSize(
-            editSegment
-                ? {
-                    count: editSegment.filter_criteria.size,
-                    percentage: Math.round((editSegment.filter_criteria.size / 400) * 100),
-                }
-                : { count: 88, percentage: 22 }
-        );
+        setEstimatedSize({ count: 88, percentage: 22 });
     }, [editSegment]);
 
     useEffect(() => {

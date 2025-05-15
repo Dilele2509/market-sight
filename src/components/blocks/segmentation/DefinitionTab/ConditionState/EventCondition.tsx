@@ -51,7 +51,7 @@ const EventCondition: React.FC<EventConditionProps> = ({
 }) => {
   const { datasets, selectedDataset, relatedDatasetNames, setConditions, editSegment } = useSegmentData()
   const { isDisableRelatedAdd, setIsDisableRelatedAdd } = useSegmentToggle();
-  const [relatedConditionsState, setRelatedConditionsState] = useState(editSegment? condition?.relatedConditions : [])
+  const [relatedConditionsState, setRelatedConditionsState] = useState(editSegment ? condition?.relatedConditions : [])
   const [attributes, setAttributes] = useState<any[]>([]);
 
   const attribute = attributes.find((attr) => attr.name === datasets['Transactions'].fields[0]);
@@ -65,9 +65,7 @@ const EventCondition: React.FC<EventConditionProps> = ({
   // }, [condition]);
 
   useEffect(() => {
-    if (!editSegment && JSON.stringify(condition?.relatedConditions) !== JSON.stringify(relatedConditionsState)) {
-      updateCondition('relatedConditions', relatedConditionsState);
-    }
+    updateCondition('relatedConditions', relatedConditionsState);
   }, [relatedConditionsState])
 
 
@@ -245,14 +243,14 @@ const EventCondition: React.FC<EventConditionProps> = ({
         <div className="flex items-center space-x-4">
           <GripVertical className="mr-2 text-gray-400 cursor-grab" size={20} />
           <div className="flex flex-col gap-3">
-            <div className="flex flex-wrap items-center space-x-2">
+            <div className="flex items-center space-x-2 w-full">
               {/* Field select */}
               {datasets['Transactions'].fields[0].length > 0 && (
                 <Select
                   value={attCon.field || ""}
                   onValueChange={(value) => { updatedAttributeCondition('field', value, index) }}
                 >
-                  <SelectTrigger className="w-[160px]">
+                  <SelectTrigger className="w-1/2">
                     <SelectValue placeholder="Select field">
                       {attCon.field
                         ? attributes.find((attr) => attr.name === attCon.field)?.name || "Select field"
@@ -302,7 +300,7 @@ const EventCondition: React.FC<EventConditionProps> = ({
                 onValueChange={(newValue) => updatedAttributeCondition("operator", newValue, index)}
                 disabled={!datasets['Transactions'].fields[0]}
               >
-                <SelectTrigger className="w-[140px] ml-2">
+                <SelectTrigger className="w-1/2 ml-2">
                   <SelectValue placeholder="Select operator" />
                 </SelectTrigger>
                 <SelectContent className="bg-card border-[0.5px] border-card-foreground shadow-lg rounded-md z-50">
@@ -319,7 +317,7 @@ const EventCondition: React.FC<EventConditionProps> = ({
               </Select>
 
             </div>
-            <div>
+            <div className="flex items-center w-full gap-2">
               {/* Value input */}
               {attCon.operator &&
                 !["is_null", "is_not_null", "is_empty", "is_not_empty"].includes(attCon.operator) && (

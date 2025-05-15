@@ -197,104 +197,107 @@ const RelatedDatasetCondition: React.FC<RelatedDatasetConditionProps> = ({ condi
     const renderRelatedAttributeConditions = (relatedCondition: any, index: any) => {
         return (
             <Card key={index} className="flex items-center justify-between min-w-fit p-2">
-                <div className="flex items-center space-x-4">
+                <div className="flex items-center space-x-4 w-full">
                     <GripVertical className="mr-2 text-gray-400 cursor-grab" size={20} />
-                    <div className="flex flex-wrap items-center space-x-2">
-                        {/* Field select */}
-                        {condition.fields.length > 0 && (
+                    <div className="flex flex-col items-start gap-2 w-full">
+                        <div className="flex items-center w-full">
+                            {/* Field select */}
+                            {condition.fields.length > 0 && (
+                                <Select
+                                    value={relatedCondition.field || ""}
+                                    onValueChange={(value) => { updateRelatedAttributeCondition('field', value, index) }}
+                                >
+                                    <SelectTrigger className="w-1/2">
+                                        <SelectValue placeholder="Select field">
+                                            {relatedCondition.field
+                                                ? attributes.find((attr) => attr.name === relatedCondition.field)?.name || "Select field"
+                                                : "No attribute"}
+                                        </SelectValue>
+                                    </SelectTrigger>
+                                    <SelectContent className="bg-card border-[0.5px] border-card-foreground shadow-lg rounded-md z-50">
+                                        {attributes.length > 0 ? (
+                                            attributes.map((attr) => (
+                                                <SelectItem
+                                                    key={attr.name}
+                                                    value={attr.name}
+                                                    className="hover:bg-background hover:rounded-md cursor-pointer"
+                                                >
+                                                    <div className="flex items-center">
+                                                        <span className="mr-2 w-5 text-gray-500">
+                                                            {attr.type === "number"
+                                                                ? "#"
+                                                                : attr.type === "datetime"
+                                                                    ? "⏱"
+                                                                    : attr.type === "boolean"
+                                                                        ? "✓"
+                                                                        : attr.type === "array"
+                                                                            ? "[]"
+                                                                            : "T"}
+                                                        </span>
+                                                        {attr.name}
+                                                    </div>
+                                                </SelectItem>
+                                            ))
+                                        ) : (
+                                            <SelectItem
+                                                value="no attribute"
+                                                disabled
+                                                className="text-gray-400"
+                                            >
+                                                No attributes available
+                                            </SelectItem>
+                                        )}
+                                    </SelectContent>
+                                </Select>
+                            )}
+
+                            {/* Operator select */}
                             <Select
-                                value={relatedCondition.field || ""}
-                                onValueChange={(value) => { updateRelatedAttributeCondition('field', value, index) }}
+                                value={relatedCondition.operator || ""}
+                                onValueChange={(newValue) => updateRelatedAttributeCondition("operator", newValue, index)}
+                                disabled={!condition.fields}
                             >
-                                <SelectTrigger className="w-[160px]">
-                                    <SelectValue placeholder="Select field">
-                                        {relatedCondition.field
-                                            ? attributes.find((attr) => attr.name === relatedCondition.field)?.name || "Select field"
-                                            : "No attribute"}
-                                    </SelectValue>
+                                <SelectTrigger className="w-1/2 ml-2">
+                                    <SelectValue placeholder="Select operator" />
                                 </SelectTrigger>
                                 <SelectContent className="bg-card border-[0.5px] border-card-foreground shadow-lg rounded-md z-50">
-                                    {attributes.length > 0 ? (
-                                        attributes.map((attr) => (
-                                            <SelectItem
-                                                key={attr.name}
-                                                value={attr.name}
-                                                className="hover:bg-background hover:rounded-md cursor-pointer"
-                                            >
-                                                <div className="flex items-center">
-                                                    <span className="mr-2 w-5 text-gray-500">
-                                                        {attr.type === "number"
-                                                            ? "#"
-                                                            : attr.type === "datetime"
-                                                                ? "⏱"
-                                                                : attr.type === "boolean"
-                                                                    ? "✓"
-                                                                    : attr.type === "array"
-                                                                        ? "[]"
-                                                                        : "T"}
-                                                    </span>
-                                                    {attr.name}
-                                                </div>
-                                            </SelectItem>
-                                        ))
-                                    ) : (
+                                    {operators.map((op) => (
                                         <SelectItem
-                                            value="no attribute"
-                                            disabled
-                                            className="text-gray-400"
+                                            key={op.value}
+                                            value={op.value}
+                                            className="hover:bg-background hover:rounded-md cursor-pointer"
                                         >
-                                            No attributes available
+                                            {op.label}
                                         </SelectItem>
-                                    )}
+                                    ))}
                                 </SelectContent>
                             </Select>
-                        )}
-
-                        {/* Operator select */}
-                        <Select
-                            value={relatedCondition.operator || ""}
-                            onValueChange={(newValue) => updateRelatedAttributeCondition("operator", newValue, index)}
-                            disabled={!condition.fields}
-                        >
-                            <SelectTrigger className="w-[140px] ml-2">
-                                <SelectValue placeholder="Select operator" />
-                            </SelectTrigger>
-                            <SelectContent className="bg-card border-[0.5px] border-card-foreground shadow-lg rounded-md z-50">
-                                {operators.map((op) => (
-                                    <SelectItem
-                                        key={op.value}
-                                        value={op.value}
-                                        className="hover:bg-background hover:rounded-md cursor-pointer"
-                                    >
-                                        {op.label}
-                                    </SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
+                        </div>
 
                         {/* Value input */}
                         {relatedCondition.operator &&
                             !["is_null", "is_not_null", "is_empty", "is_not_empty"].includes(relatedCondition.operator) && (
-                                <Input
-                                    placeholder="Value"
-                                    value={relatedCondition.value || ""}
-                                    onChange={(e) => updateRelatedAttributeCondition("value", e.target.value, index)}
-                                    className="ml-2 flex-grow"
-                                />
+                                <div className="flex items-center w-full">
+                                    <Input
+                                        placeholder="Value"
+                                        value={relatedCondition.value || ""}
+                                        onChange={(e) => updateRelatedAttributeCondition("value", e.target.value, index)}
+                                        className={`${relatedCondition.operator !== "between" && 'w-full'}`}
+                                    />
+                                    {/* Additional value input for "between" operator */}
+                                    {relatedCondition.operator === "between" && (
+                                        <>
+                                            <span className="mx-2 text-sm">and</span>
+                                            <Input
+                                                placeholder="End value"
+                                                value={relatedCondition.value2 || ""}
+                                                onChange={(e) => updateRelatedAttributeCondition("value2", e.target.value, index)}
+                                                className={`'w-1/2'`}
+                                            />
+                                        </>
+                                    )}
+                                </div>
                             )}
-
-                        {/* Additional value input for "between" operator */}
-                        {relatedCondition.operator === "between" && (
-                            <>
-                                <span className="mx-2 text-sm">and</span>
-                                <Input
-                                    placeholder="End value"
-                                    value={relatedCondition.value2 || ""}
-                                    onChange={(e) => updateRelatedAttributeCondition("value2", e.target.value, index)}
-                                    className="flex-grow"
-                                />
-                            </>
-                        )}
                     </div>
                 </div>
                 <Button variant="ghost" size="icon" className="ml-2" onClick={() => removeAttributeCondition(index)}>

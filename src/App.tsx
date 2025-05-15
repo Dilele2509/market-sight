@@ -11,6 +11,7 @@ import { SegmentToggleProvider } from "./context/SegmentToggleContext";
 import { SegmentDataProvider } from "./context/SegmentDataContext";
 import { LifecycleContextProvider } from "./context/LifecycleContext";
 import { SyncContextProvider } from "./context/SyncContext";
+import { AiChatContextProvider } from "./context/AiChatContext";
 
 const queryClient = new QueryClient();
 
@@ -25,11 +26,13 @@ const App = () => (
             <LifecycleContextProvider>
               <MicroSegmentationProvider>
                 <SyncContextProvider>
-                  <BrowserRouter>
-                    <AuthProvider>
-                      <ProtectedRoutes />
-                    </AuthProvider>
-                  </BrowserRouter>
+                  <AiChatContextProvider>
+                    <BrowserRouter>
+                      <AuthProvider>
+                        <ProtectedRoutes />
+                      </AuthProvider>
+                    </BrowserRouter>
+                  </AiChatContextProvider>
                 </SyncContextProvider>
               </MicroSegmentationProvider>
             </LifecycleContextProvider>

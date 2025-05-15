@@ -1,3 +1,4 @@
+import { hsl } from "d3";
 import type { Config } from "tailwindcss";
 
 export default {
@@ -30,9 +31,8 @@ export default {
           dark: "#006BFF",
         },
         secondary: {
-          DEFAULT: "#F1F0FB",
-          light: "#F8F7FD",
-          dark: "#E5E4F5",
+          DEFAULT: "hsl(var(--secondary))",
+          foreground: "hsl(var(--secondary-foreground))",
         },
         success: {
           DEFAULT: "#F97316",

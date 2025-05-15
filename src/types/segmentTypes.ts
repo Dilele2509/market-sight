@@ -11,7 +11,6 @@ export interface Segment {
     updated_at: string;
     status: string;
     filter_criteria: {
-        size: number;
         conditions: any[];
         conditionGroups: any[];
         rootOperator: string;

@@ -1,101 +1,93 @@
+"use client"
 
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Card } from "@/components/ui/card";
-import { Textarea } from "@/components/ui/textarea";
-import { Send } from "lucide-react";
-
-interface Message {
-    type: "user" | "ai";
-    content: string;
-}
+import { useContext, useEffect, useState } from "react"
+import { ChatInterface } from "@/components/blocks/AIChat/chat-interface"
+import { PreviewPanel } from "@/components/blocks/AIChat/preview-panel"
+import type { ChatMessage, ResponseData } from "@/types/aichat"
+import { generateSQLPreview } from "@/utils/segmentFunctionHelper"
+import { useSegmentData } from "@/context/SegmentDataContext"
+import { useAiChatContext } from "@/context/AiChatContext"
+import AuthContext from "@/context/AuthContext"
+import { toast } from "sonner"
+import { axiosPrivate } from "@/API/axios"
 
 export default function AiCreate() {
-    const [messages, setMessages] = useState<Message[]>([
+    // State for chat history
+    const [chatHistory, setChatHistory] = useState<ChatMessage[]>([
         {
-            type: "ai" as const,
-            content: "Hello! I'm your AI assistant. I can help you create customer segments based on your data. How would you like to segment your customers?",
+            user: "",
+            ai: "Xin chào! Tôi là trợ lý AI của bạn. Tôi có thể giúp bạn tạo phân khúc khách hàng dựa trên dữ liệu của bạn. Bạn muốn phân khúc khách hàng như thế nào?",
         },
-    ]);
-    const [inputMessage, setInputMessage] = useState("");
-    const [previewData, setPreviewData] = useState<any>(null);
+    ])
 
-    const handleSendMessage = () => {
-        if (!inputMessage.trim()) return;
+    const [activeTab, setActiveTab] = useState("preview")
+    const [isLoading, setIsLoading] = useState(false)
+    const { token } = useContext(AuthContext);
+    const { selectedDataset } = useSegmentData()
+    const { setSqlQuery, setConditionGroups, setConditions, setRootOperator, setResponseData, responseData, setInputMessage } = useAiChatContext()
 
-        const newMessages: Message[] = [
-            ...messages,
-            { type: "user" as const, content: inputMessage },
-            { type: "ai" as const, content: "I understand you want to create a segment. Could you provide more details about the criteria you'd like to use?" },
-        ];
-        setMessages(newMessages);
-        setInputMessage("");
+    const handleSendMessage = async (message: string) => {
+        if (!message.trim()) return;
+
+        const newMessage: ChatMessage = { user: message };
+        setChatHistory(prev => [...prev, newMessage]);
+
+        setIsLoading(true);
+
+        try {
+            console.log('check input message: ', message);
+            const res = await axiosPrivate.post('/segment/nlp/chatbot', { nlpQuery: message }, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+
+            console.log("check res: ", res);
+            if (res.status === 200 && res.data?.success) {
+                const dataRes: ResponseData = res.data;
+
+                // Update response data
+                setResponseData(dataRes);
+
+                const filter = dataRes?.data?.filter_criteria;
+                if (filter) {
+                    setConditions(filter.conditions || []);
+                    setConditionGroups(filter.conditionGroups || []);
+                    setRootOperator(filter.rootOperator || "AND");
+                    setSqlQuery(generateSQLPreview(selectedDataset, filter.conditions, filter.conditionGroups, filter.rootOperator))
+                }
+
+                toast.success('AI response success');
+                const aiResponse = `Tôi đã tạo phân khúc dựa trên tiêu chí của bạn. Bạn có thể xem kết quả trong tab Xem trước cho yêu cầu: ${message}`
+                setChatHistory((prev) => {
+                    const updated = [...prev]
+                    updated[updated.length - 1] = { ...updated[updated.length - 1], ai: aiResponse }
+                    return updated
+                })
+            } else {
+                const aiResponse = `Xin lỗi chúng tôi ${res.data?.error && res.data.error.charAt(0).toUpperCase() + res.data.error.slice(1)}`
+                setChatHistory((prev) => {
+                    const updated = [...prev]
+                    updated[updated.length - 1] = { ...updated[updated.length - 1], ai: aiResponse }
+                    return updated
+                })
+            }
+        } catch (err: any) {
+            const message = err?.message || 'Không xác định được lỗi';
+            toast.error(`Có lỗi xảy ra với AI: ${message}`);
+        } finally {
+            setIsLoading(false);
+            setInputMessage("")
+        }
     };
 
     return (
-        <div className="flex h-[calc(100vh-2rem)] gap-4">
-            {/* Chat Interface */}
-            <div className="w-1/2 flex flex-col bg-card rounded-lg border p-4">
-                <h2 className="text-2xl font-bold mb-4">AI Segmentation Assistant</h2>
-
-                {/* Messages Area */}
-                <ScrollArea className="flex-1 pr-4">
-                    <div className="space-y-4">
-                        {messages.map((message, index) => (
-                            <div
-                                key={index}
-                                className={`flex ${message.type === "user" ? "justify-end" : "justify-start"
-                                    }`}
-                            >
-                                <div
-                                    className={`max-w-[80%] p-3 rounded-lg ${message.type === "user"
-                                            ? "bg-primary text-secondary-light"
-                                            : "bg-background text-primary-foreground"
-                                        }`}
-                                >
-                                    {message.content}
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                </ScrollArea>
-
-                {/* Input Area */}
-                <div className="mt-4 flex gap-2">
-                    <Textarea
-                        value={inputMessage}
-                        onChange={(e) => setInputMessage(e.target.value)}
-                        placeholder="Type your message here..."
-                        className="min-h-[60px]"
-                        onKeyDown={(e) => {
-                            if (e.key === "Enter" && !e.shiftKey) {
-                                e.preventDefault();
-                                handleSendMessage();
-                            }
-                        }}
-                    />
-                    <Button
-                        className="self-end"
-                        onClick={handleSendMessage}
-                        disabled={!inputMessage.trim()}
-                    >
-                        <Send className="h-4 w-4" />
-                    </Button>
-                </div>
-            </div>
-
-            {/* Preview Area */}
-            <Card className="w-1/2 p-6">
-                <h2 className="text-2xl font-bold mb-4">Segment Preview</h2>
-                <div className="h-full flex items-center justify-center text-muted-foreground">
-                    {previewData ? (
-                        <pre>{JSON.stringify(previewData, null, 2)}</pre>
-                    ) : (
-                        <p>Your segment preview will appear here</p>
-                    )}
-                </div>
-            </Card>
+        <div className="flex flex-col md:flex-row h-[calc(100vh-2rem)] gap-2 bg-background from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-950">
+            <ChatInterface chatHistory={chatHistory} isLoading={isLoading} onSendMessage={handleSendMessage} />
+            <PreviewPanel
+                activeTab={activeTab}
+                setActiveTab={setActiveTab}
+                isLoading={isLoading}
+                responseData={responseData}
+            />
         </div>
-    );
+    )
 }
