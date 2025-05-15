@@ -7,13 +7,14 @@ import { Play, Terminal, XCircle, Copy, Check, Download, Maximize2, Minimize2 } 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { useAiChatContext } from "@/context/AiChatContext"
+import { convertSQLToSegment } from "@/utils/segmentFunctionConvert"
 
 interface SqlEditorProps {
 }
 
 const MonacoEditor = dynamic(() => import("@monaco-editor/react"), { ssr: false })
 
-export function SqlEditor({}: SqlEditorProps) {
+export function SqlEditor({ }: SqlEditorProps) {
     const [result, setResult] = useState<string | null>(null)
     const [isExecuting, setIsExecuting] = useState(false)
     const [activeTab, setActiveTab] = useState("editor")
@@ -21,7 +22,7 @@ export function SqlEditor({}: SqlEditorProps) {
     const [isFullscreen, setIsFullscreen] = useState(false)
     const [typedQuery, setTypedQuery] = useState("")
     const typingIntervalRef = useRef<NodeJS.Timeout | null>(null)
-    const {sqlQuery, setSqlQuery} = useAiChatContext()
+    const { sqlQuery, setSqlQuery, setConditions, setConditionGroups, setRootOperator } = useAiChatContext()
 
     useEffect(() => {
         if (!sqlQuery) {
@@ -75,6 +76,20 @@ export function SqlEditor({}: SqlEditorProps) {
     const toggleFullscreen = () => {
         setIsFullscreen(!isFullscreen)
     }
+
+    const handleSqlChange = (v: string | null) => {
+        setSqlQuery(v ?? "");
+        const sqlQuery = v.trim();
+        try {
+            console.log(convertSQLToSegment(sqlQuery))
+            setConditions(convertSQLToSegment(sqlQuery).conditions)
+            setConditionGroups(convertSQLToSegment(sqlQuery).groupConditions)
+            setRootOperator(convertSQLToSegment(sqlQuery).rootOperator)
+        } catch (error) {
+            console.log(error);
+        }
+    };
+
 
     return (
         <div className={`flex flex-col transition-all duration-300 ${isFullscreen ? "fixed inset-0 z-50 p-4 bg-background" : "h-full"}`}>
@@ -137,12 +152,12 @@ export function SqlEditor({}: SqlEditorProps) {
                     </div>
                 </div>
                 <TabsContent value="editor" className="m-0 h-[92%]">
-                    <div className="h-full py-4 bg-[#1e1e1e]">
+                    <div className="h-full py-4 bg-[#1e1e1e] rounded-lg overflow-hidden">
                         <MonacoEditor
                             height="100%"
                             defaultLanguage="sql"
                             value={typedQuery}
-                            onChange={(v) => setSqlQuery(v || "")}
+                            onChange={handleSqlChange}
                             theme="vs-dark"
                             options={{
                                 fontSize: 14,
@@ -150,7 +165,7 @@ export function SqlEditor({}: SqlEditorProps) {
                                 automaticLayout: true,
                                 scrollBeyondLastLine: false,
                                 wordWrap: "on",
-                                readOnly: isExecuting || !!result 
+                                readOnly: isExecuting || !!result
                             }}
                         />
                     </div>

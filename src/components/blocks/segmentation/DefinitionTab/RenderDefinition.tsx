@@ -374,13 +374,13 @@ const RenderDefinition: React.FC<SegmentDefinitionProps> = ({
                     <CardContent className="space-y-5">
                         {/* Segment Name */}
                         <div className="space-y-1">
-                            <label className="font-medium">Segment Name</label>
+                            <label className="font-medium">Tên phân khúc</label>
                             <Input value={segmentName} onChange={(e) => setSegmentName(e.target.value)} className="mt-1" />
                         </div>
 
                         {/* Segment Resource ID */}
                         <div className="space-y-1">
-                            <label className="font-medium">Segment Resource ID</label>
+                            <label className="font-medium">ID phân khúc</label>
                             <div className="relative">
                                 <Input value={segmentId} readOnly className="bg-background cursor-default" />
                                 <Button
@@ -396,7 +396,7 @@ const RenderDefinition: React.FC<SegmentDefinitionProps> = ({
 
                         {/* Segment of */}
                         <div className="space-y-1">
-                            <label className="font-medium">Segment of</label>
+                            <label className="font-medium">Phân khúc</label>
                             <Select value={defineDatasetName(selectedDataset.name)} onValueChange={handleDatasetChange}>
                                 <SelectTrigger>
                                     <SelectValue placeholder="Select dataset" />
@@ -425,17 +425,17 @@ const RenderDefinition: React.FC<SegmentDefinitionProps> = ({
 
                         {/* Description */}
                         <div className="flex flex-col space-y-1">
-                            <label className="font-medium">Description</label>
-                            {showDescriptionField ? (
+                            <label className="font-medium">Mô tả phân khúc</label>
+                            {showDescriptionField || description ? (
                                 <Textarea
                                     rows={2}
-                                    placeholder="Enter description..."
+                                    placeholder="Nhập mô tả cho phân khúc của bạn..."
                                     value={description}
                                     onChange={(e) => setDescription(e.target.value)}
                                 />
                             ) : (
                                 <Button className="w-40" variant="outline" onClick={() => setShowDescriptionField(true)}>
-                                    <Plus className="w-4 h-4 mr-2" /> Add Description
+                                    <Plus className="w-4 h-4 mr-2" /> Thêm mô tả
                                 </Button>
                             )}
                         </div>
@@ -445,8 +445,8 @@ const RenderDefinition: React.FC<SegmentDefinitionProps> = ({
                 <Card className="mb-4 p-4">
                     <CardContent>
                         {/* Condition builder header */}
-                        <div className="flex items-center justify-between mb-2">
-                            <h2 className="text-lg font-semibold">Conditions</h2>
+                        <div className="flex items-center justify-between mb-2 py-2">
+                            <h2 className="text-lg font-semibold">Điều kiện phân khúc</h2>
                         </div>
 
                         {/* Individual conditions */}
@@ -505,7 +505,7 @@ const RenderDefinition: React.FC<SegmentDefinitionProps> = ({
                                     className="px-2 py-1 text-xs w-auto"
                                     onClick={() => handleAddCondition("attribute")}
                                 >
-                                    <SlidersHorizontal className="w-3 h-3 mr-1" /> Add attribute condition
+                                    <SlidersHorizontal className="w-3 h-3 mr-1" /> Thêm điều kiện thuộc tính
                                 </Button>
                                 <Button
                                     variant="outline"
@@ -513,7 +513,7 @@ const RenderDefinition: React.FC<SegmentDefinitionProps> = ({
                                     className="px-2 py-1 text-xs w-auto"
                                     onClick={() => handleAddCondition("event")}
                                 >
-                                    <Calendar className="w-3 h-3 mr-1" /> Add event condition
+                                    <Calendar className="w-3 h-3 mr-1" /> Thêm sự kiện bán lẻ
                                 </Button>
                                 <Button
                                     variant="outline"
@@ -521,7 +521,7 @@ const RenderDefinition: React.FC<SegmentDefinitionProps> = ({
                                     className="px-2 py-1 text-xs w-auto"
                                     onClick={handleAddConditionGroup}
                                 >
-                                    <Group className="w-3 h-3 mr-1" /> Add condition group
+                                    <Group className="w-3 h-3 mr-1" /> Thêm nhóm điều kiện
                                 </Button>
                             </div>
                         </div>
@@ -585,7 +585,7 @@ const RenderDefinition: React.FC<SegmentDefinitionProps> = ({
                 <Card className="border border-gray-300 rounded-lg relative">
                     <CardContent className="p-4">
                         <div className="flex justify-between items-center">
-                            <h5 className="text-md font-semibold">Details List</h5>
+                            <h5 className="text-md font-semibold">Danh sách chi tiết</h5>
                             <Button
                                 size="icon"
                                 variant="ghost"
@@ -597,7 +597,7 @@ const RenderDefinition: React.FC<SegmentDefinitionProps> = ({
                         </div>
                         {loading && (
                             <div className="absolute inset-0 bg-white bg-opacity-70 flex items-center justify-center z-10">
-                                <p className="text-sm text-gray-600">Loading attributes...</p>
+                                <p className="text-sm text-gray-600">Đang tải thuộc tính...</p>
                             </div>
                         )}
                         <div className="border border-gray-300 rounded-md overflow-hidden mt-2">
@@ -607,18 +607,18 @@ const RenderDefinition: React.FC<SegmentDefinitionProps> = ({
                                         {selectedDataset.name ? selectedDataset.name.charAt(0) : 'U'}
                                     </span>
                                     <span className="flex-grow flex justify-between items-center text-sm font-medium text-gray-900">
-                                        {selectedDataset.name} Attributes
+                                        {selectedDataset.name}
                                         <span className="w-6 h-6 flex items-center justify-center bg-gray-300 text-sm font-semibold text-gray-700 rounded-md">
                                             {attributes.length}
                                         </span>
                                     </span>
                                 </div>
 
-                                <p className="text-xs text-gray-500">A condition on an attribute of {selectedDataset.name}</p>
+                                <p className="text-xs text-gray-500">Điều kiện trên một thuộc tính của {selectedDataset.name}</p>
                             </div>
                             <ScrollArea className="max-h-[350px] overflow-y-auto">
                                 {loading ? (
-                                    <div className="p-4 text-center text-sm text-gray-600">Loading attributes...</div>
+                                    <div className="p-4 text-center text-sm text-gray-600">Đang tải thuộc tính...</div>
                                 ) : attributes.length > 0 ? (
                                     <>
                                         {attributes.map((attr, index) => (
@@ -640,11 +640,11 @@ const RenderDefinition: React.FC<SegmentDefinitionProps> = ({
                                             <span className="w-5 text-gray-500 flex items-center justify-center">
                                                 <Code size={16} />
                                             </span>
-                                            <p className="text-sm text-gray-600">SQL Condition</p>
+                                            <p className="text-sm text-gray-600">Điều kiện SQL</p>
                                         </div>
                                     </>
                                 ) : (
-                                    <div className="p-4 text-center text-sm text-gray-600">No attributes available for this table</div>
+                                    <div className="p-4 text-center text-sm text-gray-600">Không có thuộc tính nào có sẵn cho bảng này</div>
                                 )}
                             </ScrollArea>
                         </div>

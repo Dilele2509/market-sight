@@ -1,4 +1,4 @@
-import { Trash, SlidersHorizontal, Calendar, Link } from "lucide-react";
+import { Trash, SlidersHorizontal, Calendar, Link, Group } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useSegmentData } from "@/context/SegmentDataContext";
@@ -21,7 +21,7 @@ const ConditionGroup: React.FC<ConditionGroupProps> = ({
     renderAttributeCondition,
     renderEventCondition,
 }) => {
-    const { selectedDataset,setConditionGroups, conditionGroups, conditions } = useAiChatContext()
+    const { selectedDataset, setConditionGroups, conditionGroups, conditions } = useAiChatContext()
 
     const handleAddConditionToGroup = (groupId, type = 'attribute') => {
         setConditionGroups(conditionGroups.map(group => {
@@ -84,8 +84,11 @@ const ConditionGroup: React.FC<ConditionGroupProps> = ({
 
     return (
         <div className="mb-3 mt-2 border border-gray-300 rounded p-2">
-            <div className="flex items-center mb-2">
-                <span className="font-medium text-base mr-2">Nhóm điều kiện</span>
+            <div className="flex items-center justify-between mb-2 px-6 py-2">
+                <div className="flex items-center">
+                    <Group className="w-5 h-5 mr-2 text-primary" />
+                    <span className="font-medium text-base min-w-fit">Nhóm điều kiện</span>
+                </div>
                 <Button
                     size="icon"
                     variant="ghost"

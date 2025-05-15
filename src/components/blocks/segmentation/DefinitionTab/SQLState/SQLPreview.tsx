@@ -13,7 +13,7 @@ const SQLPreview = () => {
 
   return (
     <>
-      <h5 className="text-lg font-semibold mb-2">SQL Preview</h5>
+      <h5 className="text-lg font-semibold mb-2 py-2">Xem trước truy vấn SQL</h5>
       <Card className="border border-gray-300 bg-background p-4 rounded-md font-mono whitespace-pre-wrap overflow-x-auto text-sm">
         <div dangerouslySetInnerHTML={{ __html: sql }} />
       </Card>

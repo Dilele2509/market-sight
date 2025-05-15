@@ -114,16 +114,16 @@ const SegmentsList: React.FC<SegmentsListProps> = ({ segments = [], onCreateSegm
     return (
         <div className="space-y-4">
             <div className="flex justify-between items-center">
-                <h1 className="text-xl font-semibold">Segments</h1>
+                <h1 className="text-xl font-semibold">Các phân khúc</h1>
                 <Button onClick={onCreateSegment}>
-                    <Plus className="mr-2" size={16} /> Add a New Segment
+                    <Plus className="mr-2" size={16} /> Tạo phân khúc mới
                 </Button>
             </div>
 
             <div className="flex justify-between items-center">
                 <div className="relative w-72">
                     <Input
-                        placeholder="Search segments..."
+                        placeholder="Tìm kiếm phân khúc..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                         className="pl-10"
@@ -131,7 +131,7 @@ const SegmentsList: React.FC<SegmentsListProps> = ({ segments = [], onCreateSegm
                     <Search size={16} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
                 </div>
                 <Button variant="outline">
-                    <Filter className="mr-2" size={16} /> Filter
+                    <Filter className="mr-2" size={16} /> Lọc
                 </Button>
             </div>
 
@@ -140,12 +140,12 @@ const SegmentsList: React.FC<SegmentsListProps> = ({ segments = [], onCreateSegm
                     <TableHeader>
                         <TableRow className="w-full">
                             <TableHead className="w-2/6 px-4 text-left">ID</TableHead>
-                            <TableHead className="w-1/6 px-4 text-left">Name</TableHead>
-                            <TableHead className="w-1/6 px-4 text-center">Dataset</TableHead>
-                            <TableHead className="w-1/6 px-4 text-center">Created at</TableHead>
-                            <TableHead className="w-1/6 px-4 text-center">Last Updated</TableHead>
-                            <TableHead className="w-1/6 px-4 text-center">Status</TableHead>
-                            <TableHead className="w-1/6 px-4 text-center">Action</TableHead>
+                            <TableHead className="w-1/6 px-4 text-left">Tên phân khúc</TableHead>
+                            <TableHead className="w-1/6 px-4 text-center">Tập dữ liệu</TableHead>
+                            <TableHead className="w-1/6 px-4 text-center">Tạo ngày</TableHead>
+                            <TableHead className="w-1/6 px-4 text-center">Cập nhật lần cuối</TableHead>
+                            <TableHead className="w-1/6 px-4 text-center">Trạng thái</TableHead>
+                            <TableHead className="w-1/6 px-4 text-center">Thao tác</TableHead>
                         </TableRow>
                     </TableHeader>
 

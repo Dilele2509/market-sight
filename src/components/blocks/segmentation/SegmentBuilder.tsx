@@ -242,7 +242,7 @@ export default function SegmentBuilder({ onBack, editSegment }: SegmentBuilderPr
 
         } catch (error) {
             console.error('[SegmentBuilder] Error saving segment:', error);
-            toast.error('Failed to save segment. Please try again.');
+            toast.error('Không lưu được phân đoạn. Vui lòng thử lại.');
         }
     };
 
@@ -265,7 +265,7 @@ export default function SegmentBuilder({ onBack, editSegment }: SegmentBuilderPr
                         onClick={handleOpenSqlDialog}
                     >
                         <Code className="mr-2 h-4 w-4" />
-                        View SQL
+                        Xem truy vấn SQL
                     </Button>
 
                     <Button
@@ -274,7 +274,7 @@ export default function SegmentBuilder({ onBack, editSegment }: SegmentBuilderPr
                         onClick={fetchPreviewData}
                         disabled={previewLoading}
                     >
-                        {previewLoading ? 'Loading...' : 'Preview Results'}
+                        {previewLoading ? 'Đang tải...' : 'Kết quả xem trước'}
                     </Button>
 
                     <Button
@@ -283,7 +283,7 @@ export default function SegmentBuilder({ onBack, editSegment }: SegmentBuilderPr
                         onClick={handleDiscardChanges}
                         disabled={!hasUnsavedChanges}
                     >
-                        Discard Changes
+                        Huỷ thay đổi
                     </Button>
 
                     <Button
@@ -292,7 +292,7 @@ export default function SegmentBuilder({ onBack, editSegment }: SegmentBuilderPr
                         onClick={handleSaveSegment}
                         disabled={!hasUnsavedChanges}
                     >
-                        Save Segment
+                        Lưu
                     </Button>
 
                     <Button className="ml-1">
@@ -303,8 +303,8 @@ export default function SegmentBuilder({ onBack, editSegment }: SegmentBuilderPr
 
             <Tabs defaultValue="definition">
                 <TabsList>
-                    <TabsTrigger value="definition">Definition</TabsTrigger>
-                    <TabsTrigger value="syncs">Syncs</TabsTrigger>
+                    <TabsTrigger value="definition">Định nghĩa phân khúc</TabsTrigger>
+                    <TabsTrigger value="syncs">Đồng bộ</TabsTrigger>
                 </TabsList>
 
                 {/* render definition UI */}

@@ -16,13 +16,13 @@ export default function CreateSegmentation() {
             {!connection ? (
                 <div className="flex flex-col gap-6 items-center justify-center h-[60vh]">
                     <Alert variant="destructive" className="max-w-md text-center">
-                        <AlertTitle>Database Connection Required</AlertTitle>
+                        <AlertTitle>Yêu cầu kết nối cơ sở dữ liệu</AlertTitle>
                         <AlertDescription>
-                            No data has been imported. Please navigate to the Import Data page to connect to your database.
+                            Chưa có dữ liệu nào được nhập. Vui lòng điều hướng đến trang Nhập dữ liệu để kết nối với cơ sở dữ liệu của bạn.
                         </AlertDescription>
                     </Alert>
                     <Button onClick={() => navigate("/connect-data")} className="mt-4">
-                        Go to Import Data
+                        Tiến hành kết nối dữ liệu
                     </Button>
                 </div>
             ) : (
@@ -34,8 +34,8 @@ export default function CreateSegmentation() {
                         onValueChange={(value) => navigate(`/create-segmentation/${value}`)}
                     >
                         <TabsList className="bg-card-foreground">
-                            <TabsTrigger className="text-card" value="user-create">User Create</TabsTrigger>
-                            <TabsTrigger className="text-card" value="ai-create">AI Support Create</TabsTrigger>
+                            <TabsTrigger className="text-card" value="user-create">Tạo bởi người dùng</TabsTrigger>
+                            <TabsTrigger className="text-card" value="ai-create">Tạo bởi AI hỗ trợ</TabsTrigger>
                         </TabsList>
                     </Tabs>
 
