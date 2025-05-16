@@ -177,11 +177,11 @@ const SegmentsList: React.FC<SegmentsListProps> = ({ segments = [], onCreateSegm
                                                     className="hover:bg-gray-100"
                                                     onClick={() => handleUpdateSegmentStatus(segment)}
                                                 >
-                                                    {segment.status === "active" ? "Disable" : "Enable"}
+                                                    {segment.status === "active" ? "Vô hiệu hoá" : "Kích hoạt"}
                                                 </DropdownMenuItem>
                                                 <DropdownMenuItem 
                                                     className="hover:bg-red-200 text-red-500"
-                                                    onClick={()=> handleDeleteSegment(segment)}>Delete</DropdownMenuItem>
+                                                    onClick={()=> handleDeleteSegment(segment)}>Xoá phân khúc</DropdownMenuItem>
                                             </DropdownMenuContent>
                                         </DropdownMenu>
                                     </TableCell>

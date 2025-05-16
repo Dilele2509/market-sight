@@ -3,7 +3,7 @@
 import { useContext, useEffect, useState } from "react"
 import { ChatInterface } from "@/components/blocks/AIChat/chat-interface"
 import { PreviewPanel } from "@/components/blocks/AIChat/preview-panel"
-import type { ChatMessage, ResponseData } from "@/types/aichat"
+import type { ChatMessage, HistoryResult, ResponseData } from "@/types/aichat"
 import { generateSQLPreview } from "@/utils/segmentFunctionHelper"
 import { useSegmentData } from "@/context/SegmentDataContext"
 import { useAiChatContext } from "@/context/AiChatContext"
@@ -13,17 +13,17 @@ import { axiosPrivate } from "@/API/axios"
 
 export default function AiCreate() {
     // State for chat history
-    const [chatHistory, setChatHistory] = useState<ChatMessage[]>([
-        {
-            user: "",
-            ai: "Xin chào! Tôi là trợ lý AI của bạn. Tôi có thể giúp bạn tạo phân khúc khách hàng dựa trên dữ liệu của bạn. Bạn muốn phân khúc khách hàng như thế nào?",
-        },
-    ])
+    // const [chatHistory, setChatHistory] = useState<ChatMessage[]>([
+    //     {
+    //         user: "",
+    //         ai: "Xin chào! Tôi là trợ lý AI của bạn. Tôi có thể giúp bạn tạo phân khúc khách hàng dựa trên dữ liệu của bạn. Bạn muốn phân khúc khách hàng như thế nào?",
+    //     },
+    // ])
 
     const [activeTab, setActiveTab] = useState("preview")
     const [isLoading, setIsLoading] = useState(false)
     const { token } = useContext(AuthContext);
-    const { selectedDataset, setSqlQuery, setConditionGroups, setConditions, setRootOperator, setResponseData, responseData, setInputMessage } = useAiChatContext()
+    const { selectedDataset, setSqlQuery, setConditionGroups, setConditions, setRootOperator, setResponseData, responseData, setInputMessage, chatHistory, setChatHistory, setHistoryResult } = useAiChatContext()
 
     const handleSendMessage = async (message: string) => {
         if (!message.trim()) return;
@@ -48,24 +48,23 @@ export default function AiCreate() {
 
                 const filter = dataRes?.data?.filter_criteria;
                 if (filter) {
-                    setConditions(filter.conditions || []);
-                    setConditionGroups(filter.conditionGroups || []);
-                    setRootOperator(filter.rootOperator || "AND");
-                    setSqlQuery(generateSQLPreview(selectedDataset, filter.conditions, filter.conditionGroups, filter.rootOperator))
+                    const aiResponse = `🎯 Tôi đã tạo phân khúc dựa trên tiêu chí bạn cung cấp:\n${dataRes?.data?.explanation?.key_conditions.map(item => `• ${item}`).join("\n")}\n\n📊 Bạn có thể xem kết quả trong tab "Xem trước" cho yêu cầu: "${message}"`;
+
+                    setChatHistory((prev) => {
+                        const updated = [...prev]
+                        updated[updated.length - 1] = { ...updated[updated.length - 1], ai: aiResponse }
+                        return updated
+                    })
+                    setHistoryResult((prev) => {
+                        const createVersion = [...prev];
+                        const newEntry: HistoryResult = {
+                            version: `version ${createVersion.length + 1}`,
+                            result: dataRes as ResponseData,
+                        };
+                        return [...createVersion, newEntry];
+                    });
+                    toast.success('AI response success');
                 }
-
-                toast.success('AI response success');
-                const aiResponse = `Tôi đã tạo phân khúc dựa trên tiêu chí của bạn:
-
-${dataRes?.data?.explanation?.key_conditions.map(item => `- ${item}`).join("\n")}
-
-Bạn có thể xem kết quả trong tab Xem trước cho yêu cầu: ${message}`;
-
-                setChatHistory((prev) => {
-                    const updated = [...prev]
-                    updated[updated.length - 1] = { ...updated[updated.length - 1], ai: aiResponse }
-                    return updated
-                })
             } else {
                 const aiResponse = `Xin lỗi chúng tôi ${res.data?.error && res.data.error.charAt(0).toUpperCase() + res.data.error.slice(1)}`
                 setChatHistory((prev) => {

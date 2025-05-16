@@ -2,12 +2,21 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Table, Code, Database } from "lucide-react"
+import { Table, Code, Database, FilePlus2 } from "lucide-react"
 import { SqlEditor } from "./sql-editor"
 import { ModelEditor } from "./model-editor"
 import { LoadingCircles } from "./loading-circles"
 import { DataTable } from "./data-table"
 import { ResponseData } from "@/types/aichat"
+import { Button } from "@/components/ui/button"
+import { Dialog } from "@radix-ui/react-dialog"
+import { useContext, useEffect, useState } from "react"
+import { CreateAISegmentation } from "./aiCreateSegment"
+import { useAiChatContext } from "@/context/AiChatContext"
+import AuthContext from "@/context/AuthContext"
+import { axiosPrivate } from "@/API/axios"
+import { toast } from "sonner"
+import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from "@/components/ui/select";
 
 interface PreviewPanelProps {
     activeTab: string
@@ -22,6 +31,75 @@ export function PreviewPanel({
     isLoading,
     responseData,
 }: PreviewPanelProps) {
+    const [isOpenDialog, setIsOpenDialog] = useState(false)
+    const { conditions, conditionGroups, rootOperator, selectedDataset, setConditionGroups, setConditions, setRootOperator, historyResult, setResponseData } = useAiChatContext()
+    const { token, user } = useContext(AuthContext)
+    const latestVersion = historyResult[historyResult.length - 1]?.version
+    const [selectedVersion, setSelectedVersion] = useState(latestVersion)
+
+    useEffect(() => {
+        if (historyResult.length > 0) {
+            const latest = historyResult[historyResult.length - 1]?.version;
+            setSelectedVersion(latest);
+        }
+    }, [historyResult]);
+
+    useEffect(() => {
+        if (selectedVersion) {
+            handleSelect(selectedVersion);
+        }
+    }, [selectedVersion]);
+
+
+    const handleSaveSegment = async (data: { name: string; segment_id: string, description: string }) => {
+        try {
+            console.log("Created segment:", data)
+
+            const segment = {
+                segment_id: data?.segment_id,
+                segment_name: data?.name,
+                created_by_user_id: user.user_id,
+                dataset: selectedDataset.name,
+                description: data?.description,
+                created_at: new Date().toISOString(),
+                updated_at: new Date().toISOString(),
+                status: 'active',
+                filter_criteria: {
+                    conditions: conditions,
+                    conditionGroups: conditionGroups,
+                    rootOperator: rootOperator
+                }
+            };
+
+            console.log('[SegmentBuilder] Sending segment to API:', segment);
+
+            await axiosPrivate.post('/segment/save-segment', segment, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                }
+            }).then(() => {
+                toast.success(`Phân khúc đã được tạo thành công`);
+                setConditionGroups([]);
+                setConditions([])
+                setRootOperator("AND")
+
+            }).catch((err) => {
+                toast.error('Failed to save segment: ', err);
+            });
+
+        } catch (error) {
+            console.error('Lỗi khi lưu phân khúc', error);
+            toast.error('Không lưu được phân khúc. Vui lòng thử lại.');
+        }
+    };
+    const handleSelect = (value: string) => {
+        const matched = historyResult.find((item) => item.version === value);
+        if (matched) {
+            console.log(matched.result);
+            setResponseData(matched.result)
+        }
+    };
+
     return (
         <Card className="w-full md:w-[60%] flex flex-col overflow-hidden shadow-lg">
             <Tabs defaultValue="preview" value={activeTab} onValueChange={setActiveTab} className="flex flex-col h-full">
@@ -47,6 +125,28 @@ export function PreviewPanel({
                         </TabsTrigger>
                     </TabsList>
                 </CardHeader>
+
+                <div className="flex items-center mt-4 mr-6 justify-between">
+                    <div className="flex items-center gap-2 ml-6 min-w-fit">
+                        <label className="text-sm text-card-foreground font-semibold min-w-fit">Kết quả đang hiển thị: </label>
+                        <Select value={selectedVersion} onValueChange={setSelectedVersion}>
+                            <SelectTrigger className="max-w-[200px] bg-background">
+                                <SelectValue placeholder="Chọn kết quả hiển thị" />
+                            </SelectTrigger>
+                            <SelectContent className="bg-background">
+                                {historyResult.map((item, index) => (
+                                    <SelectItem className="bg-background hover:bg-secondary" key={index} value={item.version}>
+                                        {item.version}
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                    </div >
+                    <Button onClick={() => setIsOpenDialog(true)}>
+                        <FilePlus2 className="text-card" />
+                        <p className="text-card">Tạo phân khúc</p>
+                    </Button>
+                </div>
 
                 <CardContent className="p-0 flex-1 overflow-hidden">
                     <TabsContent
@@ -86,9 +186,14 @@ export function PreviewPanel({
                         className="flex-1 p-5 m-0 h-full data-[state=active]:flex data-[state=active]:flex-col"
                     >
                         <CardTitle className="text-lg font-semibold mb-4">Trình soạn thảo mô hình</CardTitle>
-                        <ModelEditor responseData={responseData} />
+                        <ModelEditor />
                     </TabsContent>
                 </CardContent>
+
+                <CreateAISegmentation
+                    open={isOpenDialog}
+                    onClose={() => setIsOpenDialog(false)}
+                    onCreateSegment={handleSaveSegment} />
             </Tabs>
         </Card>
     )

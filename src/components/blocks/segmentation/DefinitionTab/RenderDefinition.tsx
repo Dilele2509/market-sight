@@ -45,7 +45,6 @@ const RenderDefinition: React.FC<SegmentDefinitionProps> = ({
         rootOperator,
         segmentId,
         description,
-        estimatedSize,
         conditionGroups,
         previewData,
         setSelectedDataset,
@@ -53,8 +52,7 @@ const RenderDefinition: React.FC<SegmentDefinitionProps> = ({
         setAttributes,
         setConditions,
         setRootOperator,
-        setConditionGroups,
-        setEstimatedSize } = useSegmentData();
+        setConditionGroups } = useSegmentData();
 
     const { setLoading,
         loading,
@@ -164,7 +162,7 @@ const RenderDefinition: React.FC<SegmentDefinitionProps> = ({
         console.log("Dataset changed to:", datasetName);
         setSelectedDataset(datasets[datasetName]);
     };
-    const handleRootOperatorChange = (newValue : 'AND' | 'OR' | string) => {
+    const handleRootOperatorChange = (newValue: 'AND' | 'OR' | string) => {
         if (newValue !== null) {
             setRootOperator(newValue);
         }
@@ -324,7 +322,7 @@ const RenderDefinition: React.FC<SegmentDefinitionProps> = ({
             </div>
         );
     };
-    const renderEventCondition = (condition : EventConditionType, isInGroup = false, groupId = null) => {
+    const renderEventCondition = (condition: EventConditionType, isInGroup = false, groupId = null) => {
         return (
             <div key={condition.id}>
                 <EventCondition

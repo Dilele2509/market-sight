@@ -1,9 +1,9 @@
 import { axiosPrivate } from "@/API/axios";
 import { Segment } from "@/types/segmentTypes";
-import { Condition, defineDatasetName } from "@/utils/segmentFunctionHelper";
+import { Condition, defineDatasetName, generateSQLPreview } from "@/utils/segmentFunctionHelper";
 import React, { createContext, useState, useContext, ReactNode, useEffect } from "react";
 import { useSegmentToggle } from "./SegmentToggleContext";
-import { ResponseData } from "@/types/aichat";
+import { ChatMessage, HistoryResult, ResponseData } from "@/types/aichat";
 
 interface AiChatContextProps {
     segmentName: string;
@@ -65,6 +65,10 @@ interface AiChatContextProps {
     setResponseData: React.Dispatch<React.SetStateAction<ResponseData>>;
     inputMessage: string;
     setInputMessage: React.Dispatch<React.SetStateAction<string>>;
+    chatHistory: ChatMessage[];
+    setChatHistory: React.Dispatch<React.SetStateAction<ChatMessage[]>>;
+    historyResult: HistoryResult[];
+    setHistoryResult: React.Dispatch<React.SetStateAction<HistoryResult[]>>;
 }
 
 const AiChatContext = createContext<AiChatContextProps | undefined>(undefined);
@@ -100,6 +104,13 @@ const formattedData = async (inputData: any) => {
 
 
 export const AiChatContextProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+    const [chatHistory, setChatHistory] = useState<ChatMessage[]>([
+        {
+            user: "",
+            ai: "Xin chào! Tôi là trợ lý AI của bạn. Tôi có thể giúp bạn tạo phân khúc khách hàng dựa trên dữ liệu của bạn. Bạn muốn phân khúc khách hàng như thế nào?",
+        },
+    ])
+    const [historyResult, setHistoryResult] = useState<HistoryResult[]>([])
     const { logged } = useSegmentToggle()
     const [connectionUrl, setConnectionUrl] = useState();
     const CONNECTION_STORAGE_KEY = 'postgres_connection';
@@ -138,6 +149,19 @@ export const AiChatContextProvider: React.FC<{ children: ReactNode }> = ({ child
     const [description, setDescription] = useState<string>('');
     const [estimatedSize, setEstimatedSize] = useState<any>({ count: 88, percentage: 22 });
 
+    useEffect(() => { console.log('history result: ', historyResult); }, [historyResult])
+
+    useEffect(() => {
+        console.log('responseData in context: ', responseData);
+        const filter = responseData?.data?.filter_criteria;
+        if (filter) {
+            setConditions(filter.conditions || []);
+            setConditionGroups(filter.conditionGroups || []);
+            setRootOperator(filter.rootOperator || "AND");
+            setSqlQuery(generateSQLPreview(selectedDataset, filter.conditions, filter.conditionGroups, filter.rootOperator))
+        }
+    }, [responseData])
+
     //fetch 4 tables of dataset
     useEffect(() => {
         const fetchTables = async () => {
@@ -158,38 +182,11 @@ export const AiChatContextProvider: React.FC<{ children: ReactNode }> = ({ child
 
     useEffect(() => {
         if (!datasets || Object.keys(datasets).length === 0) return;
-        console.log('check segment in context: ', responseData?.filter_criteria.conditions);
+        //console.log('check segment in context: ', responseData?.data?.filter_criteria.conditions);
 
-        setSegmentName(responseData ? responseData.segment_name : "High Value Users (new)");
-        setSegmentId(responseData ? responseData.segment_id : "segment:high-value-users-new");
-
-        const datasetKey = responseData
-            ? defineDatasetName(responseData.dataset)
-            : defineDatasetName("customer");
-
-        setSelectedDataset(datasets ? datasets[datasetKey] : {
-            name: "customers",
-            fields: [
-                "customer_id",
-                "first_name",
-                "last_name",
-                "email",
-                "phone",
-                "gender",
-                "birth_date",
-                "registration_date",
-                "address",
-                "city"
-            ],
-            description: "Customer information",
-            schema: "public"
-        });
-
-        setRootOperator(responseData ? responseData.filter_criteria.rootOperator : "AND");
-        setConditions(responseData ? responseData.filter_criteria.conditions : []);
-        setConditionGroups(responseData ? responseData.filter_criteria.conditionGroups : []);
-        setDescription(responseData ? responseData.description : "");
-        setEstimatedSize({ count: 88, percentage: 22 });
+        setRootOperator(responseData ? responseData?.data?.filter_criteria.rootOperator : "AND");
+        setConditions(responseData ? responseData?.data?.filter_criteria.conditions : []);
+        setConditionGroups(responseData ? responseData?.data?.filter_criteria.conditionGroups : []);
     }, [responseData]);
 
     useEffect(() => {
@@ -326,7 +323,11 @@ export const AiChatContextProvider: React.FC<{ children: ReactNode }> = ({ child
                 selectRelatedDataset,
                 setSelectRelatedDataset,
                 inputMessage,
-                setInputMessage
+                setInputMessage,
+                chatHistory,
+                setChatHistory,
+                historyResult,
+                setHistoryResult
             }}
         >
             {children}

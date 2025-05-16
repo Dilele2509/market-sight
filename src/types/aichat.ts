@@ -4,6 +4,11 @@ export interface ChatMessage {
     ai?: string
 }
 
+export interface HistoryResult {
+    version: string
+    result: ResponseData
+}
+
 // Response data interface
 export interface ResponseData {
     success: boolean

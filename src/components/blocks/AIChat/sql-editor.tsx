@@ -25,12 +25,25 @@ export function SqlEditor({ }: SqlEditorProps) {
     const { sqlQuery, setSqlQuery, setConditions, setConditionGroups, setRootOperator } = useAiChatContext()
 
     useEffect(() => {
+        window.MonacoEnvironment = {
+            getWorkerUrl: function (moduleId, label) {
+                return `data:text/javascript;charset=utf-8,${encodeURIComponent(`
+                self.MonacoEnvironment = {
+                    baseUrl: '/',
+                };
+                importScripts('https://unpkg.com/monaco-editor@0.45.0/min/vs/base/worker/workerMain.js');
+            `)}`;
+            }
+        };
+    }, []);
+
+
+    useEffect(() => {
         if (!sqlQuery) {
             setTypedQuery("")
             return
         }
 
-        // Hủy interval cũ nếu có
         if (typingIntervalRef.current) {
             clearInterval(typingIntervalRef.current)
         }

@@ -29,15 +29,13 @@ export function ModelEditor({ }: ModelEditorProps) {
 
     useEffect(() => {
         console.log('update data conditions: ', conditions);
+        console.log('update data conditionGroups: ', conditionGroups);
+        console.log('update data rootOperator: ', rootOperator);
     }, [conditions || conditionGroups || rootOperator])
 
     useEffect(() => {
         setSqlQuery(generateSQLPreview(selectedDataset, conditions, conditionGroups, rootOperator))
     }, [conditions || conditionGroups || rootOperator])
-
-    // useEffect(()=>{
-    //     console.log('check condition: ', conditions);
-    // },[conditions])
 
     const fetchAttributes = async (dataset: any, showToast = true) => {
         try {
