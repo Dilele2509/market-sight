@@ -23,6 +23,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { useSegmentData } from "@/context/SegmentDataContext"
 import ConnectionCard from "@/components/blocks/Connection/ConnectionCard"
+import { toast } from "sonner"
 
 const sources = [
   {
@@ -99,6 +100,10 @@ export default function ImportData() {
   const renderConnectionDialog = () => {
     setConnectionDialog(!connectionDialog)
   }
+
+  useEffect(()=>{
+    toast.success('Đã được kết nối với dữ liệu')
+  },[recentConnections])
 
   return (
     <DashboardShell>

@@ -1,6 +1,7 @@
 "use client"
 
 import { addMonths, format } from "date-fns"
+import { vi } from "date-fns/locale"
 import { CalendarIcon } from "lucide-react"
 import { useEffect } from "react"
 
@@ -32,7 +33,7 @@ function DateRangePicker() {
     // Format dates for display
     const formatDate = (date: Date | null) => {
         if (!date) return ""
-        return format(date, "MMM d, yyyy")
+        return format(date, "d MMMM, yyyy", { locale: vi })
     }
 
     // Handle date selection
@@ -68,6 +69,7 @@ function DateRangePicker() {
                         onSelect={handleStartDateSelect}
                         initialFocus
                         defaultMonth={startDate || undefined}
+                        locale={vi}
                     />
                 </PopoverContent>
             </Popover>
@@ -88,6 +90,7 @@ function DateRangePicker() {
                         onSelect={handleEndDateSelect}
                         initialFocus
                         defaultMonth={endDate || undefined}
+                        locale={vi}
                     />
                 </PopoverContent>
             </Popover>

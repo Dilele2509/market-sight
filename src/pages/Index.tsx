@@ -139,7 +139,7 @@ export default function Dashboard() {
           {dashboardData ? <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
             {/* GMV Card */}
             <MetricCard
-              title="Gross Merchandise Value"
+              title="Tổng giá trị hàng hóa"
               value={dashboardData?.values?.gmv}
               change={dashboardData?.changes?.gmv}
               icon={<DollarSignIcon />}
@@ -148,7 +148,7 @@ export default function Dashboard() {
 
             {/* Orders Card */}
             <MetricCard
-              title="Total Orders"
+              title="Tổng số lượng đơn hàng"
               value={dashboardData?.values?.orders}
               change={dashboardData?.changes?.orders}
               icon={<ShoppingCartIcon />}
@@ -158,7 +158,7 @@ export default function Dashboard() {
 
             {/* Unique Customers Card */}
             <MetricCard
-              title="Unique Customers"
+              title="Khách hàng thực tế"
               value={dashboardData?.values?.unique_customers}
               change={dashboardData?.changes?.unique_customers}
               icon={<UsersIcon />}
@@ -168,7 +168,7 @@ export default function Dashboard() {
 
             {/* AOV Card */}
             <MetricCard
-              title="Average Order Value"
+              title="Giá trị đơn hàng trung bình"
               value={dashboardData?.values?.aov}
               change={dashboardData?.changes?.aov}
               icon={<CreditCardIcon />}
@@ -194,10 +194,10 @@ export default function Dashboard() {
               </div>
 
               {dashboardData ? <div className="space-y-4">
-                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
                   {/* Avg Bill Per User Card */}
                   <MetricCard
-                    title="Avg Bill Per User"
+                    title="Mức chi tiêu trung bình mỗi khách hàng"
                     value={dashboardData.values.avg_bill_per_user}
                     change={dashboardData.changes.avg_bill_per_user}
                     icon={<TrendingDownIcon />}
@@ -206,7 +206,7 @@ export default function Dashboard() {
 
                   {/* ARPU Card */}
                   <MetricCard
-                    title="Average Revenue Per User"
+                    title="Doanh thu bình quân trên mỗi khách hàng"
                     value={dashboardData.values.arpu}
                     change={dashboardData.changes.arpu}
                     icon={<TrendingUpIcon />}
@@ -215,10 +215,18 @@ export default function Dashboard() {
 
                   {/* Orders Per Day Card */}
                   <MetricCard
-                    title="Orders Per Day"
+                    title="Tổng hơn hàng mỗi ngày"
                     value={dashboardData.values.orders_per_day}
                     change={dashboardData.changes.orders_per_day}
                     icon={<ShoppingCartIcon />}
+                    isCurrency={false}
+                  />
+
+                  <MetricCard
+                    title="Hiệu suất đặt hàng hàng ngày theo cửa hàng"
+                    value={dashboardData.values.orders_per_day_per_store}
+                    change={dashboardData.changes.orders_per_day_per_store}
+                    icon={<ShoppingBagIcon />}
                     isCurrency={false}
                   />
                 </div>
@@ -262,7 +270,7 @@ export default function Dashboard() {
               </div> : (
                 <div className="flex flex-col items-center justify-center py-20 space-y-4">
                   <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-card-foreground"></div>
-                  <p className="text-sm text-muted-foreground">Loading data...</p>
+                  <p className="text-sm text-muted-foreground">Đang tải dữ liệu...</p>
                 </div>)}
             </div>
           </div>
@@ -270,8 +278,8 @@ export default function Dashboard() {
           {dashboardData ? <div className="mt-6 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             <Card className="col-span-full lg:col-span-2">
               <CardHeader>
-                <CardTitle>Performance Summary</CardTitle>
-                <CardDescription>Key metrics comparison with previous period</CardDescription>
+                <CardTitle>Hiệu suất tổng hợp</CardTitle>
+                <CardDescription>So sánh các số liệu chính với tháng trước đó</CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
@@ -279,7 +287,7 @@ export default function Dashboard() {
                   <div className="flex items-center justify-between">
                     <div className="space-y-1">
                       <p className="text-sm font-medium">GMV</p>
-                      <p className="text-xs text-muted-foreground">Gross Merchandise Value</p>
+                      <p className="text-xs text-muted-foreground">Tổng giá trị hàng hóa</p>
                     </div>
                     <div className="flex items-center gap-2">
                       <span className="text-sm font-medium">{formatCurrency(dashboardData.values.gmv)}</span>
@@ -295,8 +303,8 @@ export default function Dashboard() {
                   {/* Orders Performance */}
                   <div className="flex items-center justify-between">
                     <div className="space-y-1">
-                      <p className="text-sm font-medium">Orders</p>
-                      <p className="text-xs text-muted-foreground">Total number of orders</p>
+                      <p className="text-sm font-medium">Đơn hàng</p>
+                      <p className="text-xs text-muted-foreground">Tổng số lượng đơn hàng</p>
                     </div>
                     <div className="flex items-center gap-2">
                       <span className="text-sm font-medium">{dashboardData.values.orders}</span>
@@ -312,8 +320,8 @@ export default function Dashboard() {
                   {/* Customers Performance */}
                   <div className="flex items-center justify-between">
                     <div className="space-y-1">
-                      <p className="text-sm font-medium">Customers</p>
-                      <p className="text-xs text-muted-foreground">Unique customers</p>
+                      <p className="text-sm font-medium">Khách hàng</p>
+                      <p className="text-xs text-muted-foreground">Tổng số khách hàng thực tế</p>
                     </div>
                     <div className="flex items-center gap-2">
                       <span className="text-sm font-medium">{dashboardData.values.unique_customers}</span>
@@ -330,7 +338,7 @@ export default function Dashboard() {
                   <div className="flex items-center justify-between">
                     <div className="space-y-1">
                       <p className="text-sm font-medium">AOV</p>
-                      <p className="text-xs text-muted-foreground">Average Order Value</p>
+                      <p className="text-xs text-muted-foreground">Giá trị đơn hàng trung bình</p>
                     </div>
                     <div className="flex items-center gap-2">
                       <span className="text-sm font-medium">{formatCurrency(dashboardData.values.aov)}</span>
@@ -350,7 +358,7 @@ export default function Dashboard() {
           </div> : (
             <div className="flex flex-col items-center justify-center py-20 space-y-4">
               <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-card-foreground"></div>
-              <p className="text-sm text-muted-foreground">Loading data...</p>
+              <p className="text-sm text-muted-foreground">Đang tải dữ liệu...</p>
             </div>)}
         </main>
       </div>

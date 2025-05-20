@@ -3,18 +3,21 @@
 import { useEffect, useRef, useState } from "react"
 import dynamic from "next/dynamic"
 import { Button } from "@/components/ui/button"
-import { Play, Terminal, XCircle, Copy, Check, Download, Maximize2, Minimize2 } from "lucide-react"
+import { Play, Terminal, XCircle, Copy, Check, Download, Maximize2, Minimize2, CodeXml } from "lucide-react"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { useAiChatContext } from "@/context/AiChatContext"
 import { convertSQLToSegment } from "@/utils/segmentFunctionConvert"
+import { LoadingCircles } from "./loading-circles"
+import { generateSQLPreview } from "@/utils/segmentFunctionHelper"
 
 interface SqlEditorProps {
+    isLoading: boolean
 }
 
 const MonacoEditor = dynamic(() => import("@monaco-editor/react"), { ssr: false })
 
-export function SqlEditor({ }: SqlEditorProps) {
+export function SqlEditor({ isLoading }: SqlEditorProps) {
     const [result, setResult] = useState<string | null>(null)
     const [isExecuting, setIsExecuting] = useState(false)
     const [activeTab, setActiveTab] = useState("editor")
@@ -22,7 +25,8 @@ export function SqlEditor({ }: SqlEditorProps) {
     const [isFullscreen, setIsFullscreen] = useState(false)
     const [typedQuery, setTypedQuery] = useState("")
     const typingIntervalRef = useRef<NodeJS.Timeout | null>(null)
-    const { sqlQuery, setSqlQuery, setConditions, setConditionGroups, setRootOperator } = useAiChatContext()
+    const [externalSqlQuery, setExternalSqlQuery] = useState("")
+    const { sqlQuery, setSqlQuery, setConditions, setConditionGroups, setRootOperator, responseData } = useAiChatContext()
 
     useEffect(() => {
         window.MonacoEnvironment = {
@@ -36,7 +40,6 @@ export function SqlEditor({ }: SqlEditorProps) {
             }
         };
     }, []);
-
 
     useEffect(() => {
         if (!sqlQuery) {
@@ -61,7 +64,7 @@ export function SqlEditor({ }: SqlEditorProps) {
                 return next
             })
         }, 5)
-    }, [])
+    }, [responseData])
 
     const handleClearResult = () => {
         setResult(null)
@@ -164,7 +167,7 @@ export function SqlEditor({ }: SqlEditorProps) {
                         </TooltipProvider>
                     </div>
                 </div>
-                <TabsContent value="editor" className="m-0 h-[92%]">
+                {!isLoading ? typedQuery !== "" ? <TabsContent value="editor" className="m-0 h-[92%]">
                     <div className="h-full py-4 bg-[#1e1e1e] rounded-lg overflow-hidden">
                         <MonacoEditor
                             height="100%"
@@ -182,7 +185,21 @@ export function SqlEditor({ }: SqlEditorProps) {
                             }}
                         />
                     </div>
-                </TabsContent>
+                </TabsContent> : (
+                    <div className="h-full flex flex-col items-center justify-center text-muted-foreground bg-muted/30 rounded-xl p-8">
+                        <div className="w-16 h-16 rounded-full bg-muted/50 flex items-center justify-center mb-4">
+                            <CodeXml className="h-8 w-8 text-muted-foreground/70" />
+                        </div>
+                        <p className="text-center font-medium">Không có dữ liệu</p>
+                        <p className="text-center text-sm mt-1">Gửi truy vấn để tạo dữ liệu phân khúc</p>
+                    </div>
+                ) : (
+                    <div className="h-[calc(100%-2rem)] flex flex-col items-center justify-center">
+                        <LoadingCircles />
+                        <p className="mt-5 text-sm font-medium">Đang tạo dữ liệu phân khúc...</p>
+                        <p className="text-xs text-muted-foreground mt-1">Quá trình này có thể mất vài giây</p>
+                    </div>
+                )}
             </Tabs>
         </div>
     )

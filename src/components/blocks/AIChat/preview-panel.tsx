@@ -17,6 +17,7 @@ import AuthContext from "@/context/AuthContext"
 import { axiosPrivate } from "@/API/axios"
 import { toast } from "sonner"
 import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from "@/components/ui/select";
+import { generateSQLPreview } from "@/utils/segmentFunctionHelper"
 
 interface PreviewPanelProps {
     activeTab: string
@@ -32,15 +33,14 @@ export function PreviewPanel({
     responseData,
 }: PreviewPanelProps) {
     const [isOpenDialog, setIsOpenDialog] = useState(false)
-    const { conditions, conditionGroups, rootOperator, selectedDataset, setConditionGroups, setConditions, setRootOperator, historyResult, setResponseData } = useAiChatContext()
+    const { conditions, conditionGroups, rootOperator, selectedDataset, setConditionGroups, setConditions, setRootOperator, historyResult, setResponseData, setSqlQuery } = useAiChatContext()
     const { token, user } = useContext(AuthContext)
-    const latestVersion = historyResult[historyResult.length - 1]?.version
-    const [selectedVersion, setSelectedVersion] = useState(latestVersion)
+    const [selectedVersion, setSelectedVersion] = useState<string | undefined>(undefined);
 
     useEffect(() => {
         if (historyResult.length > 0) {
             const latest = historyResult[historyResult.length - 1]?.version;
-            setSelectedVersion(latest);
+            if (latest) setSelectedVersion(latest);
         }
     }, [historyResult]);
 
@@ -49,6 +49,17 @@ export function PreviewPanel({
             handleSelect(selectedVersion);
         }
     }, [selectedVersion]);
+
+    const handleSelect = (value: string) => {
+        if (!value) return;
+        const matched = historyResult.find((item) => item.version === value);
+        if (matched) {
+            console.log(matched.result);
+            setResponseData(matched.result);
+            const filter = matched.result?.data?.filter_criteria
+            setSqlQuery(generateSQLPreview(selectedDataset, filter?.conditions, filter?.conditionGroups, filter?.rootOperator))
+        }
+    };
 
 
     const handleSaveSegment = async (data: { name: string; segment_id: string, description: string }) => {
@@ -92,63 +103,75 @@ export function PreviewPanel({
             toast.error('Không lưu được phân khúc. Vui lòng thử lại.');
         }
     };
-    const handleSelect = (value: string) => {
-        const matched = historyResult.find((item) => item.version === value);
-        if (matched) {
-            console.log(matched.result);
-            setResponseData(matched.result)
-        }
-    };
 
     return (
         <Card className="w-full md:w-[60%] flex flex-col overflow-hidden shadow-lg">
             <Tabs defaultValue="preview" value={activeTab} onValueChange={setActiveTab} className="flex flex-col h-full">
                 <CardHeader className="px-4 py-3 border-b bg-card">
                     <TabsList className="grid grid-cols-3 h-10 rounded-lg">
-                        <TabsTrigger value="preview" className="rounded-md">
-                            <div className="flex items-center gap-2 py-0.5">
-                                <Table className="h-4 w-4" />
-                                <span className="text-sm font-medium">Xem trước</span>
-                            </div>
-                        </TabsTrigger>
                         <TabsTrigger disabled={isLoading} value="sql" className="rounded-md">
                             <div className="flex items-center gap-2 py-0.5">
                                 <Code className="h-4 w-4" />
                                 <span className="text-sm font-medium">Chỉnh sửa SQL</span>
                             </div>
                         </TabsTrigger>
-                        <TabsTrigger disabled={isLoading} value="model" className="rounded-md">
+                        <TabsTrigger disabled={isLoading || Object.entries(responseData).length === 0} value="model" className="rounded-md">
                             <div className="flex items-center gap-2 py-0.5">
                                 <Database className="h-4 w-4" />
                                 <span className="text-sm font-medium">Chỉnh sửa mô hình</span>
+                            </div>
+                        </TabsTrigger>
+                        <TabsTrigger disabled={isLoading || Object.entries(responseData).length === 0} value="preview" className="rounded-md">
+                            <div className="flex items-center gap-2 py-0.5">
+                                <Table className="h-4 w-4" />
+                                <span className="text-sm font-medium">Xem trước</span>
                             </div>
                         </TabsTrigger>
                     </TabsList>
                 </CardHeader>
 
                 <div className="flex items-center mt-4 mr-6 justify-between">
-                    <div className="flex items-center gap-2 ml-6 min-w-fit">
-                        <label className="text-sm text-card-foreground font-semibold min-w-fit">Kết quả đang hiển thị: </label>
-                        <Select value={selectedVersion} onValueChange={setSelectedVersion}>
-                            <SelectTrigger className="max-w-[200px] bg-background">
-                                <SelectValue placeholder="Chọn kết quả hiển thị" />
-                            </SelectTrigger>
-                            <SelectContent className="bg-background">
-                                {historyResult.map((item, index) => (
-                                    <SelectItem className="bg-background hover:bg-secondary" key={index} value={item.version}>
-                                        {item.version}
-                                    </SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
-                    </div >
-                    <Button onClick={() => setIsOpenDialog(true)}>
-                        <FilePlus2 className="text-card" />
-                        <p className="text-card">Tạo phân khúc</p>
-                    </Button>
+                    {Object.entries(responseData ?? {}).length > 0 &&
+                        <>
+                            <div className="flex items-center gap-2 ml-6 min-w-fit">
+                                <label className="text-sm text-card-foreground font-semibold min-w-fit">Kết quả đang hiển thị: </label>
+                                <Select value={selectedVersion} onValueChange={setSelectedVersion}>
+                                    <SelectTrigger className="max-w-[200px] bg-background">
+                                        <SelectValue placeholder="Chọn kết quả hiển thị" />
+                                    </SelectTrigger>
+                                    <SelectContent className="bg-background">
+                                        {historyResult.map((item, index) => (
+                                            <SelectItem className="bg-background hover:bg-secondary" key={index} value={item.version}>
+                                                {item.version}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            </div >
+                            <Button onClick={() => setIsOpenDialog(true)}>
+                                <FilePlus2 className="text-card" />
+                                <p className="text-card">Tạo phân khúc</p>
+                            </Button>
+                        </>}
                 </div>
 
                 <CardContent className="p-0 flex-1 overflow-hidden">
+                    <TabsContent
+                        value="sql"
+                        className="flex-1 p-5 m-0 h-full data-[state=active]:flex data-[state=active]:flex-col"
+                    >
+                        <CardTitle className="text-lg font-semibold mb-4">Trình soạn thảo SQL</CardTitle>
+                        <SqlEditor isLoading={isLoading} />
+                    </TabsContent>
+
+                    <TabsContent
+                        value="model"
+                        className="flex-1 p-5 m-0 h-full data-[state=active]:flex data-[state=active]:flex-col"
+                    >
+                        <CardTitle className="text-lg font-semibold mb-4">Trình soạn thảo mô hình</CardTitle>
+                        <ModelEditor />
+                    </TabsContent>
+
                     <TabsContent
                         value="preview"
                         className="flex-1 overflow-auto p-5 m-0 h-full data-[state=active]:flex data-[state=active]:flex-col"
@@ -171,22 +194,6 @@ export function PreviewPanel({
                                 <p className="text-center text-sm mt-1">Gửi truy vấn để tạo dữ liệu phân khúc</p>
                             </div>
                         )}
-                    </TabsContent>
-
-                    <TabsContent
-                        value="sql"
-                        className="flex-1 p-5 m-0 h-full data-[state=active]:flex data-[state=active]:flex-col"
-                    >
-                        <CardTitle className="text-lg font-semibold mb-4">Trình soạn thảo SQL</CardTitle>
-                        <SqlEditor />
-                    </TabsContent>
-
-                    <TabsContent
-                        value="model"
-                        className="flex-1 p-5 m-0 h-full data-[state=active]:flex data-[state=active]:flex-col"
-                    >
-                        <CardTitle className="text-lg font-semibold mb-4">Trình soạn thảo mô hình</CardTitle>
-                        <ModelEditor />
                     </TabsContent>
                 </CardContent>
 

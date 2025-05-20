@@ -49,7 +49,7 @@ export function MetricCard({ title, value, change, icon, isCurrency = false, pre
             <ArrowDownIcon className="mr-1 h-4 w-4 text-rose-500" />
           )}
           <span className={change >= 0 ? "text-emerald-500" : "text-rose-500"}>{formatPercentage(change)}</span>
-          <span className="text-muted-foreground ml-1">from last period</span>
+          <span className="text-muted-foreground ml-1">so với tháng trước</span>
         </div>
       </CardContent>
     </Card>

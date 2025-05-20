@@ -6,11 +6,11 @@ import MicroSegmentation from "../../pages/MicroSegmentation";
 import CreateSegmentation from "@/pages/CreateSegmentation";
 
 const ProtectedRoutes = () => {
-  const { token } = useContext(AuthContext);
+  const { token, users } = useContext(AuthContext);
 
   return (
     <Routes>
-      {token
+      {token && users !== null
         ? privateRoutes.map((route, index) => {
           const Page = route.component;
           return <Route key={index} path={route.path} element={<Page />} />;
@@ -21,7 +21,7 @@ const ProtectedRoutes = () => {
         })}
 
       {/* Nếu đã đăng nhập, thiết lập route cho MicroSegmentation */}
-      {token && (
+      {token && users !== null && (
         <>
           <Route path="/micro-segmentation" element={<MicroSegmentation />}>
             <Route index element={<Navigate to="rfm" replace />} />

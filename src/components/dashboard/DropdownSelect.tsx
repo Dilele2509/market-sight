@@ -17,7 +17,7 @@ interface MonthlyDetailDropdownProps {
 export function MonthlyDetailDropdown({ data, currentData, resetCurrentData }: MonthlyDetailDropdownProps) {
     const getMonthYear = (dateString: string) => {
         const date = new Date(dateString);
-        return `${date.toLocaleString('en-us', { month: 'long' })} ${date.getFullYear()}`;
+        return `${date.toLocaleString('vi-VN', { month: 'long' })} ${date.getFullYear()}`;
     };
 
     const [selectedMonth, setSelectedMonth] = useState<string>(getMonthYear(currentData.period.end_date));
@@ -35,7 +35,7 @@ export function MonthlyDetailDropdown({ data, currentData, resetCurrentData }: M
     return (
         <div className="flex items-center gap-2">
             <label className="min-w-fit text-sm font-medium text-card-foreground">
-                Select monthly detail:
+                Báo cáo theo:
             </label>
             <Select value={selectedMonth} onValueChange={handleChange}>
                 <SelectTrigger className="w-[200px] bg-card">
