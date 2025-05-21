@@ -115,13 +115,13 @@ export function PreviewPanel({
                                 <span className="text-sm font-medium">Chỉnh sửa SQL</span>
                             </div>
                         </TabsTrigger>
-                        <TabsTrigger disabled={isLoading || Object.entries(responseData).length === 0} value="model" className="rounded-md">
+                        <TabsTrigger disabled={isLoading || Object.entries(responseData || {}).length === 0} value="model" className="rounded-md">
                             <div className="flex items-center gap-2 py-0.5">
                                 <Database className="h-4 w-4" />
                                 <span className="text-sm font-medium">Chỉnh sửa mô hình</span>
                             </div>
                         </TabsTrigger>
-                        <TabsTrigger disabled={isLoading || Object.entries(responseData).length === 0} value="preview" className="rounded-md">
+                        <TabsTrigger disabled={isLoading || Object.entries(responseData || {}).length === 0} value="preview" className="rounded-md">
                             <div className="flex items-center gap-2 py-0.5">
                                 <Table className="h-4 w-4" />
                                 <span className="text-sm font-medium">Xem trước</span>
