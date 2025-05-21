@@ -20,7 +20,7 @@ export default function AiCreate() {
     //     },
     // ])
 
-    const [activeTab, setActiveTab] = useState("preview")
+    const [activeTab, setActiveTab] = useState("sql")
     const [isLoading, setIsLoading] = useState(false)
     const { token } = useContext(AuthContext);
     const { selectedDataset, setSqlQuery, setConditionGroups, setConditions, setRootOperator, setResponseData, responseData, setInputMessage, chatHistory, setChatHistory, setHistoryResult } = useAiChatContext()

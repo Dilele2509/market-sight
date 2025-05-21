@@ -25,7 +25,7 @@ export function SqlEditor({ isLoading }: SqlEditorProps) {
     const [isFullscreen, setIsFullscreen] = useState(false)
     const [typedQuery, setTypedQuery] = useState("")
     const typingIntervalRef = useRef<NodeJS.Timeout | null>(null)
-    const [externalSqlQuery, setExternalSqlQuery] = useState("")
+    const isManualEditRef = useRef(false)
     const { sqlQuery, setSqlQuery, setConditions, setConditionGroups, setRootOperator, responseData } = useAiChatContext()
 
     useEffect(() => {
@@ -42,8 +42,8 @@ export function SqlEditor({ isLoading }: SqlEditorProps) {
     }, []);
 
     useEffect(() => {
-        if (!sqlQuery) {
-            setTypedQuery("")
+        if (!sqlQuery || isManualEditRef.current) {
+            isManualEditRef.current = false  // reset flag
             return
         }
 
@@ -64,7 +64,7 @@ export function SqlEditor({ isLoading }: SqlEditorProps) {
                 return next
             })
         }, 5)
-    }, [responseData])
+    }, [sqlQuery, responseData])
 
     const handleClearResult = () => {
         setResult(null)
@@ -94,8 +94,9 @@ export function SqlEditor({ isLoading }: SqlEditorProps) {
     }
 
     const handleSqlChange = (v: string | null) => {
+        isManualEditRef.current = true
         setSqlQuery(v ?? "");
-        const sqlQuery = v.trim();
+        const sqlQuery = v?.trim() ?? "";
         try {
             console.log(convertSQLToSegment(sqlQuery))
             setConditions(convertSQLToSegment(sqlQuery).conditions)
