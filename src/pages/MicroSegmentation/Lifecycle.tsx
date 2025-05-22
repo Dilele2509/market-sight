@@ -196,9 +196,9 @@ export default function CustomerLifecyclePage() {
       <main className="flex flex-1 flex-col gap-4 md:gap-8">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold tracking-tight">Customer Lifecycle Analysis</h1>
+            <h1 className="text-2xl font-bold tracking-tight">Phân Tích Vòng Đời Khách Hàng</h1>
             <p className="text-muted-foreground">
-              Track customer behavior and metrics across different lifecycle stages
+              Theo dõi hành vi và số liệu của khách hàng trong các giai đoạn vòng đời khác nhau
             </p>
           </div>
           <div className="flex items-center gap-4">
@@ -211,7 +211,7 @@ export default function CustomerLifecyclePage() {
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent>
-                  Click to sync data
+                  Nhấp để đồng bộ dữ liệu
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
@@ -220,9 +220,9 @@ export default function CustomerLifecyclePage() {
 
         {dataGMV && cusLifeList && dataMonthly ? <Tabs defaultValue="overview" className="space-y-4">
           <TabsList>
-            <TabsTrigger value="overview">Overview</TabsTrigger>
-            <TabsTrigger value="table">Table</TabsTrigger>
-            <TabsTrigger value="metrics">Metrics</TabsTrigger>
+            <TabsTrigger value="overview">Tổng quan</TabsTrigger>
+            <TabsTrigger value="table">Bảng thông tin</TabsTrigger>
+            <TabsTrigger value="metrics">Tăng trưởng số liệu</TabsTrigger>
           </TabsList>
           <TabsContent value="overview" className="space-y-4">
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
@@ -296,7 +296,7 @@ export default function CustomerLifecyclePage() {
         </Tabs> : (
           <div className="flex flex-col items-center justify-center py-20 space-y-4">
             <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-card-foreground"></div>
-            <p className="text-sm text-muted-foreground">Loading data...</p>
+            <p className="text-sm text-muted-foreground">Đang tải dữ liệu...</p>
           </div>
         )}
       </main>

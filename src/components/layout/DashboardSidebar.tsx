@@ -17,32 +17,32 @@ import { useTheme } from "@/components/dark-mode/ThemeProvider";
 
 const menuItems = [
   {
-    title: "Dashboard",
+    title: "Bảng giám sát",
     icon: LayoutDashboard,
     path: "/",
   },
   {
-    title: "Micro-segmentation",
+    title: "Phân khúc vi mô",
     icon: ChartNoAxesCombined,
     path: "/micro-segmentation",
   },
   {
-    title: "Create Segmentation",
+    title: "Tạo phân khúc",
     icon: Filter,
     path: "/create-segmentation",
   },
   {
-    title: "Data Modeling",
+    title: "Chuẩn hoá dữ liệu",
     icon: Database,
     path: "/data-modeling",
   },
   {
-    title: "Connect Data",
+    title: "Kết nối dữ liệu",
     icon: Cable,
     path: "/connect-data",
   },
   {
-    title: "Sync Config",
+    title: "Cấu hình đồng bộ",
     icon: FolderSync,
     path: "/sync-config",
   },
@@ -74,7 +74,7 @@ const DashboardSidebar = ({ isCollapsed, updateCollapsedStatus }) => {
           </Button>
         </div>
         <SidebarGroup>
-          <SidebarGroupLabel>{!isCollapsed && "Analytics"}</SidebarGroupLabel>
+          <SidebarGroupLabel>{!isCollapsed && "Phân tích"}</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {menuItems.map((item) => (
@@ -104,12 +104,12 @@ const DashboardSidebar = ({ isCollapsed, updateCollapsedStatus }) => {
           {theme === "dark" ? (
             <>
               <Sun className="h-4 w-4" />
-              {!isCollapsed && <span>Light Mode</span>}
+              {!isCollapsed && <span>Chế độ sáng</span>}
             </>
           ) : (
             <>
               <Moon className="h-4 w-4" />
-              {!isCollapsed && <span>Dark Mode</span>}
+              {!isCollapsed && <span>Chế độ tối</span>}
             </>
           )}
         </Button>

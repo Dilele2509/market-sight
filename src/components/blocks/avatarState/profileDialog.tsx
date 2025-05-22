@@ -2,7 +2,10 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useState } from "react";
-import { LoaderCircle } from "lucide-react";
+import { LoaderCircle, User2, Mail, Building2, UserRound, Calendar, BadgeHelp } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Separator } from "@/components/ui/separator";
 
 interface ProfileDialogProps {
     openProfileDialog: boolean;
@@ -27,13 +30,17 @@ const ProfileDialog: React.FC<ProfileDialogProps> = ({ openProfileDialog, setOpe
     const closeDialog = () => setOpenProfileDialog(false);
 
     const handleEdit = () => {
+        if (isEditing) {
+            setEditedUser({ ...user }); // Reset changes on cancel
+        }
         setIsEditing((prev) => !prev);
+        setHasChanges(false);
     };
 
     const handleChange = (field: string, value: string) => {
         setEditedUser((prevState) => {
             const updatedUser = { ...prevState, [field]: value };
-            setHasChanges(JSON.stringify(updatedUser) !== JSON.stringify(user)); // Check if there's any change
+            setHasChanges(JSON.stringify(updatedUser) !== JSON.stringify(user));
             return updatedUser;
         });
     };
@@ -48,129 +55,173 @@ const ProfileDialog: React.FC<ProfileDialogProps> = ({ openProfileDialog, setOpe
     const generateRoleName = (roleId: number) => {
         switch (roleId) {
             case 1:
-                return "Admin";
+                return { name: "Quản trị viên", color: "bg-red-500" };
             case 2:
-                return "Data team";
+                return { name: "Nhóm Data", color: "bg-blue-500" };
             case 3:
-                return "Marketing team";
+                return { name: "Nhóm marketing", color: "bg-green-500" };
             default:
-                return "Unknown role";
+                return { name: "Chưa xác định", color: "bg-gray-500" };
         }
+    };
+
+    const formatDate = (dateString: string) => {
+        const date = new Date(dateString);
+        return new Intl.DateTimeFormat('vi-VN', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+        }).format(date);
     };
 
     return (
         <Dialog open={openProfileDialog} onOpenChange={setOpenProfileDialog}>
-            <DialogContent>
+            <DialogContent className="sm:max-w-[600px] bg-card">
                 <DialogHeader>
-                    <DialogTitle>User Profile</DialogTitle>
+                    <div className="flex items-center gap-2">
+                        <User2 className="h-6 w-6" />
+                        <DialogTitle>Thông tin cá nhân</DialogTitle>
+                    </div>
                     <DialogDescription>
-                        Below are the details of the user's profile. You can update any information here.
+                        Xem và quản lý thông tin cá nhân của bạn
                     </DialogDescription>
                 </DialogHeader>
 
                 {user ? (
-                    <div className="space-y-6">
-                        {/* Business ID */}
-                        <div className="flex justify-between items-center">
-                            <div className="font-semibold text-lg">Business ID:</div>
-                            <div className="text-gray-700">{user.business_id}</div>
-                        </div>
+                    <ScrollArea className="max-h-[600px] pr-4">
+                        <div className="space-y-6 py-4">
+                            {/* User Info Section */}
+                            <div className="space-y-4">
+                                <h4 className="text-sm font-medium leading-none">Thông tin cơ bản</h4>
+                                <Separator />
+                                
+                                {/* Email Field */}
+                                <div className="rounded-lg border p-4 space-y-2">
+                                    <div className="flex items-center gap-2 text-muted-foreground">
+                                        <Mail className="h-4 w-4" />
+                                        <span className="text-sm">Địa chỉ email</span>
+                                    </div>
+                                    {isEditing ? (
+                                        <Input
+                                            type="email"
+                                            value={editedUser.email}
+                                            onChange={(e) => handleChange("email", e.target.value)}
+                                            className="h-9"
+                                        />
+                                    ) : (
+                                        <p className="text-sm font-medium">{user.email}</p>
+                                    )}
+                                </div>
 
-                        {/* Email */}
-                        <div className="flex justify-between items-center">
-                            <div className="font-semibold text-lg">Email:</div>
-                            {isEditing ? (
-                                <Input
-                                    type="email"
-                                    value={editedUser.email}
-                                    onChange={(e) => handleChange("email", e.target.value)}
-                                    className="input input-bordered w-full max-w-xs"
-                                />
-                            ) : (
-                                <div className="text-gray-700">{user.email}</div>
-                            )}
-                        </div>
+                                {/* Name Fields */}
+                                <div className="rounded-lg border p-4 space-y-4">
+                                    <div className="flex items-center gap-2 text-muted-foreground">
+                                        <UserRound className="h-4 w-4" />
+                                        <span className="text-sm">Họ và tên</span>
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div className="space-y-2">
+                                            <label className="text-sm text-muted-foreground">Tên</label>
+                                            {isEditing ? (
+                                                <Input
+                                                    type="text"
+                                                    value={editedUser.first_name}
+                                                    onChange={(e) => handleChange("first_name", e.target.value)}
+                                                    className="h-9"
+                                                />
+                                            ) : (
+                                                <p className="text-sm font-medium">{user.first_name}</p>
+                                            )}
+                                        </div>
+                                        <div className="space-y-2">
+                                            <label className="text-sm text-muted-foreground">Họ</label>
+                                            {isEditing ? (
+                                                <Input
+                                                    type="text"
+                                                    value={editedUser.last_name}
+                                                    onChange={(e) => handleChange("last_name", e.target.value)}
+                                                    className="h-9"
+                                                />
+                                            ) : (
+                                                <p className="text-sm font-medium">{user.last_name}</p>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
 
-                        {/* First Name */}
-                        <div className="flex justify-between items-center">
-                            <div className="font-semibold text-lg">First Name:</div>
-                            {isEditing ? (
-                                <Input
-                                    type="text"
-                                    value={editedUser.first_name}
-                                    onChange={(e) => handleChange("first_name", e.target.value)}
-                                    className="input input-bordered w-full max-w-xs"
-                                />
-                            ) : (
-                                <div className="text-gray-700">{user.first_name}</div>
-                            )}
-                        </div>
+                                {/* Business & Role Info */}
+                                <div className="rounded-lg border p-4 space-y-4">
+                                    <div className="flex items-center gap-2 text-muted-foreground">
+                                        <Building2 className="h-4 w-4" />
+                                        <span className="text-sm">Thông tin tổ chức</span>
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div className="space-y-2">
+                                            <label className="text-sm text-muted-foreground">Mã doanh nghiệp</label>
+                                            <p className="text-sm font-medium">{user.business_id}</p>
+                                        </div>
+                                        <div className="space-y-2">
+                                            <label className="text-sm text-muted-foreground">Vai trò</label>
+                                            <div className="flex items-center gap-2">
+                                                <Badge variant="secondary" className={`${generateRoleName(user.role_id).color} text-white`}>
+                                                    {generateRoleName(user.role_id).name}
+                                                </Badge>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
 
-                        {/* Last Name */}
-                        <div className="flex justify-between items-center">
-                            <div className="font-semibold text-lg">Last Name:</div>
-                            {isEditing ? (
-                                <Input
-                                    type="text"
-                                    value={editedUser.last_name}
-                                    onChange={(e) => handleChange("last_name", e.target.value)}
-                                    className="input input-bordered w-full max-w-xs"
-                                />
-                            ) : (
-                                <div className="text-gray-700">{user.last_name}</div>
-                            )}
-                        </div>
-
-                        {/* Role ID */}
-                        <div className="flex justify-between items-center">
-                            <div className="font-semibold text-lg">Role ID:</div>
-                            <div className="text-gray-700">
-                                {user.role_id} - {generateRoleName(user.role_id)}
+                                {/* Timestamps */}
+                                <div className="rounded-lg border p-4 space-y-4">
+                                    <div className="flex items-center gap-2 text-muted-foreground">
+                                        <Calendar className="h-4 w-4" />
+                                        <span className="text-sm">Thời gian</span>
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div className="space-y-2">
+                                            <label className="text-sm text-muted-foreground">Ngày tạo</label>
+                                            <p className="text-sm font-medium">{formatDate(user.created_at)}</p>
+                                        </div>
+                                        <div className="space-y-2">
+                                            <label className="text-sm text-muted-foreground">Cập nhật lần cuối</label>
+                                            <p className="text-sm font-medium">{formatDate(user.updated_at)}</p>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
-
-                        {/* Created and Updated At */}
-                        <div className="flex justify-between items-center">
-                            <div className="font-semibold text-lg">Created At:</div>
-                            <div className="text-gray-700">{new Date(user.created_at).toLocaleString()}</div>
-                        </div>
-
-                        <div className="flex justify-between items-center">
-                            <div className="font-semibold text-lg">Updated At:</div>
-                            <div className="text-gray-700">{new Date(user.updated_at).toLocaleString()}</div>
-                        </div>
-
-                        {/* Action Buttons */}
-                        <DialogFooter>
-                            <Button variant="outline" onClick={closeDialog}>
-                                Close
-                            </Button>
-
-                            {/* Edit/Cancel Button */}
-                            <Button
-                                variant="outline"
-                                className={`${isEditing ? 'border-error text-error' : ''}`}
-                                onClick={handleEdit}
-                                disabled={isEditing && !hasChanges}
-                            >
-                                {isEditing ? "Cancel" : "Edit"}
-                            </Button>
-
-                            {/* Save Changes Button */}
-                            <Button
-                                className="bg-primary"
-                                onClick={handleUpdate}
-                                disabled={!hasChanges || !isEditing}
-                            >
-                                Save Changes
-                            </Button>
-                        </DialogFooter>
-                    </div>
+                    </ScrollArea>
                 ) : (
                     <div className="flex justify-center items-center py-10">
                         <LoaderCircle className="h-8 w-8 animate-spin text-primary" />
                     </div>
                 )}
+
+                <DialogFooter className="flex gap-2 mt-4">
+                    <Button
+                        variant="outline"
+                        onClick={closeDialog}
+                    >
+                        Đóng
+                    </Button>
+                    <Button
+                        variant={isEditing ? "destructive" : "outline"}
+                        onClick={handleEdit}
+                    >
+                        {isEditing ? "Hủy" : "Chỉnh sửa"}
+                    </Button>
+                    {isEditing && (
+                        <Button
+                            variant="default"
+                            onClick={handleUpdate}
+                            disabled={!hasChanges}
+                        >
+                            Lưu thay đổi
+                        </Button>
+                    )}
+                </DialogFooter>
             </DialogContent>
         </Dialog>
     );

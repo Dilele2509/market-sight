@@ -16,6 +16,7 @@ import {
 import { useContext, useState } from "react";
 import AuthContext from "@/context/AuthContext";
 import ProfileDialog from "./profileDialog";
+import { KeyboardDialog } from "./keyboardDialog";
 import { useShortcutListener } from "@/hooks/use-shortcut";
 import { formatShortcut } from "@/components/utils/shortcutFormatter.ts";
 import { LoaderCircle } from "lucide-react";
@@ -27,6 +28,7 @@ interface AvatarConfigProps {
 const AvatarConfig: React.FC<AvatarConfigProps> = ({ className = "" }) => {
     const { user, logout } = useContext(AuthContext)
     const [openProfileDialog, setOpenProfileDialog] = useState(false)
+    const [openKeyboardDialog, setOpenKeyboardDialog] = useState(false)
 
     const configAvaFromName = () => {
         if (!user || !user.first_name || !user.last_name) return "??"; // Trường hợp thiếu dữ liệu
@@ -40,17 +42,12 @@ const AvatarConfig: React.FC<AvatarConfigProps> = ({ className = "" }) => {
         {
             name: "Profile",
             shortcut: "⇧⌘P",
-            onClick: () => setOpenProfileDialog(!openProfileDialog),
-        },
-        {
-            name: "Business",
-            shortcut: "⌘B",
-            onClick: () => console.log("Navigating to Business"),
+            onClick: () => setOpenProfileDialog(true),
         },
         {
             name: "Keyboard Shortcuts",
             shortcut: "⌘K",
-            onClick: () => console.log("Navigating to Keyboard Shortcuts"),
+            onClick: () => setOpenKeyboardDialog(true),
         },
     ];
     menuItems.forEach(item => {
@@ -67,7 +64,7 @@ const AvatarConfig: React.FC<AvatarConfigProps> = ({ className = "" }) => {
                             <Avatar
                                 className={`${className} hover:shadow-lg hover:border-2 hover:border-primary-light transition-all duration-300`}
                             >
-                                <AvatarFallback className="bg-primary-dark text-secondary-light">{configAvaFromName()}</AvatarFallback>
+                                <AvatarFallback className="bg-primary-dark text-white">{configAvaFromName()}</AvatarFallback>
                             </Avatar>
                         </Button>
                     </DropdownMenuTrigger>
@@ -96,6 +93,10 @@ const AvatarConfig: React.FC<AvatarConfigProps> = ({ className = "" }) => {
                         openProfileDialog={openProfileDialog}
                         setOpenProfileDialog={setOpenProfileDialog}
                         user={user}
+                    />
+                    <KeyboardDialog
+                        open={openKeyboardDialog}
+                        onOpenChange={setOpenKeyboardDialog}
                     />
                 </>
             ) : (

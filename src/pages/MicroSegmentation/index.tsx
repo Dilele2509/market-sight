@@ -16,25 +16,25 @@ export default function MicroSegmentation() {
             {!connection ? (
                 <div className="flex flex-col gap-6 items-center justify-center h-[60vh]">
                     <Alert variant="destructive" className="max-w-md text-center">
-                        <AlertTitle>Database Connection Required</AlertTitle>
+                        <AlertTitle>Yêu cầu kết nối cơ sở dữ liệu</AlertTitle>
                         <AlertDescription>
-                            No data has been imported. Please navigate to the Import Data page to connect to your database.
+                            Chưa có dữ liệu nào được nhập. Vui lòng điều hướng đến trang Nhập dữ liệu để kết nối với cơ sở dữ liệu của bạn.
                         </AlertDescription>
                     </Alert>
                     <Button onClick={() => navigate("/connect-data")} className="mt-4">
-                        Go to Import Data
+                        Đi đến kết nối
                     </Button>
                 </div>
             ) : (<div className="flex flex-col gap-6">
-                <h1 className="text-3xl font-bold tracking-tight">Micro-Segmentation</h1>
+                <h1 className="text-3xl font-bold tracking-tight">Phân Khúc Vi Mô</h1>
                 <Tabs
                     defaultValue="rfm"
                     value={["rfm", "lifecycle"].includes(location.pathname.split("/").pop()) ? location.pathname.split("/").pop() : "rfm"}
                     onValueChange={(value) => navigate(`/micro-segmentation/${value}`)}
                 >
                     <TabsList className="bg-card-foreground">
-                        <TabsTrigger className="text-card" value="rfm">RFM Analysis</TabsTrigger>
-                        <TabsTrigger className="text-card" value="lifecycle">Customer Lifecycle Analysis</TabsTrigger>
+                        <TabsTrigger className="text-card" value="rfm">Phân tích RFM</TabsTrigger>
+                        <TabsTrigger className="text-card" value="lifecycle">Phân tích Vòng Đời Khách Hàng</TabsTrigger>
                     </TabsList>
                 </Tabs>
 
