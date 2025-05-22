@@ -54,20 +54,7 @@ export function PreviewPanel({
         if (!value) return;
         const matched = historyResult.find((item) => item.version === value);
         if (matched) {
-            // const responseData: ResponseData = {
-            //     success: true,
-            //     data: matched.result
-            // };
-            //setResponseData(responseData);
             setDisplayData(matched.result)
-            //const filter = matched.result?.filter_criteria;
-            // if (filter) {
-            //     // Ensure conditions, conditionGroups and rootOperator have default values if undefined
-            //     const conditions = filter.conditions || [];
-            //     const conditionGroups = filter.conditionGroups || [];
-            //     const rootOperator = filter.rootOperator || "AND";
-            //     setSqlQuery(generateSQLPreview(selectedDataset, conditions, conditionGroups, rootOperator));
-            // }
         }
     };
 

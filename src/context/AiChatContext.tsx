@@ -156,14 +156,14 @@ export const AiChatContextProvider: React.FC<{ children: ReactNode }> = ({ child
 
     useEffect(() => {
         console.log('responseData in context: ', responseData);
-        setDisplayData(responseData?.data)
-        // const filter = responseData?.data?.filter_criteria;
-        // if (filter) {
-        //     setConditions(filter.conditions || []);
-        //     setConditionGroups(filter.conditionGroups || []);
-        //     setRootOperator(filter.rootOperator || "AND");
-        //     setSqlQuery(generateSQLPreview(selectedDataset, filter.conditions, filter.conditionGroups, filter.rootOperator))
-        // }
+        if(responseData === null) {
+            setConditions([]);
+            setConditionGroups([]);
+            setRootOperator("AND");
+            setSqlQuery("")
+            return;
+        }
+        setDisplayData(responseData ? responseData?.data : null)
     }, [responseData])
 
     useEffect(() => {
@@ -173,7 +173,8 @@ export const AiChatContextProvider: React.FC<{ children: ReactNode }> = ({ child
             setConditions(filter.conditions || []);
             setConditionGroups(filter.conditionGroups || []);
             setRootOperator(filter.rootOperator || "AND");
-            setSqlQuery(generateSQLPreview(selectedDataset, filter.conditions, filter.conditionGroups, filter.rootOperator))
+            const sql = generateSQLPreview(selectedDataset, filter.conditions, filter.conditionGroups, filter.rootOperator)
+            setSqlQuery(displayData ? sql : "")
         }
     }, [displayData])
 

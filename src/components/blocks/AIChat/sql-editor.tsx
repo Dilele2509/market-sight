@@ -26,6 +26,7 @@ export function SqlEditor({ isLoading }: SqlEditorProps) {
     const [typedQuery, setTypedQuery] = useState("")
     const typingIntervalRef = useRef<NodeJS.Timeout | null>(null)
     const isManualEditRef = useRef(false)
+    const isTypingAnimationRef = useRef(false)
     const { sqlQuery, setSqlQuery, setConditions, setConditionGroups, setRootOperator, responseData } = useAiChatContext()
 
     useEffect(() => {
@@ -42,29 +43,52 @@ export function SqlEditor({ isLoading }: SqlEditorProps) {
     }, []);
 
     useEffect(() => {
-        if (!sqlQuery || isManualEditRef.current) {
-            isManualEditRef.current = false  // reset flag
+        if (sqlQuery === "") {
+            setTypedQuery("")
             return
         }
 
-        if (typingIntervalRef.current) {
-            clearInterval(typingIntervalRef.current)
+        if (!sqlQuery || isManualEditRef.current) {
+            isManualEditRef.current = false
+            return
         }
 
-        let index = 0
+        // Clear any existing interval
+        if (typingIntervalRef.current) {
+            clearInterval(typingIntervalRef.current)
+            typingIntervalRef.current = null
+        }
+
+        let currentIndex = 0
+        const totalLength = sqlQuery.length
+        isTypingAnimationRef.current = true
+
         setTypedQuery("")
+
         typingIntervalRef.current = setInterval(() => {
-            setTypedQuery((prev) => {
-                const next = prev + sqlQuery[index]
-                index++
-                if (index >= sqlQuery.length) {
-                    clearInterval(typingIntervalRef.current!)
-                    typingIntervalRef.current = null
-                }
-                return next
-            })
+            if (currentIndex >= totalLength) {
+                clearInterval(typingIntervalRef.current!)
+                typingIntervalRef.current = null
+                isTypingAnimationRef.current = false
+                return
+            }
+
+            setTypedQuery(prev => prev + sqlQuery[currentIndex])
+            currentIndex++
         }, 5)
-    }, [sqlQuery, responseData])
+
+        // Cleanup function
+        return () => {
+            if (typingIntervalRef.current) {
+                clearInterval(typingIntervalRef.current)
+                typingIntervalRef.current = null
+            }
+        }
+    }, [sqlQuery])
+
+    useEffect(() => {
+        console.log("checkTypeQuery", typedQuery);
+    }, [typedQuery])
 
     const handleClearResult = () => {
         setResult(null)
@@ -94,18 +118,21 @@ export function SqlEditor({ isLoading }: SqlEditorProps) {
     }
 
     const handleSqlChange = (v: string | null) => {
+        if (isTypingAnimationRef.current) return // ⬅️ bỏ qua nếu đang animation
+
         isManualEditRef.current = true
         setSqlQuery(v ?? "");
-        const sqlQuery = v?.trim() ?? "";
+
         try {
-            console.log(convertSQLToSegment(sqlQuery))
-            setConditions(convertSQLToSegment(sqlQuery).conditions)
-            setConditionGroups(convertSQLToSegment(sqlQuery).groupConditions)
-            setRootOperator(convertSQLToSegment(sqlQuery).rootOperator)
+            const sql = v?.trim() ?? ""
+            const parsed = convertSQLToSegment(sql)
+            setConditions(parsed.conditions)
+            setConditionGroups(parsed.groupConditions)
+            setRootOperator(parsed.rootOperator)
         } catch (error) {
             console.log(error);
         }
-    };
+    }
 
 
     return (
@@ -168,7 +195,7 @@ export function SqlEditor({ isLoading }: SqlEditorProps) {
                         </TooltipProvider>
                     </div>
                 </div>
-                {!isLoading ? typedQuery !== "" ? <TabsContent value="editor" className="m-0 h-[92%]">
+                {!isLoading ? (typedQuery !== "" ? <TabsContent value="editor" className="m-0 h-[92%]">
                     <div className="h-full py-4 bg-[#1e1e1e] rounded-lg overflow-hidden">
                         <MonacoEditor
                             height="100%"
@@ -194,7 +221,7 @@ export function SqlEditor({ isLoading }: SqlEditorProps) {
                         <p className="text-center font-medium">Không có dữ liệu</p>
                         <p className="text-center text-sm mt-1">Gửi truy vấn để tạo dữ liệu phân khúc</p>
                     </div>
-                ) : (
+                )) : (
                     <div className="h-[calc(100%-2rem)] flex flex-col items-center justify-center">
                         <LoadingCircles />
                         <p className="mt-5 text-sm font-medium">Đang tạo dữ liệu phân khúc...</p>

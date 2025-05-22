@@ -138,13 +138,14 @@ export default function AiCreate() {
             toast.error(`Có lỗi xảy ra với AI: ${message}`);
         } finally {
             setIsLoading(false);
+            setIsModification(true);
             setInputMessage("")
         }
     };
 
     return (
         <div className="flex flex-col md:flex-row h-[calc(100vh-2rem)] gap-2 bg-background from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-950">
-            <ChatInterface chatHistory={chatHistory} isLoading={isLoading} onSendMessage={handleSendMessage} />
+            <ChatInterface chatHistory={chatHistory} isLoading={isLoading} onSendMessage={handleSendMessage} setIsModification={setIsModification}/>
             <PreviewPanel
                 activeTab={activeTab}
                 setActiveTab={setActiveTab}
