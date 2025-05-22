@@ -3,75 +3,135 @@
 import { useContext, useEffect, useState } from "react"
 import { ChatInterface } from "@/components/blocks/AIChat/chat-interface"
 import { PreviewPanel } from "@/components/blocks/AIChat/preview-panel"
-import type { ChatMessage, HistoryResult, ResponseData } from "@/types/aichat"
+import type { ChatMessage, dataDetailResponse, HistoryResult, ResponseData } from "@/types/aichat"
 import { generateSQLPreview } from "@/utils/segmentFunctionHelper"
 import { useSegmentData } from "@/context/SegmentDataContext"
 import { useAiChatContext } from "@/context/AiChatContext"
 import AuthContext from "@/context/AuthContext"
 import { toast } from "sonner"
 import { axiosPrivate } from "@/API/axios"
+import { headers } from "next/headers"
+import { updateChatHistory, updateHistoryResult } from "@/utils/aiFunctionHelper"
 
 export default function AiCreate() {
-    // State for chat history
-    // const [chatHistory, setChatHistory] = useState<ChatMessage[]>([
-    //     {
-    //         user: "",
-    //         ai: "Xin chào! Tôi là trợ lý AI của bạn. Tôi có thể giúp bạn tạo phân khúc khách hàng dựa trên dữ liệu của bạn. Bạn muốn phân khúc khách hàng như thế nào?",
-    //     },
-    // ])
-
     const [activeTab, setActiveTab] = useState("sql")
     const [isLoading, setIsLoading] = useState(false)
     const { token } = useContext(AuthContext);
-    const { selectedDataset, setSqlQuery, setConditionGroups, setConditions, setRootOperator, setResponseData, responseData, setInputMessage, chatHistory, setChatHistory, setHistoryResult } = useAiChatContext()
+    const [isModification, setIsModification] = useState(true)
+    const { setResponseData, responseData, setInputMessage, chatHistory, setChatHistory, setHistoryResult } = useAiChatContext()
+
+    const getHistoryConversation = async () => {
+        try {
+            await axiosPrivate.get('/segment/ai/history', {
+                headers: {
+                    Authorization: `Bearer ${token}`
+                }
+            })
+                .then((res) => {
+                    if (res.status === 200) {
+                        const dataHistoryConversation = res.data?.data[0]?.conversation?.history as dataDetailResponse[];
+                        if (dataHistoryConversation.length > 0) {
+                            const responseData: ResponseData = {
+                                success: true,
+                                data: dataHistoryConversation[dataHistoryConversation.length - 1]
+                            };
+                            // Only update chat history if it's empty
+                            if (chatHistory.length <= 1) {  // 1 because of initial greeting message
+                                updateChatHistory(dataHistoryConversation, setChatHistory);
+                                updateHistoryResult(dataHistoryConversation, setHistoryResult);
+                            }
+                        }
+                    }
+                })
+        } catch (error) {
+            toast.error("Có lỗi xảy ra: ", error.message)
+        }
+    }
+
+    const setDefaultForResponse = async () => {
+        try {
+            await axiosPrivate.get('/segment/ai/history', {
+                headers: {
+                    Authorization: `Bearer ${token}`
+                }
+            })
+                .then((res) => {
+                    if (res.status === 200) {
+                        const dataHistoryConversation = res.data?.data[0]?.conversation?.history as dataDetailResponse[];
+                        if (dataHistoryConversation.length > 0) {
+                            const responseData: ResponseData = {
+                                success: true,
+                                data: dataHistoryConversation[dataHistoryConversation.length - 1]
+                            };
+                            setResponseData(responseData);
+                        }
+                    }
+                })
+        } catch (error) {
+            toast.error("Có lỗi xảy ra: ", error.message)
+        }
+    }
+    useEffect(() => {
+        console.log('responseData changed:', responseData);
+        if (responseData) {  // Only call if responseData exists
+            getHistoryConversation();
+        }
+    }, [responseData, token]); // Add token as dependency since it's used in getHistoryConversation
+
+    useEffect(() => {
+        setDefaultForResponse()
+    }, [])
 
     const handleSendMessage = async (message: string) => {
         if (!message.trim()) return;
 
+        // Add user message to chat history
         const newMessage: ChatMessage = { user: message };
         setChatHistory(prev => [...prev, newMessage]);
 
         setIsLoading(true);
 
         try {
-            console.log('check input message: ', message);
-            const res = await axiosPrivate.post('/segment/nlp/chatbot', { nlpQuery: message }, {
+            const res = await axiosPrivate.post('/segment/nlp/chatbot', { nlpQuery: message, isModification: isModification }, {
                 headers: { Authorization: `Bearer ${token}` }
             });
 
-            //console.log("check res: ", res.data);
             if (res.status === 200 && res.data?.success) {
                 const dataRes: ResponseData = res.data;
-                console.log('check dataRes: ', dataRes);
-                // Update response data
-                setResponseData(dataRes);
+                console.log('Previous responseData:', responseData);
+                console.log('New responseData:', dataRes);
+                
+                // Update response data with a new reference
+                setResponseData(prevData => {
+                    if (JSON.stringify(prevData) === JSON.stringify(dataRes)) {
+                        // If the data is the same, create a new reference to force update
+                        return { ...dataRes };
+                    }
+                    return dataRes;
+                });
+
+                // Add AI response to chat history immediately
+                if (dataRes.data) {
+                    const aiMessage: ChatMessage = {
+                        user: message,
+                        ai: `📌 ${dataRes.data.explanation.query_intent}\n${dataRes.data.explanation.key_conditions.map(item => `• ${item}`).join("\n")}\n\n`
+                    };
+                    setChatHistory(prev => [...prev.slice(0, -1), aiMessage]);
+
+                    // Update history result with new version
+                    setHistoryResult(prev => {
+                        const newVersion = `version ${prev.length + 1}`;
+                        return [...prev, {
+                            version: newVersion,
+                            result: dataRes.data
+                        }];
+                    });
+                }
 
                 const filter = dataRes?.data?.filter_criteria;
                 if (filter) {
-                    const aiResponse = `🎯 Tôi đã tạo phân khúc dựa trên tiêu chí bạn cung cấp:\n${dataRes?.data?.explanation?.key_conditions.map(item => `• ${item}`).join("\n")}\n\n📊 Bạn có thể xem kết quả trong tab "Xem trước" cho yêu cầu: "${message}"`;
-
-                    setChatHistory((prev) => {
-                        const updated = [...prev]
-                        updated[updated.length - 1] = { ...updated[updated.length - 1], ai: aiResponse }
-                        return updated
-                    })
-                    setHistoryResult((prev) => {
-                        const createVersion = [...prev];
-                        const newEntry: HistoryResult = {
-                            version: `version ${createVersion.length + 1}`,
-                            result: dataRes as ResponseData,
-                        };
-                        return [...createVersion, newEntry];
-                    });
                     toast.success('AI response success');
                 }
-            } else {
-                const aiResponse = `Xin lỗi chúng tôi ${res.data?.error && res.data.error.charAt(0).toUpperCase() + res.data.error.slice(1)}`
-                setChatHistory((prev) => {
-                    const updated = [...prev]
-                    updated[updated.length - 1] = { ...updated[updated.length - 1], ai: aiResponse }
-                    return updated
-                })
             }
         } catch (err: any) {
             const message = err?.message || 'Không xác định được lỗi';

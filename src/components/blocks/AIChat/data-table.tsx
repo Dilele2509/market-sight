@@ -2,7 +2,7 @@ import { axiosPrivate } from "@/API/axios";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import AuthContext from "@/context/AuthContext";
 import { useSegmentData } from "@/context/SegmentDataContext";
-import type { CustomerData } from "@/types/aichat"
+import type { CustomerData, ResponseData } from "@/types/aichat"
 import { useContext, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { LoadingCircles } from "./loading-circles";
@@ -10,14 +10,20 @@ import { SearchX } from "lucide-react";
 import { useAiChatContext } from "@/context/AiChatContext";
 
 interface DataTableProps {
+    previewResponseData?: ResponseData;
 }
 
-export function DataTable({ }: DataTableProps) {
+export function DataTable({ previewResponseData }: DataTableProps) {
     const { sqlQuery, setPreviewData, previewData, CONNECTION_STORAGE_KEY, selectedDataset } = useAiChatContext()
     const { token } = useContext(AuthContext)
     const [previewLoading, setPreviewLoading] = useState(false)
     // Function to fetch preview data based on current conditions
     const fetchPreviewData = async () => {
+        // Only fetch if we don't have preview response data
+        if (previewResponseData) {
+            return;
+        }
+
         setPreviewLoading(true);
 
         try {
@@ -120,14 +126,22 @@ export function DataTable({ }: DataTableProps) {
     };
 
     useEffect(() => {
-        fetchPreviewData()
-    }, [sqlQuery])
+        if (!previewResponseData) {
+            fetchPreviewData()
+        } else {
+            // If we have preview response data, use it directly
+            const data = previewResponseData.data?.filter_criteria?.conditions || [];
+            setPreviewData(data);
+        }
+    }, [sqlQuery, previewResponseData])
+
+    const displayData = previewResponseData?.data?.filter_criteria?.conditions || previewData;
 
     return (
-        <div className={`h-full rounded-md border overflow-hidden ${previewData?.length === 0 && 'flex items-center justify-center'}`}>
+        <div className={`h-full rounded-md border overflow-hidden ${(!previewResponseData && previewData?.length === 0) && 'flex items-center justify-center'}`}>
             {!previewLoading ? (
                 <>
-                    {previewData.length > 0 ? <div className="max-h-full relative overflow-auto">
+                    {displayData.length > 0 ? <div className="max-h-full relative overflow-auto">
                         <Table className="min-w-full border-collapse">
                             <TableHeader className="sticky top-0 z-10 bg-background shadow-sm">
                                 <TableRow>
@@ -144,7 +158,7 @@ export function DataTable({ }: DataTableProps) {
                                 </TableRow>
                             </TableHeader>
                             <TableBody className="max-h-full relative overflow-auto">
-                                {previewData.map((customer: CustomerData) => (
+                                {displayData.map((customer: CustomerData) => (
                                     <TableRow key={customer.customer_id}>
                                         <TableCell className="font-medium">{customer.customer_id}</TableCell>
                                         <TableCell>{customer.first_name}</TableCell>

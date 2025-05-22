@@ -6,24 +6,26 @@ export interface ChatMessage {
 
 export interface HistoryResult {
     version: string
-    result: ResponseData
+    result: dataDetailResponse
+}
+
+export interface dataDetailResponse {
+    query: string
+    explanation: {
+        query_intent: string
+        key_conditions: string[]
+    }
+    filter_criteria: {
+        conditions: any[]
+        conditionGroups: any[]
+        rootOperator: string
+    }
 }
 
 // Response data interface
 export interface ResponseData {
     success: boolean
-    data: {
-        query: string
-        explanation: {
-            query_intent: string
-            key_conditions: string[]
-        }
-        filter_criteria: {
-            conditions: any[]
-            conditionGroups: any[]
-            rootOperator: string
-        }
-    }
+    data: dataDetailResponse
 }
 
 // Customer data interface for the table

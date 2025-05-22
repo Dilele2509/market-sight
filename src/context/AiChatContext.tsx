@@ -3,7 +3,8 @@ import { Segment } from "@/types/segmentTypes";
 import { Condition, defineDatasetName, generateSQLPreview } from "@/utils/segmentFunctionHelper";
 import React, { createContext, useState, useContext, ReactNode, useEffect } from "react";
 import { useSegmentToggle } from "./SegmentToggleContext";
-import { ChatMessage, HistoryResult, ResponseData } from "@/types/aichat";
+import { ChatMessage, dataDetailResponse, HistoryResult, ResponseData } from "@/types/aichat";
+import { toast } from "sonner";
 
 interface AiChatContextProps {
     segmentName: string;
@@ -26,8 +27,6 @@ interface AiChatContextProps {
     setConditionGroups: React.Dispatch<React.SetStateAction<any[]>>;
     description: string;
     setDescription: React.Dispatch<React.SetStateAction<string>>;
-    estimatedSize: any;
-    setEstimatedSize: React.Dispatch<React.SetStateAction<any>>;
     editableSql: string;
     setEditableSql: React.Dispatch<React.SetStateAction<string>>;
     sqlError: any;
@@ -69,6 +68,8 @@ interface AiChatContextProps {
     setChatHistory: React.Dispatch<React.SetStateAction<ChatMessage[]>>;
     historyResult: HistoryResult[];
     setHistoryResult: React.Dispatch<React.SetStateAction<HistoryResult[]>>;
+    displayData: dataDetailResponse;
+    setDisplayData: React.Dispatch<React.SetStateAction<dataDetailResponse>>;
 }
 
 const AiChatContext = createContext<AiChatContextProps | undefined>(undefined);
@@ -136,31 +137,45 @@ export const AiChatContextProvider: React.FC<{ children: ReactNode }> = ({ child
         description: "Customer information",
         schema: "public"
     });
-    const [responseData, setResponseData] = useState(null);
+    const [responseData, setResponseData] = useState<ResponseData>(null);
+    const [displayData, setDisplayData] = useState<dataDetailResponse>(responseData?.data ?? null);
 
     const [segmentName, setSegmentName] = useState<string>("High Value Users (new)");
     const [segmentId, setSegmentId] = useState<string>("segment:high-value-users-new");
     const [attributes, setAttributes] = useState<any[]>([]);
 
     const [previewData, setPreviewData] = useState<any[]>([]);
+
     const [rootOperator, setRootOperator] = useState<string>("AND");
     const [conditions, setConditions] = useState<Condition[]>([]);
     const [conditionGroups, setConditionGroups] = useState<any[]>([]);
     const [description, setDescription] = useState<string>('');
-    const [estimatedSize, setEstimatedSize] = useState<any>({ count: 88, percentage: 22 });
 
     useEffect(() => { console.log('history result: ', historyResult); }, [historyResult])
+    useEffect(() => { console.log('conversation history result: ', chatHistory); }, [chatHistory])
 
     useEffect(() => {
         console.log('responseData in context: ', responseData);
-        const filter = responseData?.data?.filter_criteria;
+        setDisplayData(responseData?.data)
+        // const filter = responseData?.data?.filter_criteria;
+        // if (filter) {
+        //     setConditions(filter.conditions || []);
+        //     setConditionGroups(filter.conditionGroups || []);
+        //     setRootOperator(filter.rootOperator || "AND");
+        //     setSqlQuery(generateSQLPreview(selectedDataset, filter.conditions, filter.conditionGroups, filter.rootOperator))
+        // }
+    }, [responseData])
+
+    useEffect(() => {
+        console.log('display in context: ', displayData);
+        const filter = displayData?.filter_criteria;
         if (filter) {
             setConditions(filter.conditions || []);
             setConditionGroups(filter.conditionGroups || []);
             setRootOperator(filter.rootOperator || "AND");
             setSqlQuery(generateSQLPreview(selectedDataset, filter.conditions, filter.conditionGroups, filter.rootOperator))
         }
-    }, [responseData])
+    }, [displayData])
 
     //fetch 4 tables of dataset
     useEffect(() => {
@@ -285,8 +300,6 @@ export const AiChatContextProvider: React.FC<{ children: ReactNode }> = ({ child
                 setConditionGroups,
                 description,
                 setDescription,
-                estimatedSize,
-                setEstimatedSize,
                 editableSql,
                 setEditableSql,
                 sqlError,
@@ -327,7 +340,9 @@ export const AiChatContextProvider: React.FC<{ children: ReactNode }> = ({ child
                 chatHistory,
                 setChatHistory,
                 historyResult,
-                setHistoryResult
+                setHistoryResult,
+                displayData,
+                setDisplayData
             }}
         >
             {children}

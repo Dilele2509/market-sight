@@ -33,7 +33,7 @@ export function PreviewPanel({
     responseData,
 }: PreviewPanelProps) {
     const [isOpenDialog, setIsOpenDialog] = useState(false)
-    const { conditions, conditionGroups, rootOperator, selectedDataset, setConditionGroups, setConditions, setRootOperator, historyResult, setResponseData, setSqlQuery } = useAiChatContext()
+    const { conditions, conditionGroups, rootOperator, selectedDataset, setConditionGroups, setConditions, setRootOperator, historyResult, setDisplayData, setSqlQuery } = useAiChatContext()
     const { token, user } = useContext(AuthContext)
     const [selectedVersion, setSelectedVersion] = useState<string | undefined>(undefined);
 
@@ -54,10 +54,20 @@ export function PreviewPanel({
         if (!value) return;
         const matched = historyResult.find((item) => item.version === value);
         if (matched) {
-            console.log(matched.result);
-            setResponseData(matched.result);
-            const filter = matched.result?.data?.filter_criteria
-            setSqlQuery(generateSQLPreview(selectedDataset, filter?.conditions, filter?.conditionGroups, filter?.rootOperator))
+            // const responseData: ResponseData = {
+            //     success: true,
+            //     data: matched.result
+            // };
+            //setResponseData(responseData);
+            setDisplayData(matched.result)
+            //const filter = matched.result?.filter_criteria;
+            // if (filter) {
+            //     // Ensure conditions, conditionGroups and rootOperator have default values if undefined
+            //     const conditions = filter.conditions || [];
+            //     const conditionGroups = filter.conditionGroups || [];
+            //     const rootOperator = filter.rootOperator || "AND";
+            //     setSqlQuery(generateSQLPreview(selectedDataset, conditions, conditionGroups, rootOperator));
+            // }
         }
     };
 
