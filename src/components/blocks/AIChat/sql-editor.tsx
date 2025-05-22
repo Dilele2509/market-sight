@@ -63,19 +63,23 @@ export function SqlEditor({ isLoading }: SqlEditorProps) {
         const totalLength = sqlQuery.length
         isTypingAnimationRef.current = true
 
+        // Reset typed query to empty string
         setTypedQuery("")
 
-        typingIntervalRef.current = setInterval(() => {
-            if (currentIndex >= totalLength) {
-                clearInterval(typingIntervalRef.current!)
-                typingIntervalRef.current = null
-                isTypingAnimationRef.current = false
-                return
-            }
+        // Small delay before starting new animation
+        const timeoutId = setTimeout(() => {
+            typingIntervalRef.current = setInterval(() => {
+                if (currentIndex >= totalLength) {
+                    clearInterval(typingIntervalRef.current!)
+                    typingIntervalRef.current = null
+                    isTypingAnimationRef.current = false
+                    return
+                }
 
-            setTypedQuery(prev => prev + sqlQuery[currentIndex])
-            currentIndex++
-        }, 5)
+                setTypedQuery(prev => prev + sqlQuery[currentIndex])
+                currentIndex++
+            }, 5)
+        }, 100)  // 100ms delay
 
         // Cleanup function
         return () => {
@@ -83,6 +87,8 @@ export function SqlEditor({ isLoading }: SqlEditorProps) {
                 clearInterval(typingIntervalRef.current)
                 typingIntervalRef.current = null
             }
+            clearTimeout(timeoutId)
+            isTypingAnimationRef.current = false
         }
     }, [sqlQuery])
 
@@ -118,10 +124,11 @@ export function SqlEditor({ isLoading }: SqlEditorProps) {
     }
 
     const handleSqlChange = (v: string | null) => {
-        if (isTypingAnimationRef.current) return // ⬅️ bỏ qua nếu đang animation
+        if (isTypingAnimationRef.current) return
 
         isManualEditRef.current = true
-        setSqlQuery(v ?? "");
+        setSqlQuery(v ?? "")
+        setTypedQuery(v ?? "")  // Immediately update typedQuery as well
 
         try {
             const sql = v?.trim() ?? ""
@@ -130,7 +137,7 @@ export function SqlEditor({ isLoading }: SqlEditorProps) {
             setConditionGroups(parsed.groupConditions)
             setRootOperator(parsed.rootOperator)
         } catch (error) {
-            console.log(error);
+            console.log(error)
         }
     }
 

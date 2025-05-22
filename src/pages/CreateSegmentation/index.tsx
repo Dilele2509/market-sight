@@ -27,7 +27,7 @@ export default function CreateSegmentation() {
                 </div>
             ) : (
                 <div className="flex flex-col gap-6">
-                    <h1 className="text-3xl font-bold tracking-tight">Create Segmentation</h1>
+                    <h1 className="text-3xl font-bold tracking-tight">Tạo Phân Khúc Khách Hàng</h1>
                     <Tabs
                         defaultValue="user-create"
                         value={["user-create", "ai-create"].includes(location.pathname.split("/").pop()) ? location.pathname.split("/").pop() : "user-create"}
