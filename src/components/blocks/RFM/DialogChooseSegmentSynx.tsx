@@ -34,17 +34,19 @@ import {
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { translateSegmentName } from "@/utils/rfmFunctionHelper"
 
 interface SyncSettingsDialogProps {
     open: boolean
     onClose: () => void
     inputData: RFMInterface
+    selectBefore: string | null
 }
 
-export const SyncSettingsDialog: React.FC<SyncSettingsDialogProps> = ({ open, onClose, inputData }) => {
+export const SyncSettingsDialog: React.FC<SyncSettingsDialogProps> = ({ open, onClose, inputData, selectBefore }) => {
     const segmentsWithData = useMemo(() => inputData.segment_stats.filter((s) => s.count > 0), [inputData.segment_stats])
 
-    const [selectedSegments, setSelectedSegments] = useState<string>("")
+    const [selectedSegments, setSelectedSegments] = useState<string>(selectBefore ? selectBefore : "")
     const [selectedTarget, setSelectedTarget] = useState<"create" | "use">("create")
     const [sheetValue, setSheetValue] = useState<string>("")
     const { sheetURL } = useSyncContext()
@@ -66,6 +68,12 @@ export const SyncSettingsDialog: React.FC<SyncSettingsDialogProps> = ({ open, on
     useEffect(() => {
         if (selectedTarget === "use") setSheetValue(sheetURL)
     }, [selectedTarget, sheetURL])
+
+    useEffect(() => {
+        if (selectBefore) {
+            setSelectedSegments(selectBefore)
+        }
+    }, [selectBefore])
 
     const handleSegmentChange = (value: string) => {
         setSelectedSegments(value)
@@ -162,13 +170,13 @@ export const SyncSettingsDialog: React.FC<SyncSettingsDialogProps> = ({ open, on
         const colors: Record<string, string> = {
             Champions: "bg-emerald-100 text-emerald-800 border-emerald-200",
             "Loyal Customers": "bg-blue-100 text-blue-800 border-blue-200",
-            "Potential Loyalists": "bg-indigo-100 text-indigo-800 border-indigo-200",
+            "Potential Loyalist": "bg-indigo-100 text-indigo-800 border-indigo-200",
             "New Customers": "bg-purple-100 text-purple-800 border-purple-200",
             Promising: "bg-cyan-100 text-cyan-800 border-cyan-200",
-            "Needs Attention": "bg-amber-100 text-amber-800 border-amber-200",
+            "Need Attention": "bg-amber-100 text-amber-800 border-amber-200",
             "About To Sleep": "bg-orange-100 text-orange-800 border-orange-200",
             "At Risk": "bg-rose-100 text-rose-800 border-rose-200",
-            "Cannot Lose Them": "bg-red-100 text-red-800 border-red-200",
+            "Can't Lose Them": "bg-red-100 text-red-800 border-red-200",
             Hibernating: "bg-gray-100 text-gray-800 border-gray-200",
             Lost: "bg-slate-100 text-slate-800 border-slate-200",
         }
@@ -217,7 +225,7 @@ export const SyncSettingsDialog: React.FC<SyncSettingsDialogProps> = ({ open, on
                                             {segmentsWithData.map((seg) => (
                                                 <SelectItem key={seg.segment} value={seg.segment}>
                                                     <div className="flex items-center justify-between w-full">
-                                                        <span>{seg.segment}</span>
+                                                        <span>{translateSegmentName(seg.segment)}</span>
                                                         <Badge variant="outline" className="ml-2">
                                                             {seg.count} khách hàng
                                                         </Badge>
@@ -235,7 +243,7 @@ export const SyncSettingsDialog: React.FC<SyncSettingsDialogProps> = ({ open, on
                                                 <div>
                                                     <h3 className="font-medium">Đã chọn phân khúc:</h3>
                                                     <div className="flex items-center mt-1">
-                                                        <Badge className={`${getSegmentColor(selectedSegments)} border`}>{selectedSegments}</Badge>
+                                                        <Badge className={`${getSegmentColor(selectedSegments)} border`}>{translateSegmentName(selectedSegments)}</Badge>
                                                     </div>
                                                 </div>
                                                 <div className="text-right">

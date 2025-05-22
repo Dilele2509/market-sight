@@ -15,6 +15,8 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { Button } from "@/components/ui/button"
 import { Download } from "lucide-react"
 import { SyncSettingsDialog } from "@/components/blocks/RFM/DialogChooseSegmentSynx"
+import { translateLabelToVietnamese } from "@/utils/segmentFunctionHelper"
+import { translateSegmentName } from "@/utils/rfmFunctionHelper"
 
 export interface segment_stats_interface {
   "segment": string,
@@ -115,8 +117,8 @@ export default function RFM() {
           </Card>
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Champions</CardTitle>
-              <Badge className="bg-teal-800 text-secondary-light">
+              <CardTitle className="text-sm font-medium">{translateSegmentName("Champions")}</CardTitle>
+              <Badge className="bg-teal-800 text-white">
                 {rfmData?.segment_stats.find(item => item.segment === "Champions")?.percentage}%
               </Badge>
             </CardHeader>
@@ -128,8 +130,8 @@ export default function RFM() {
           </Card>
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">At Risk</CardTitle>
-              <Badge className="bg-red-500 text-secondary-light">
+              <CardTitle className="text-sm font-medium">{translateSegmentName("At Risk")}</CardTitle>
+              <Badge className="bg-red-500 text-white">
                 {rfmData?.segment_stats.find(item => item.segment === "At Risk")?.percentage}%
               </Badge>
             </CardHeader>
@@ -141,8 +143,8 @@ export default function RFM() {
           </Card>
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Hibernating</CardTitle>
-              <Badge className="bg-cyan-600 text-secondary-light">
+              <CardTitle className="text-sm font-medium">{translateSegmentName("Hibernating")}</CardTitle>
+              <Badge className="bg-cyan-600 text-white">
                 {rfmData?.segment_stats.find(item => item.segment === "Hibernating")?.percentage}%
               </Badge>
             </CardHeader>
@@ -169,17 +171,16 @@ export default function RFM() {
               <TabsContent value="treemap" className="space-y-4">
                 {rfmData?.segment_stats.length > 0 &&
                   <RfmTreemap
+                    rawData = {rfmData}
                     rfmData={rfmData?.segment_stats}
                   />}
               </TabsContent>
               <TabsContent value="table">
-                {rfmData?.rfm_scores.length > 0 && <RfmSegmentTable
-                  rfmData={rfmData?.rfm_scores}
-                />}
+                {startDate && endDate && <RfmSegmentTable startDate={format(startDate, "yyyy-MM-dd")} endDate={format(endDate, "yyyy-MM-dd")}/>}
               </TabsContent>
             </Tabs>
           </CardContent>
-          <SyncSettingsDialog open={dialogOpen} onClose={() => setDialogOpen(false)} inputData={rfmData} />
+          <SyncSettingsDialog open={dialogOpen} onClose={() => setDialogOpen(false)} inputData={rfmData} selectBefore={null}/>
         </Card>
       </div> : (
         <div className="flex flex-col items-center justify-center py-20 space-y-4">

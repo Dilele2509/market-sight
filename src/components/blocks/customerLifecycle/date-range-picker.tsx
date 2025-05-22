@@ -74,7 +74,7 @@ function DateRangePicker() {
                 </PopoverContent>
             </Popover>
 
-            <span className="text-muted-foreground">to</span>
+            <span className="text-muted-foreground">đến</span>
 
             <Popover>
                 <PopoverTrigger asChild>

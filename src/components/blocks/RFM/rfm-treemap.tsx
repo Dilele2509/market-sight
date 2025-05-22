@@ -5,6 +5,14 @@ import * as d3 from "d3"
 import { Card } from "@/components/ui/card"
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
 import ScoreBar from "./score-bar-rfm"
+import { StrategyDialog } from "./strategyDialog"
+import { translateSegmentName } from "@/utils/rfmFunctionHelper"
+import { RefreshCw } from "lucide-react"
+import { Button } from "@/components/ui/button"
+import { RFMInterface } from "@/pages/MicroSegmentation/RFM"
+import { SyncSettingsDialog } from "./DialogChooseSegmentSynx"
+import { cn } from "@/lib/utils"
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 
 // Generate a color based on the name
 const generateColor: Record<string, string> = {
@@ -46,6 +54,7 @@ type TreemapNode = d3.HierarchyNode<any> & {
 
 // Replace the interface RfmTreemapProps with this updated version
 interface RfmTreemapProps {
+    rawData: RFMInterface
     rfmData: {
         segment: string
         count: number
@@ -53,10 +62,16 @@ interface RfmTreemapProps {
     }[]
 }
 
-export function RfmTreemap({ rfmData }: RfmTreemapProps) {
+export function RfmTreemap({ rawData, rfmData }: RfmTreemapProps) {
     const svgRef = useRef<SVGSVGElement>(null)
     const tooltipRef = useRef<HTMLDivElement>(null)
     const [tab, setTab] = useState("R")
+    const [isOpen, setIsOpen] = useState(false)
+    const [selectSync, setSelectSync] = useState<string>(null)
+    const [selectedSegment, setSelectedSegment] = useState<{
+        name: string
+        percentage: string
+    } | null>(null)
 
     // Replace the formattedData transformation in the RfmTreemap component with this
     const formattedData = rfmData.map((item) => {
@@ -147,15 +162,15 @@ export function RfmTreemap({ rfmData }: RfmTreemapProps) {
             .selectAll<SVGGElement, TreemapNode>("g")
             .data(root.leaves() as TreemapNode[])
             .join("g")
-            .attr("transform", (d) => `translate(${(d.x0 + d.x1) / 2}, ${(d.y0 + d.y1) / 2})`) // Bắt đầu ở tâm cell
+            .attr("transform", (d) => `translate(${(d.x0 + d.x1) / 2}, ${(d.y0 + d.y1) / 2})`)
             .style("opacity", 0) // Bắt đầu ẩn
 
         cell
             .transition()
-            .delay((_, i) => i * 40 + Math.random() * 150) // Delay đan xen
+            .delay((_, i) => i * 40 + Math.random() * 150)
             .duration(600)
-            .ease(d3.easeBackOut.overshoot(1.5)) // Nảy nhẹ cực đẹp
-            .attr("transform", (d) => `translate(${d.x0},${d.y0})`) // Bay về đúng vị trí
+            .ease(d3.easeBackOut.overshoot(1.5))
+            .attr("transform", (d) => `translate(${d.x0},${d.y0})`)
             .style("opacity", 1) // Fade in
 
         // Add rectangles
@@ -166,9 +181,9 @@ export function RfmTreemap({ rfmData }: RfmTreemapProps) {
             .attr("fill", (d) => generateColor[(d.data as any).name])
             .on("mouseover", (event, d) => {
                 tooltip.style("visibility", "visible").html(`
-                    <div class="font-medium">${(d.data as any).name}</div>
-                    <div>Customers: ${(d.data as any).value.toLocaleString()}</div>
-                    <div>Percentage: ${(d.data as any).percentage}</div>
+                    <div class="font-medium">${translateSegmentName((d.data as any).name)}</div>
+                    <div>Số lượng khách hàng: ${(d.data as any).value.toLocaleString()}</div>
+                    <div>Tỉ trọng: ${(d.data as any).percentage}</div>
                     <div>R: ${(d.data as any).r}, F: ${(d.data as any).f}, M: ${(d.data as any).m}</div>
                   `)
 
@@ -190,6 +205,10 @@ export function RfmTreemap({ rfmData }: RfmTreemapProps) {
             .on("mouseout", () => {
                 tooltip.style("visibility", "hidden")
             })
+            .on("click", (event, d) => {
+                setSelectedSegment({ name: d.data.name, percentage: d.data.percentage })
+            })
+            .style("cursor", "pointer")
             .transition()
             .duration(800)
             .ease(d3.easeCubicOut)
@@ -223,7 +242,7 @@ export function RfmTreemap({ rfmData }: RfmTreemapProps) {
             .attr("y", 55)
             .attr("fill", "white")
             .attr("font-size", "12px")
-            .text((d) => (d.data as any).name)
+            .text((d) => translateSegmentName((d.data as any).name))
 
         // Add axes labels
         svg
@@ -233,7 +252,7 @@ export function RfmTreemap({ rfmData }: RfmTreemapProps) {
             .attr("text-anchor", "middle")
             .attr("fill", "hsl(var(--foreground))")
             .attr("font-size", "14px")
-            .text("Recency (days)")
+            .text("Recency (ngày)")
 
         svg
             .append("text")
@@ -243,7 +262,7 @@ export function RfmTreemap({ rfmData }: RfmTreemapProps) {
             .attr("text-anchor", "middle")
             .attr("fill", "hsl(var(--foreground))")
             .attr("font-size", "14px")
-            .text("Frequency + Monetary (orders + revenue)")
+            .text("Frequency + Monetary (số đơn + doanh thu)")
 
         // Add axis numbers
         for (let i = 1; i <= 5; i++) {
@@ -281,17 +300,63 @@ export function RfmTreemap({ rfmData }: RfmTreemapProps) {
                 {/* Segment Data - Name and Value */}
                 <div className="col-span-3 gap-4 p-2">
                     <div className="flex justify-end mb-4">
-                        <div className="text-sm font-medium">customers</div>
+                        <div className="text-sm font-medium">Số lượng khách hàng</div>
                     </div>
-                    {formattedData.map((segment) => (
-                        <div key={segment.name} className="flex items-center justify-between">
-                            <div className="flex items-center space-x-2">
-                                <div className="w-4 h-4" style={{ backgroundColor: generateColor[segment.name] }}></div>
-                                <div className="text-sm">{segment.name}</div>
-                            </div>
-                            <div className="text-sm">{animatedValues[segment.name]?.toLocaleString() ?? 0}</div>
-                        </div>
-                    ))}
+                    <div className="flex flex-col">
+                        {formattedData.map((segment) => {
+                            const hasCustomers = segment.value > 0;
+                            const segmentName = translateSegmentName(segment.name);
+                            const customerCount = animatedValues[segment.name]?.toLocaleString() ?? 0;
+
+                            return (
+                                <div
+                                    key={segment.name}
+                                    className="group relative overflow-hidden rounded-md cursor-pointer hover:bg-primary-light text-card-foreground"
+                                >
+                                    <div
+                                        className={`flex items-center justify-between p-2 transition-transform duration-200 ease-in-out ${hasCustomers ? 'group-hover:-translate-x-28' : ''
+                                            }`}
+                                    >
+                                        <div className="flex items-center space-x-2">
+                                            <div
+                                                className="w-4 h-4"
+                                                style={{ backgroundColor: generateColor[segment.name] }}
+                                            ></div>
+                                            <div className="text-sm">{segmentName}</div>
+                                        </div>
+                                        <div className="text-sm">{customerCount}</div>
+                                    </div>
+
+                                    {hasCustomers ? (
+                                        // Nút đồng bộ nếu có khách hàng
+                                        <div className="absolute right-1 top-0 h-full flex items-center justify-center transition-opacity duration-200 opacity-0 group-hover:opacity-100">
+                                            <Button
+                                                variant="ghost"
+                                                className="h-8 px-2 text-primary-dark hover:text-card hover:bg-primary-dark"
+                                                onClick={() => {
+                                                    setSelectSync(segment.name);
+                                                    setIsOpen(true);
+                                                }}
+                                            >
+                                                <RefreshCw className="h-4 w-4 mr-1" />
+                                                <span>Đồng bộ</span>
+                                            </Button>
+                                        </div>
+                                    ) : (
+                                        // Tooltip nếu không có khách hàng
+                                        <Tooltip>
+                                            <TooltipTrigger asChild>
+                                                <div className="absolute inset-0 z-10" />
+                                            </TooltipTrigger>
+                                            <TooltipContent className="bg-background" side="top" align="center" sideOffset={8}>
+                                                Không có khách hàng trong phân khúc
+                                            </TooltipContent>
+                                        </Tooltip>
+                                    )}
+                                </div>
+                            );
+                        })}
+                    </div>
                 </div>
 
                 {/* Days section */}
@@ -343,6 +408,11 @@ export function RfmTreemap({ rfmData }: RfmTreemapProps) {
                     </Tabs>
                 </Card>
             </div>
+            <StrategyDialog
+                selectedSegment={selectedSegment}
+                onClose={() => setSelectedSegment(null)}
+            />
+            <SyncSettingsDialog open={isOpen} onClose={() => setIsOpen(false)} inputData={rawData} selectBefore={selectSync} />
         </div>
     )
 }
