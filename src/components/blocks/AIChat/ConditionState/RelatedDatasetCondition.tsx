@@ -39,7 +39,7 @@ interface RelatedDatasetConditionProps {
 
 const RelatedDatasetCondition: React.FC<RelatedDatasetConditionProps> = ({ condition, relatedConditionsState, setRelatedConditionsState }) => {
     const { setLoading, setIsDisableRelatedAdd } = useSegmentToggle();
-    const { datasets, relatedDatasetNames } = useAiChatContext();
+    const { datasets, relatedDatasetNames, conditions, setConditions } = useAiChatContext();
     const [attributes, setAttributes] = useState<any[]>([]);
 
     const attribute = attributes.find((attr) => attr.name === condition.fields?.[0]);
@@ -52,6 +52,22 @@ const RelatedDatasetCondition: React.FC<RelatedDatasetConditionProps> = ({ condi
             fields: condition.fields,
         });
     }, [condition.relatedDataset, condition.fields]);
+
+    useEffect(() => {
+        if (relatedConditionsState) {
+            setConditions(prevConditions => {
+                return prevConditions.map(cond => {
+                    if (cond.type === 'event') {
+                        return {
+                            ...cond,
+                            relatedConditions: relatedConditionsState
+                        };
+                    }
+                    return cond;
+                });
+            });
+        }
+    }, [relatedConditionsState]);
 
     const fetchAttributes = async (dataset: any, showToast = true) => {
         try {
@@ -108,7 +124,9 @@ const RelatedDatasetCondition: React.FC<RelatedDatasetConditionProps> = ({ condi
 
 
     //access function
-    const updateCondition = (key: string, value: any) => { handleUpdateCondition(condition.id, key, value); };
+    const updateCondition = (key: string, value: any) => {
+        handleUpdateCondition(condition.id, key, value);
+    };
 
     const handleUpdateCondition = (id: number, field: string, value: any) => {
         setRelatedConditionsState(prevConditions =>
@@ -119,30 +137,43 @@ const RelatedDatasetCondition: React.FC<RelatedDatasetConditionProps> = ({ condi
                 return condition;
             })
         );
-
     };
 
     const updateRelatedAttributeCondition = (key: string, value: string, index: number) => {
         handleUpdateAttributeCondition(condition.id, key, value, index);
     };
 
-    const handleUpdateAttributeCondition = (id, field, value, index) => {
-        setRelatedConditionsState(prevConditions =>
-            prevConditions.map(condition => {
+    const handleUpdateAttributeCondition = (id: number, field: string, value: string, index: number) => {
+        setRelatedConditionsState(prevConditions => {
+            const updatedConditions = prevConditions.map(condition => {
                 if (condition.id === id) {
-                    const updatedRelated = [...condition.relatedAttributeConditions];
-                    updatedRelated[index] = {
-                        ...updatedRelated[index],
-                        [field]: value,
+                    const updatedRelatedAttCons = [...(condition.relatedAttributeConditions || [])];
+
+                    if (!updatedRelatedAttCons[index]) {
+                        updatedRelatedAttCons[index] = {
+                            id: Math.max(0, ...updatedRelatedAttCons.map(c => c.id)) + 1,
+                            field: '',
+                            operator: '',
+                            value: '',
+                            value2: ''
+                        };
+                    }
+
+                    updatedRelatedAttCons[index] = {
+                        ...updatedRelatedAttCons[index],
+                        [field]: value
                     };
+
                     return {
                         ...condition,
-                        relatedAttributeConditions: updatedRelated,
+                        relatedAttributeConditions: updatedRelatedAttCons
                     };
                 }
                 return condition;
-            })
-        );
+            });
+
+            return updatedConditions;
+        });
     };
 
     const handleRemoveCondition = (id: number) => {
@@ -165,7 +196,7 @@ const RelatedDatasetCondition: React.FC<RelatedDatasetConditionProps> = ({ condi
             prevConditions.map(condition => {
                 if (condition.id === conditionId) {
                     const updatedRelated = [...condition.relatedAttributeConditions];
-                    updatedRelated.splice(index, 1); // Xoá phần tử con tại index
+                    updatedRelated.splice(index, 1);
                     return {
                         ...condition,
                         relatedAttributeConditions: updatedRelated,
@@ -182,18 +213,30 @@ const RelatedDatasetCondition: React.FC<RelatedDatasetConditionProps> = ({ condi
 
     const handleAddRelatedAttCon = () => {
         const existingRelated = condition.relatedAttributeConditions || [];
-        const newId = Math.max(0, ...existingRelated.map((c: any) => c.id)) + 1;
+        const newId = Math.max(0, ...existingRelated.map((c: any) => c.id), 0) + 1;
 
         const newCondition = {
             id: newId,
             field: '',
             operator: '',
             value: '',
-            value2: ''
+            value2: '',
+            chosen: false,
+            selected: false
         };
 
-        updateCondition('relatedAttributeConditions', [...existingRelated, newCondition])
-    }
+        setRelatedConditionsState(prevConditions =>
+            prevConditions.map(cond => {
+                if (cond.id === condition.id) {
+                    return {
+                        ...cond,
+                        relatedAttributeConditions: [...existingRelated, newCondition]
+                    };
+                }
+                return cond;
+            })
+        );
+    };
 
     //rendering function
     const renderRelatedAttributeConditions = (relatedCondition: any, index: any) => {

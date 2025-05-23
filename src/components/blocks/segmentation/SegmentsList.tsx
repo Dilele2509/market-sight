@@ -146,7 +146,7 @@ const SegmentsList: React.FC<SegmentsListProps> = ({ segments = [], onCreateSegm
     };
 
     return (
-        <div className="space-y-4">
+        <div className="space-y-4 pb-4">
             <div className="flex justify-between items-center">
                 <h1 className="text-xl font-semibold">Các phân khúc</h1>
                 <Button onClick={onCreateSegment}>

@@ -93,7 +93,7 @@ export function SqlEditor({ isLoading }: SqlEditorProps) {
     }, [sqlQuery])
 
     useEffect(() => {
-        console.log("checkTypeQuery", typedQuery);
+        console.log("checkTypeQuery");
     }, [typedQuery])
 
     const handleClearResult = () => {
