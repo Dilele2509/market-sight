@@ -100,7 +100,7 @@ export default function AiCreate() {
                 const dataRes: ResponseData = res.data;
                 console.log('Previous responseData:', responseData);
                 console.log('New responseData:', dataRes);
-                
+
                 // Update response data with a new reference
                 setResponseData(prevData => {
                     if (JSON.stringify(prevData) === JSON.stringify(dataRes)) {
@@ -132,6 +132,16 @@ export default function AiCreate() {
                 if (filter) {
                     toast.success('AI response success');
                 }
+            } else if (res.status === 200 && !res.data.success) {
+                const dataRes: ResponseData = res.data;
+                console.log('New responseData:', dataRes);
+                if (dataRes.data) {
+                    const aiMessage: ChatMessage = {
+                        user: message,
+                        ai: `📌 ${dataRes.data.explanation.query_intent}\n${dataRes.data.explanation.key_conditions.map(item => `• ${item}`).join("\n")}\n\n`
+                    };
+                    setChatHistory(prev => [...prev.slice(0, -1), aiMessage]);
+                }
             }
         } catch (err: any) {
             const message = err?.message || 'Không xác định được lỗi';
@@ -145,7 +155,7 @@ export default function AiCreate() {
 
     return (
         <div className="flex flex-col md:flex-row h-[calc(100vh-2rem)] gap-2 bg-background from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-950">
-            <ChatInterface chatHistory={chatHistory} isLoading={isLoading} onSendMessage={handleSendMessage} setIsModification={setIsModification}/>
+            <ChatInterface chatHistory={chatHistory} isLoading={isLoading} onSendMessage={handleSendMessage} setIsModification={setIsModification} />
             <PreviewPanel
                 activeTab={activeTab}
                 setActiveTab={setActiveTab}
