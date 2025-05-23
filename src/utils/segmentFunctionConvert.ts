@@ -197,3 +197,4 @@ function parseAttributeCondition(condition: string, id: number): Condition | nul
     console.log('Created attribute condition:', result);
     return result;
 }
+
