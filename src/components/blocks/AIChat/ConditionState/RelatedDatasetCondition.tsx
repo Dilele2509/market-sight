@@ -41,6 +41,8 @@ const RelatedDatasetCondition: React.FC<RelatedDatasetConditionProps> = ({ condi
     const { setLoading, setIsDisableRelatedAdd } = useSegmentToggle();
     const { datasets, relatedDatasetNames, conditions, setConditions } = useAiChatContext();
     const [attributes, setAttributes] = useState<any[]>([]);
+    const [showNameSuggestions, setShowNameSuggestions] = useState<{ [key: number]: boolean }>({});
+    const [filteredNameSuggestions, setFilteredNameSuggestions] = useState<{ [key: number]: string[] }>({});
 
     const attribute = attributes.find((attr) => attr.name === condition.fields?.[0]);
     const attributeType = attribute ? attribute.type : "text";
@@ -238,8 +240,590 @@ const RelatedDatasetCondition: React.FC<RelatedDatasetConditionProps> = ({ condi
         );
     };
 
+    const nameSuggestions = [
+        'Macbook Air M2',
+        'Laptop Dell Inspiron',
+        'Netflix',
+        'Adobe premium',
+        'Office Microsoft personal',
+        'Điện thoại Samsung Galaxy',
+        'Ổ cứng SSH Samsung 1TB',
+        'Tai nghe Sony',
+        'Apple Watch',
+        'Máy chơi game PlayStation'
+    ];
+
+    // List of suggestions for the 'store_name' field
+    const storeNameOptions = [
+        'Điện Máy Xanh Nguyễn Hữu Thọ',
+        'FPT Shop Tôn Đức Thắng',
+        'Thế Giới Di Động Liễu Giai',
+        'CellphoneS Huế',
+        'Nguyễn Kim Cần Thơ'
+    ];
+
+    // Handle input change for name field with suggestions
+    const handleNameInputChange = (e: React.ChangeEvent<HTMLInputElement>, index: number) => {
+        const inputValue = e.target.value;
+        // Update the condition value first
+        updateRelatedAttributeCondition("value", inputValue, index);
+
+        // Filter suggestions
+        if (inputValue) {
+            // Function to remove Vietnamese diacritics and 'đ' for comparison
+            const removeVietnameseAccents = (str: string) => {
+                return str.toLowerCase().replace(/đ/g, 'd').normalize('NFD').replace(/[̀-ͯ]/g, '');
+            };
+
+            const lowerCaseInputCleaned = removeVietnameseAccents(inputValue);
+
+            const filtered = nameSuggestions.filter(suggestion =>
+                removeVietnameseAccents(suggestion).includes(lowerCaseInputCleaned)
+            );
+            setFilteredNameSuggestions(prev => ({ ...prev, [index]: filtered }));
+            setShowNameSuggestions(prev => ({ ...prev, [index]: true }));
+        } else {
+            setFilteredNameSuggestions(prev => ({ ...prev, [index]: [] }));
+            setShowNameSuggestions(prev => ({ ...prev, [index]: false }));
+        }
+    };
+
+    // Handle suggestion click
+    const handleSuggestionClick = (suggestion: string, index: number) => {
+        updateRelatedAttributeCondition("value", suggestion, index);
+        setShowNameSuggestions(prev => ({ ...prev, [index]: false }));
+    };
+
     //rendering function
     const renderRelatedAttributeConditions = (relatedCondition: any, index: any) => {
+        // Define category options
+        const categoryOptions = ['Electronics', 'Software', 'Accessories'];
+        const fieldName = relatedCondition.field?.toLowerCase();
+
+        // Determine operators based on field type
+        const attribute = attributes.find((attr) => attr.name === relatedCondition.field);
+        const attributeType = attribute ? attribute.type : "text";
+        const operators = OPERATORS[attributeType] || OPERATORS.text;
+
+        // Handle Name suggestions input
+        if (fieldName === 'name') {
+             return (
+                 <Card key={index} className="flex items-center justify-between min-w-fit p-2">
+                      <div className="flex items-center space-x-4 w-full">
+                           <GripVertical className="mr-2 text-gray-400 cursor-grab" size={20} />
+                           <div className="flex flex-col items-start gap-2 w-full">
+                               <div className="flex items-center w-full">
+                                   {/* Field select */}
+                                   {condition.fields.length > 0 && (
+                                       <Select
+                                           value={relatedCondition.field || ""}
+                                           onValueChange={(value) => { updateRelatedAttributeCondition('field', value, index) }}
+                                       >
+                                           <SelectTrigger className="w-1/2">
+                                               <SelectValue placeholder="Chọn trường dữ liệu">
+                                                   {relatedCondition.field
+                                                       ? attributes.find((attr) => attr.name === relatedCondition.field)?.name || "Chọn trường dữ liệu"
+                                                       : "Không có thuộc tính"}
+                                               </SelectValue>
+                                           </SelectTrigger>
+                                           <SelectContent className="bg-card border-[0.5px] border-card-foreground shadow-lg rounded-md z-50">
+                                               {attributes.length > 0 ? (
+                                                   attributes.map((attr) => (
+                                                       <SelectItem
+                                                           key={attr.name}
+                                                           value={attr.name}
+                                                           className="hover:bg-background hover.rounded-md cursor-pointer"
+                                                       >
+                                                           <div className="flex items-center">
+                                                               <span className="mr-2 w-5 text-gray-500">
+                                                                   {attr.type === "number"
+                                                                       ? "#"
+                                                                       : attr.type === "datetime"
+                                                                           ? "⏱"
+                                                                           : attr.type === "boolean"
+                                                                               ? "✓"
+                                                                               : attr.type === "array"
+                                                                                   ? "[]"
+                                                                                   : "T"}
+                                                               </span>
+                                                               {attr.name}
+                                                           </div>
+                                                       </SelectItem>
+                                                   ))
+                                               ) : (
+                                                   <SelectItem
+                                                       value="no attribute"
+                                                       disabled
+                                                       className="text-gray-400"
+                                                   >
+                                                       Không có thuộc tính khả dụng
+                                                   </SelectItem>
+                                               )}
+                                           </SelectContent>
+                                       </Select>
+                                   )}
+
+                                   {/* Operator select */}
+                                   <Select
+                                       value={relatedCondition.operator || ""}
+                                       onValueChange={(newValue) => updateRelatedAttributeCondition("operator", newValue, index)}
+                                       disabled={!condition.fields}
+                                   >
+                                       <SelectTrigger className="w-1/2 ml-2">
+                                           <SelectValue placeholder="Select operator" />
+                                       </SelectTrigger>
+                                       <SelectContent className="bg-card border-[0.5px] border-card-foreground shadow-lg rounded-md z-50">
+                                           {operators.map((op) => (
+                                               <SelectItem
+                                                   key={op.value}
+                                                   value={op.value}
+                                                   className="hover:bg-background hover.rounded-md cursor-pointer"
+                                               >
+                                                   {translateLabelToVietnamese(op.label)}
+                                               </SelectItem>
+                                           ))}
+                                       </SelectContent>
+                                   </Select>
+                               </div>
+
+                               {/* Value input with suggestions */}
+                               {relatedCondition.operator &&
+                                   !["is_null", "is_not_null", "is_empty", "is_not_empty"].includes(relatedCondition.operator) && (
+                                       <div className="relative w-full">
+                                           <Input
+                                               placeholder="Nhập tên sản phẩm/dịch vụ"
+                                               value={relatedCondition.value || ""}
+                                               onChange={(e) => handleNameInputChange(e, index)}
+                                               onBlur={() => setTimeout(() => setShowNameSuggestions(prev => ({ ...prev, [index]: false })), 100)}
+                                               className="flex-grow"
+                                           />
+                                           {showNameSuggestions[index] && filteredNameSuggestions[index]?.length > 0 && (
+                                               <ul className="absolute z-10 w-full bg-card border border-card-foreground rounded-md shadow-lg mt-1 max-h-40 overflow-y-auto">
+                                                   {filteredNameSuggestions[index].map((suggestion, idx) => (
+                                                       <li
+                                                           key={idx}
+                                                           className="px-3 py-2 cursor-pointer hover:bg-background"
+                                                           onMouseDown={() => handleSuggestionClick(suggestion, index)}
+                                                       >
+                                                           {suggestion}
+                                                       </li>
+                                                   ))}
+                                               </ul>
+                                           )}
+                                       </div>
+                                   )}
+                           </div>
+                       </div>
+                     <Button variant="ghost" size="icon" className="ml-2" onClick={() => removeAttributeCondition(index)}>
+                          <Trash className="w-4 h-4" color={"#E11D48"} />
+                     </Button>
+                 </Card>
+             );
+        }
+
+        // Handle Store Name dropdown
+        if (fieldName === 'store_name') {
+             // Only allow 'equals' and 'not_equals' operators for store name dropdown
+             if (!['equals', 'not_equals', 'contains', 'not_contains'].includes(relatedCondition.operator)) {
+                  return (
+                     <Card key={index} className="flex items-center justify-between min-w-fit p-2">
+                          <div className="flex items-center space-x-4 w-full">
+                               <GripVertical className="mr-2 text-gray-400 cursor-grab" size={20} />
+                               <div className="flex flex-col items-start gap-2 w-full">
+                                   <div className="flex items-center w-full">
+                                       {/* Field select */}
+                                       {condition.fields.length > 0 && (
+                                           <Select
+                                               value={relatedCondition.field || ""}
+                                               onValueChange={(value) => { updateRelatedAttributeCondition('field', value, index) }}
+                                           >
+                                               <SelectTrigger className="w-1/2">
+                                                   <SelectValue placeholder="Chọn trường dữ liệu">
+                                                       {relatedCondition.field
+                                                           ? attributes.find((attr) => attr.name === relatedCondition.field)?.name || "Chọn trường dữ liệu"
+                                                           : "Không có thuộc tính"}
+                                                   </SelectValue>
+                                               </SelectTrigger>
+                                               <SelectContent className="bg-card border-[0.5px] border-card-foreground shadow-lg rounded-md z-50">
+                                                   {attributes.length > 0 ? (
+                                                       attributes.map((attr) => (
+                                                           <SelectItem
+                                                               key={attr.name}
+                                                               value={attr.name}
+                                                               className="hover:bg-background hover.rounded-md cursor-pointer"
+                                                           >
+                                                               <div className="flex items-center">
+                                                                   <span className="mr-2 w-5 text-gray-500">
+                                                                       {attr.type === "number"
+                                                                           ? "#"
+                                                                           : attr.type === "datetime"
+                                                                               ? "⏱"
+                                                                               : attr.type === "boolean"
+                                                                                   ? "✓"
+                                                                                   : attr.type === "array"
+                                                                                       ? "[]"
+                                                                                       : "T"}
+                                                                   </span>
+                                                                   {attr.name}
+                                                               </div>
+                                                           </SelectItem>
+                                                       ))
+                                                   ) : (
+                                                       <SelectItem
+                                                           value="no attribute"
+                                                           disabled
+                                                           className="text-gray-400"
+                                                       >
+                                                           Không có thuộc tính khả dụng
+                                                       </SelectItem>
+                                                   )}
+                                               </SelectContent>
+                                           </Select>
+                                       )}
+
+                                       {/* Operator select */}
+                                       <Select
+                                           value={relatedCondition.operator || ""}
+                                           onValueChange={(newValue) => updateRelatedAttributeCondition("operator", newValue, index)}
+                                           disabled={!condition.fields}
+                                       >
+                                           <SelectTrigger className="w-1/2 ml-2">
+                                               <SelectValue placeholder="Select operator" />
+                                           </SelectTrigger>
+                                           <SelectContent className="bg-card border-[0.5px] border-card-foreground shadow-lg rounded-md z-50">
+                                               {operators.map((op) => (
+                                                   <SelectItem
+                                                       key={op.value}
+                                                       value={op.value}
+                                                       className="hover:bg-background hover.rounded-md cursor-pointer"
+                                                   >
+                                                       {translateLabelToVietnamese(op.label)}
+                                                   </SelectItem>
+                                               ))}
+                                           </SelectContent>
+                                       </Select>
+                                   </div>
+                                   <Input className="ml-2 flex-grow" value="N/A - Chọn toán tử khác" disabled />
+                               </div>
+                          </div>
+                          <Button variant="ghost" size="icon" className="ml-2" onClick={() => removeAttributeCondition(index)}>
+                               <Trash className="w-4 h-4" color={"#E11D48"} />
+                          </Button>
+                     </Card>
+                   );
+             }
+            return (
+                <Card key={index} className="flex items-center justify-between min-w-fit p-2">
+                    <div className="flex items-center space-x-4 w-full">
+                        <GripVertical className="mr-2 text-gray-400 cursor-grab" size={20} />
+                        <div className="flex flex-col items-start gap-2 w-full">
+                            <div className="flex items-center w-full">
+                                {/* Field select */}
+                                {condition.fields.length > 0 && (
+                                    <Select
+                                        value={relatedCondition.field || ""}
+                                        onValueChange={(value) => { updateRelatedAttributeCondition('field', value, index) }}
+                                    >
+                                        <SelectTrigger className="w-1/2">
+                                            <SelectValue placeholder="Chọn trường dữ liệu">
+                                                {relatedCondition.field
+                                                    ? attributes.find((attr) => attr.name === relatedCondition.field)?.name || "Chọn trường dữ liệu"
+                                                    : "Không có thuộc tính"}
+                                            </SelectValue>
+                                        </SelectTrigger>
+                                        <SelectContent className="bg-card border-[0.5px] border-card-foreground shadow-lg rounded-md z-50">
+                                            {attributes.length > 0 ? (
+                                                attributes.map((attr) => (
+                                                    <SelectItem
+                                                        key={attr.name}
+                                                        value={attr.name}
+                                                        className="hover:bg-background hover.rounded-md cursor-pointer"
+                                                    >
+                                                        <div className="flex items-center">
+                                                            <span className="mr-2 w-5 text-gray-500">
+                                                                {attr.type === "number"
+                                                                    ? "#"
+                                                                    : attr.type === "datetime"
+                                                                        ? "⏱"
+                                                                        : attr.type === "boolean"
+                                                                            ? "✓"
+                                                                            : attr.type === "array"
+                                                                                ? "[]"
+                                                                                : "T"}
+                                                            </span>
+                                                            {attr.name}
+                                                        </div>
+                                                    </SelectItem>
+                                                ))
+                                            ) : (
+                                                <SelectItem
+                                                    value="no attribute"
+                                                    disabled
+                                                    className="text-gray-400"
+                                                >
+                                                    Không có thuộc tính khả dụng
+                                                </SelectItem>
+                                            )}
+                                        </SelectContent>
+                                    </Select>
+                                )}
+
+                                {/* Operator select */}
+                                <Select
+                                    value={relatedCondition.operator || ""}
+                                    onValueChange={(newValue) => updateRelatedAttributeCondition("operator", newValue, index)}
+                                    disabled={!condition.fields}
+                                >
+                                    <SelectTrigger className="w-1/2 ml-2">
+                                        <SelectValue placeholder="Select operator" />
+                                    </SelectTrigger>
+                                    <SelectContent className="bg-card border-[0.5px] border-card-foreground shadow-lg rounded-md z-50">
+                                        {operators.map((op) => (
+                                            <SelectItem
+                                                key={op.value}
+                                                value={op.value}
+                                                className="hover:bg-background hover.rounded-md cursor-pointer"
+                                            >
+                                                {translateLabelToVietnamese(op.label)}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                            {/* Value input */}
+                            {relatedCondition.operator &&
+                                !["is_null", "is_not_null", "is_empty", "is_not_empty"].includes(relatedCondition.operator) && (
+                                    <div className="flex items-center w-full">
+                                        <Select
+                                            value={relatedCondition.value || undefined}
+                                            onValueChange={(newValue) => updateRelatedAttributeCondition("value", newValue, index)}
+                                        >
+                                            <SelectTrigger className="w-full">
+                                                <SelectValue placeholder="Chọn cửa hàng" />
+                                            </SelectTrigger>
+                                            <SelectContent className="bg-card border-[0.5px] border-card-foreground shadow-lg rounded-md z-50">
+                                                {storeNameOptions.map(store => (
+                                                    <SelectItem key={store} value={store} className="hover:bg-background hover.rounded-md cursor-pointer">
+                                                        {store}
+                                                    </SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+                                )}
+                        </div>
+                    </div>
+                    <Button variant="ghost" size="icon" className="ml-2" onClick={() => removeAttributeCondition(index)}>
+                        <Trash className="w-4 h-4" color={"#E11D48"} />
+                    </Button>
+                </Card>
+            );
+        }
+
+        // Handle Category dropdown
+        if (fieldName === 'category') {
+             // Define category options
+             const categoryOptions = ['Electronics', 'Software', 'Accessories'];
+             // Only allow 'equals' and 'not_equals' operators for category dropdown
+             if (!['equals', 'not_equals', 'contains', 'not_contains'].includes(relatedCondition.operator)) {
+                  return (
+                    <Card key={index} className="flex items-center justify-between min-w-fit p-2">
+                         {/* ... existing code ... */}
+                         <div className="flex items-center space-x-4 w-full">
+                              <GripVertical className="mr-2 text-gray-400 cursor-grab" size={20} />
+                              <div className="flex flex-col items-start gap-2 w-full">
+                                  <div className="flex items-center w-full">
+                                      {/* Field select */}
+                                      {condition.fields.length > 0 && (
+                                          <Select
+                                              value={relatedCondition.field || ""}
+                                              onValueChange={(value) => { updateRelatedAttributeCondition('field', value, index) }}
+                                          >
+                                              <SelectTrigger className="w-1/2">
+                                                  <SelectValue placeholder="Chọn trường dữ liệu">
+                                                      {relatedCondition.field
+                                                          ? attributes.find((attr) => attr.name === relatedCondition.field)?.name || "Chọn trường dữ liệu"
+                                                          : "Không có thuộc tính"}
+                                                  </SelectValue>
+                                              </SelectTrigger>
+                                              <SelectContent className="bg-card border-[0.5px] border-card-foreground shadow-lg rounded-md z-50">
+                                                  {attributes.length > 0 ? (
+                                                      attributes.map((attr) => (
+                                                          <SelectItem
+                                                              key={attr.name}
+                                                              value={attr.name}
+                                                              className="hover:bg-background hover:rounded-md cursor-pointer"
+                                                          >
+                                                              <div className="flex items-center">
+                                                                  <span className="mr-2 w-5 text-gray-500">
+                                                                      {attr.type === "number"
+                                                                          ? "#"
+                                                                          : attr.type === "datetime"
+                                                                              ? "⏱"
+                                                                              : attr.type === "boolean"
+                                                                                  ? "✓"
+                                                                                  : attr.type === "array"
+                                                                                      ? "[]"
+                                                                                      : "T"}
+                                                                  </span>
+                                                                  {attr.name}
+                                                              </div>
+                                                          </SelectItem>
+                                                      ))
+                                                  ) : (
+                                                      <SelectItem
+                                                          value="no attribute"
+                                                          disabled
+                                                          className="text-gray-400"
+                                                      >
+                                                          Không có thuộc tính khả dụng
+                                                      </SelectItem>
+                                                  )}
+                                              </SelectContent>
+                                          </Select>
+                                      )}
+
+                                      {/* Operator select */}
+                                      <Select
+                                          value={relatedCondition.operator || ""}
+                                          onValueChange={(newValue) => updateRelatedAttributeCondition("operator", newValue, index)}
+                                          disabled={!condition.fields}
+                                      >
+                                          <SelectTrigger className="w-1/2 ml-2">
+                                              <SelectValue placeholder="Select operator" />
+                                          </SelectTrigger>
+                                          <SelectContent className="bg-card border-[0.5px] border-card-foreground shadow-lg rounded-md z-50">
+                                              {operators.map((op) => (
+                                                  <SelectItem
+                                                      key={op.value}
+                                                      value={op.value}
+                                                      className="hover:bg-background hover:rounded-md cursor-pointer"
+                                                  >
+                                                      {translateLabelToVietnamese(op.label)}
+                                                  </SelectItem>
+                                              ))}
+                                          </SelectContent>
+                                      </Select>
+                                  </div>
+                                   <Input className="ml-2 flex-grow" value="N/A - Chọn toán tử khác" disabled />
+                               </div>
+                         </div>
+                         {/* ... existing code ... */}
+                         <Button variant="ghost" size="icon" className="ml-2" onClick={() => removeAttributeCondition(index)}>
+                              <Trash className="w-4 h-4" color={"#E11D48"} />
+                         </Button>
+                    </Card>
+                  );
+             }
+            return (
+                <Card key={index} className="flex items-center justify-between min-w-fit p-2">
+                    <div className="flex items-center space-x-4 w-full">
+                        <GripVertical className="mr-2 text-gray-400 cursor-grab" size={20} />
+                        <div className="flex flex-col items-start gap-2 w-full">
+                            <div className="flex items-center w-full">
+                                {/* Field select */}
+                                {condition.fields.length > 0 && (
+                                    <Select
+                                        value={relatedCondition.field || ""}
+                                        onValueChange={(value) => { updateRelatedAttributeCondition('field', value, index) }}
+                                    >
+                                        <SelectTrigger className="w-1/2">
+                                            <SelectValue placeholder="Chọn trường dữ liệu">
+                                                {relatedCondition.field
+                                                    ? attributes.find((attr) => attr.name === relatedCondition.field)?.name || "Chọn trường dữ liệu"
+                                                    : "Không có thuộc tính"}
+                                            </SelectValue>
+                                        </SelectTrigger>
+                                        <SelectContent className="bg-card border-[0.5px] border-card-foreground shadow-lg rounded-md z-50">
+                                            {attributes.length > 0 ? (
+                                                attributes.map((attr) => (
+                                                    <SelectItem
+                                                        key={attr.name}
+                                                        value={attr.name}
+                                                        className="hover:bg-background hover:rounded-md cursor-pointer"
+                                                    >
+                                                        <div className="flex items-center">
+                                                            <span className="mr-2 w-5 text-gray-500">
+                                                                {attr.type === "number"
+                                                                    ? "#"
+                                                                    : attr.type === "datetime"
+                                                                        ? "⏱"
+                                                                        : attr.type === "boolean"
+                                                                            ? "✓"
+                                                                            : attr.type === "array"
+                                                                                ? "[]"
+                                                                                : "T"}
+                                                            </span>
+                                                            {attr.name}
+                                                        </div>
+                                                    </SelectItem>
+                                                ))
+                                            ) : (
+                                                <SelectItem
+                                                    value="no attribute"
+                                                    disabled
+                                                    className="text-gray-400"
+                                                >
+                                                    Không có thuộc tính khả dụng
+                                                </SelectItem>
+                                            )}
+                                        </SelectContent>
+                                    </Select>
+                                )}
+
+                                {/* Operator select */}
+                                <Select
+                                    value={relatedCondition.operator || ""}
+                                    onValueChange={(newValue) => updateRelatedAttributeCondition("operator", newValue, index)}
+                                    disabled={!condition.fields}
+                                >
+                                    <SelectTrigger className="w-1/2 ml-2">
+                                        <SelectValue placeholder="Select operator" />
+                                    </SelectTrigger>
+                                    <SelectContent className="bg-card border-[0.5px] border-card-foreground shadow-lg rounded-md z-50">
+                                        {operators.map((op) => (
+                                            <SelectItem
+                                                key={op.value}
+                                                value={op.value}
+                                                className="hover:bg-background hover:rounded-md cursor-pointer"
+                                            >
+                                                {translateLabelToVietnamese(op.label)}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                            {/* Value input */}
+                            {relatedCondition.operator &&
+                                !["is_null", "is_not_null", "is_empty", "is_not_empty"].includes(relatedCondition.operator) && (
+                                    <div className="flex items-center w-full">
+                                        <Select
+                                            value={relatedCondition.value || undefined}
+                                            onValueChange={(newValue) => updateRelatedAttributeCondition("value", newValue, index)}
+                                        >
+                                            <SelectTrigger className="w-full">
+                                                <SelectValue placeholder="Chọn danh mục" />
+                                            </SelectTrigger>
+                                            <SelectContent className="bg-card border-[0.5px] border-card-foreground shadow-lg rounded-md z-50">
+                                                {categoryOptions.map(category => (
+                                                    <SelectItem key={category} value={category} className="hover:bg-background hover:rounded-md cursor-pointer">
+                                                        {category}
+                                                    </SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+                                )}
+                        </div>
+                    </div>
+                    <Button variant="ghost" size="icon" className="ml-2" onClick={() => removeAttributeCondition(index)}>
+                        <Trash className="w-4 h-4" color={"#E11D48"} />
+                    </Button>
+                </Card>
+            );
+        }
+
+        // Default rendering (Input or Datetime picker)
         return (
             <Card key={index} className="flex items-center justify-between min-w-fit p-2">
                 <div className="flex items-center space-x-4 w-full">

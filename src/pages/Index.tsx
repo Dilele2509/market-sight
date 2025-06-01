@@ -177,7 +177,7 @@ export default function Dashboard() {
           </div> : (
             <div className="flex flex-col items-center justify-center py-20 space-y-4">
               <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-card-foreground"></div>
-              <p className="text-sm text-muted-foreground">Loading data...</p>
+              <p className="text-sm text-muted-foreground">Đang tải dữ liệu...</p>
             </div>)}
 
           <div className="mt-6">
@@ -215,7 +215,7 @@ export default function Dashboard() {
 
                   {/* Orders Per Day Card */}
                   <MetricCard
-                    title="Tổng hơn hàng mỗi ngày"
+                    title="Tổng đơn hàng mỗi ngày"
                     value={dashboardData.values.orders_per_day}
                     change={dashboardData.changes.orders_per_day}
                     icon={<ShoppingCartIcon />}
@@ -233,8 +233,8 @@ export default function Dashboard() {
 
                 {/* GMV Trend Chart */}
                 <LineChartCard
-                  title="Business Performance Metrics"
-                  description="Monthly comparison of all key business metrics"
+                  title="Hiệu suất hoạt động"
+                  description="So sánh các số liệu chính theo tháng"
                   data={rawData?.data?.metrics}
                   dataKeys={metricsToShow}
                   smallValueKeys={smallValueMetrics}
@@ -248,8 +248,8 @@ export default function Dashboard() {
                 <div className="grid gap-4 md:grid-cols-2">
                   {/* Orders vs Customers Chart */}
                   <BarChartCard
-                    title="Orders vs Customers"
-                    description="Monthly comparison for the period"
+                    title="Đơn hàng vs Khách hàng"
+                    description="So sánh các số liệu chính theo tháng"
                     data={rawData?.data?.metrics}
                     barKeys={["orders", "unique_customers"]}
                     xAxisDataKey="name"
@@ -258,8 +258,8 @@ export default function Dashboard() {
 
                   {/* AOV Distribution Chart */}
                   <PieChartCard
-                    title="AOV Distribution"
-                    description={`Order value distribution for period`}
+                    title="Phân bổ AOV"
+                    description={`Phân bổ giá trị đơn hàng theo tháng`}
                     data={rawData?.data?.metrics}
                     dataKey="value"
                     nameKey="name"

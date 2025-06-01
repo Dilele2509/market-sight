@@ -122,12 +122,12 @@ export default function ConnectionDialog() {
                         </p>
                     </Card>
                     <p className="text-sm text-gray-600">
-                        This connection uses the Supabase Transaction Pooler (Supavisor), ideal for stateless applications. Connection details will be stored securely for 1 hour.
+                        Kết nối này sử dụng Supabase Transaction Pooler (Supavisor), lý tưởng cho các ứng dụng không trạng thái. Thông tin kết nối sẽ được lưu trữ an toàn trong 1 giờ.
                     </p>
                     <div className="relative">
                         <Input
                             type={showPassword ? "text" : "password"}
-                            placeholder="PostgreSQL Connection URL"
+                            placeholder="URL kết nối PostgreSQL"
                             value={connectionUrl || ''}
                             onChange={(e) => setConnectionUrl(e.target.value)}
                             className="pr-10 py-2 w-full"
@@ -141,20 +141,20 @@ export default function ConnectionDialog() {
                         </button>
                     </div>
                     <Alert className="border-l-4 border-yellow-500 bg-yellow-100/90 text-yellow-900 shadow-md rounded-lg p-4">
-                        <AlertTitle className="text-sm font-semibold">⚠️ Important</AlertTitle>
+                        <AlertTitle className="text-sm font-semibold">⚠️ Lưu ý</AlertTitle>
                         <AlertDescription className="text-xs font-medium leading-relaxed">
-                            Make sure your Supabase project allows connections from your current IP address.
-                            You can configure this in your Supabase project settings.
+                            Đảm bảo dự án Supabase của bạn cho phép kết nối từ địa chỉ IP hiện tại của bạn.
+                            Bạn có thể cấu hình điều này trong cài đặt dự án Supabase của bạn.
                         </AlertDescription>
                     </Alert>
                 </div>
                 <DialogFooter>
-                    <Button variant="ghost" onClick={() => setConnectionDialog(!connectionDialog)}>Cancel</Button>
+                    <Button variant="ghost" onClick={() => setConnectionDialog(!connectionDialog)}>Hủy bỏ</Button>
                     <Button variant="outline" onClick={testConnection} disabled={!connectionUrl || loading}>
-                        {loading ? <Loader2 className="animate-spin" size={18} /> : "Test Connection"}
+                        {loading ? <Loader2 className="animate-spin" size={18} /> : "Kiểm tra kết nối"}
                     </Button>
                     <Button onClick={handleConnectionSubmit} disabled={!connectionUrl || loading}>
-                        {loading ? <Loader2 className="animate-spin" size={18} /> : "Connect"}
+                        {loading ? <Loader2 className="animate-spin" size={18} /> : "Kết nối"}
                     </Button>
                 </DialogFooter>
             </DialogContent>

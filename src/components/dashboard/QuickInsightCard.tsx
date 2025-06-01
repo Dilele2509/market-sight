@@ -8,7 +8,7 @@ interface QuickInsightsCardProps {
 
 export function QuickInsightsCard({ data }: QuickInsightsCardProps) {
     const formatPercentageChange = (change: number) => `${change.toFixed(2)}%`;
-    const formatIncreaseOrDecrease = (change: number) => (change > 0 ? 'Increased' : 'Decreased');
+    const formatIncreaseOrDecrease = (change: number) => (change > 0 ? 'Tăng' : 'Giảm');
 
     const getChangeIconAndBg = (change: number, Icon: React.ElementType) => {
         return {
@@ -17,11 +17,41 @@ export function QuickInsightsCard({ data }: QuickInsightsCardProps) {
         };
     };
 
+    const getEvaluationMessage = (change: number, metric: string) => {
+        const absChange = Math.abs(change);
+        const isPositive = change > 0;
+        const prefix = isPositive ? 'Tăng' : 'Giảm';
+        
+        let intensity = '';
+        if (absChange < 5) {
+            intensity = 'nhẹ';
+        } else if (absChange < 15) {
+            intensity = 'trung bình';
+        } else if (absChange < 30) {
+            intensity = 'khá mạnh';
+        } else {
+            intensity = 'mạnh';
+        }
+
+        switch (metric) {
+            case 'orders':
+                return `${prefix} ${intensity} trong số lượng đơn hàng`;
+            case 'aov':
+                return `${prefix} ${intensity} trong giá trị đơn hàng trung bình`;
+            case 'unique_customers':
+                return `${prefix} ${intensity} trong số lượng khách hàng mới`;
+            case 'gmv':
+                return `${prefix} ${intensity} trong tổng doanh thu`;
+            default:
+                return '';
+        }
+    };
+
     return (
         <Card>
             <CardHeader>
-                <CardTitle>Quick Insights</CardTitle>
-                <CardDescription>Key takeaways from {new Date(data.period.start_date).toLocaleString('en-us', { month: 'long', year: 'numeric' })}</CardDescription>
+                <CardTitle>Phân tích nhanh</CardTitle>
+                <CardDescription>Những điểm chính từ {new Date(data.period.start_date).toLocaleString('en-us', { month: 'long', year: 'numeric' })}</CardDescription>
             </CardHeader>
             <CardContent>
                 <div className="space-y-4">
@@ -31,8 +61,8 @@ export function QuickInsightsCard({ data }: QuickInsightsCardProps) {
                             {getChangeIconAndBg(data.changes.orders, TrendingUpIcon).icon}
                         </div>
                         <div className="space-y-1">
-                            <p className="text-sm font-medium">{`Orders ${formatIncreaseOrDecrease(data.changes.orders)} by ${formatPercentageChange(data.changes.orders)}`}</p>
-                            <p className="text-xs text-muted-foreground">Strong growth in order volume</p>
+                            <p className="text-sm font-medium">{`Đơn hàng ${formatIncreaseOrDecrease(data.changes.orders)} ${formatPercentageChange(data.changes.orders)}`}</p>
+                            <p className="text-xs text-muted-foreground">{getEvaluationMessage(data.changes.orders, 'orders')}</p>
                         </div>
                     </div>
 
@@ -42,19 +72,19 @@ export function QuickInsightsCard({ data }: QuickInsightsCardProps) {
                             {getChangeIconAndBg(data.changes.aov, TrendingUpIcon).icon}
                         </div>
                         <div className="space-y-1">
-                            <p className="text-sm font-medium">{`AOV ${formatIncreaseOrDecrease(data.changes.aov)} by ${formatPercentageChange(data.changes.aov)}`}</p>
-                            <p className="text-xs text-muted-foreground">Significant drop in average order value</p>
+                            <p className="text-sm font-medium">{`AOV ${formatIncreaseOrDecrease(data.changes.aov)} ${formatPercentageChange(data.changes.aov)}`}</p>
+                            <p className="text-xs text-muted-foreground">{getEvaluationMessage(data.changes.aov, 'aov')}</p>
                         </div>
                     </div>
 
                     {/* Unique Customers */}
                     <div className="flex items-start gap-2">
-                        <div className="rounded-full bg-emerald-100 p-1.5 dark:bg-emerald-900">
-                            <UsersIcon className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+                        <div className={`rounded-full p-1.5 ${getChangeIconAndBg(data.changes.unique_customers, UsersIcon).bgClass}`}>
+                            {getChangeIconAndBg(data.changes.unique_customers, UsersIcon).icon}
                         </div>
                         <div className="space-y-1">
-                            <p className="text-sm font-medium">{`Customer base grew by ${formatPercentageChange(data.changes.unique_customers)}`}</p>
-                            <p className="text-xs text-muted-foreground">Healthy growth in unique customers</p>
+                            <p className="text-sm font-medium">{`Khách hàng ${formatIncreaseOrDecrease(data.changes.unique_customers)} ${formatPercentageChange(data.changes.unique_customers)}`}</p>
+                            <p className="text-xs text-muted-foreground">{getEvaluationMessage(data.changes.unique_customers, 'unique_customers')}</p>
                         </div>
                     </div>
 
@@ -64,8 +94,8 @@ export function QuickInsightsCard({ data }: QuickInsightsCardProps) {
                             {getChangeIconAndBg(data.changes.gmv, DollarSignIcon).icon}
                         </div>
                         <div className="space-y-1">
-                            <p className="text-sm font-medium">{`GMV ${formatIncreaseOrDecrease(data.changes.gmv)} by ${formatPercentageChange(data.changes.gmv)}`}</p>
-                            <p className="text-xs text-muted-foreground">Overall revenue decline despite more orders</p>
+                            <p className="text-sm font-medium">{`GMV ${formatIncreaseOrDecrease(data.changes.gmv)} ${formatPercentageChange(data.changes.gmv)}`}</p>
+                            <p className="text-xs text-muted-foreground">{getEvaluationMessage(data.changes.gmv, 'gmv')}</p>
                         </div>
                     </div>
                 </div>

@@ -38,28 +38,6 @@ export function AccountRegistrationForm({
     showPassword = false,
     onToggleShowPassword,
 }: AccountRegistrationFormProps) {
-    const [businessList, setBusinessList] = useState<any[]>([])
-
-    const fetchBusinessList = async () => {
-        try {
-            await axiosPrivate.get('/businesses')
-                .then((res) => {
-                    if (res.status === 200) {
-                        setBusinessList(res.data)
-                    };
-                })
-                .catch((err) => {
-                    toast.error(err.message)
-                })
-        } catch (error) {
-            toast.error(error.message)
-        }
-    }
-
-    useEffect(() => {
-        fetchBusinessList();
-    }, [])
-
     if (step === 1) {
         return (
             <motion.div
@@ -72,24 +50,24 @@ export function AccountRegistrationForm({
             >
                 <div className="grid grid-cols-2 gap-4">
                     <div className="grid gap-2">
-                        <Label htmlFor="firstName">First Name</Label>
+                        <Label htmlFor="firstName">Họ</Label>
                         <Input
                             id="firstName"
                             type="text"
                             value={formData.firstName}
                             onChange={onInputChange}
-                            placeholder="John"
+                            placeholder="Nguyễn"
                             required
                         />
                     </div>
                     <div className="grid gap-2">
-                        <Label htmlFor="lastName">Last Name</Label>
+                        <Label htmlFor="lastName">Tên</Label>
                         <Input
                             id="lastName"
                             type="text"
                             value={formData.lastName}
                             onChange={onInputChange}
-                            placeholder="Doe"
+                            placeholder="Văn A"
                             required
                         />
                     </div>
@@ -106,7 +84,7 @@ export function AccountRegistrationForm({
                     />
                 </div>
                 <div className="grid gap-2">
-                    <Label>Role</Label>
+                    <Label>Vai trò</Label>
                     <RadioGroup onValueChange={(value) => onSelectChange("role", value)} value={formData.role}>
                         <div className="flex items-center space-x-2">
                             <RadioGroupItem value="3" id="marketing" />
@@ -118,42 +96,12 @@ export function AccountRegistrationForm({
                         </div>
                     </RadioGroup>
                 </div>
-                <div className="grid gap-2">
-                    <Label>Select Business</Label>
-                    <Select
-                        onValueChange={(value) => onSelectChange("business_id", value)} 
-                        value={String(formData.business_id)} 
-                    >
-                        <SelectTrigger>
-                            <SelectValue placeholder="Select a business">
-                                {businessList.find((b) => b.business_id === Number(formData.business_id))?.name || "Select a business"}
-                            </SelectValue>
-                        </SelectTrigger>
-                        {Array.isArray(businessList) && businessList.length > 0 && (
-                            <SelectContent className="bg-card">
-                                {businessList.map((business) => (
-                                    <SelectItem
-                                        key={business.business_id}
-                                        className="hover:bg-background hover:cursor-pointer"
-                                        value={String(business.business_id)} 
-                                    >
-                                        {business.name}
-                                    </SelectItem>
-                                ))}
-                            </SelectContent>
-                        )}
-                    </Select>
-                    {/* Custom helper text below Select */}
-                    <p className="text-sm text-muted-foreground">
-                        Can not find your business? <BusinessGuideModal />
-                    </p>
-                </div>
                 <div className="flex gap-2">
                     <Button type="button" variant="outline" onClick={onBack} className="w-full">
-                        Back
+                        Quay lại
                     </Button>
                     <Button type="button" onClick={onNext} className="w-full">
-                        Next
+                        Tiếp tục
                     </Button>
                 </div>
             </motion.div>
@@ -170,7 +118,7 @@ export function AccountRegistrationForm({
             className="flex flex-col gap-6"
         >
             <div className="grid gap-2">
-                <Label htmlFor="password">Password</Label>
+                <Label htmlFor="password">Mật khẩu</Label>
                 <Input
                     id="password"
                     type={showPassword ? "text" : "password"}
@@ -180,7 +128,7 @@ export function AccountRegistrationForm({
                 />
             </div>
             <div className="grid gap-2">
-                <Label htmlFor="confirmPassword">Confirm Password</Label>
+                <Label htmlFor="confirmPassword">Xác nhận mật khẩu</Label>
                 <Input
                     id="confirmPassword"
                     type={showPassword ? "text" : "password"}
@@ -198,7 +146,7 @@ export function AccountRegistrationForm({
                         htmlFor="showPassword"
                         className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
                     >
-                        Show password
+                        Hiển thị mật khẩu
                     </label>
                 </div>
             </div>
@@ -207,7 +155,7 @@ export function AccountRegistrationForm({
                     Back
                 </Button>
                 <Button type="submit" className="w-full">
-                    Register
+                    Đăng ký
                 </Button>
             </div>
         </motion.div>

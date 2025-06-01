@@ -106,12 +106,6 @@ export function PreviewPanel({
             <Tabs defaultValue="preview" value={activeTab} onValueChange={setActiveTab} className="flex flex-col h-full">
                 <CardHeader className="px-4 py-3 border-b bg-card">
                     <TabsList className="grid grid-cols-3 h-10 rounded-lg">
-                        <TabsTrigger disabled={isLoading} value="sql" className="rounded-md">
-                            <div className="flex items-center gap-2 py-0.5">
-                                <Code className="h-4 w-4" />
-                                <span className="text-sm font-medium">Chỉnh sửa SQL</span>
-                            </div>
-                        </TabsTrigger>
                         <TabsTrigger disabled={isLoading || Object.entries(responseData || {}).length === 0} value="model" className="rounded-md">
                             <div className="flex items-center gap-2 py-0.5">
                                 <Database className="h-4 w-4" />
@@ -122,6 +116,12 @@ export function PreviewPanel({
                             <div className="flex items-center gap-2 py-0.5">
                                 <Table className="h-4 w-4" />
                                 <span className="text-sm font-medium">Xem trước</span>
+                            </div>
+                        </TabsTrigger>
+                        <TabsTrigger disabled={isLoading} value="sql" className="rounded-md">
+                            <div className="flex items-center gap-2 py-0.5">
+                                <Code className="h-4 w-4" />
+                                <span className="text-sm font-medium">Chỉnh sửa SQL</span>
                             </div>
                         </TabsTrigger>
                     </TabsList>

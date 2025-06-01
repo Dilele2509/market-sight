@@ -38,6 +38,32 @@ export const CustomTooltipContent = ({ active, payload, label, formatter }: any)
     return null
 }
 
+// Custom tooltip content component for Pie Chart
+const CustomPieTooltipContent = ({ active, payload }: any) => {
+    if (active && payload && payload.length) {
+        const data = payload[0].payload; // Data of the hovered slice
+        // Optional: calculate and show percentage
+        // const percentage = (payload[0].percent * 100).toFixed(0);
+
+        return (
+            <div className="rounded-md border bg-background p-2 shadow-sm text-sm">
+                <p className="font-medium">{data.name}</p>
+                <p>{`Số lượng: ${data.value}`}</p>
+                {/* Optional: display percentage */}
+                {/* <p>{`${percentage}%`}</p> */}
+            </div>
+        );
+    }
+
+    return null;
+};
+
+// Define label map for Bar Chart
+const barChartLabelMap: Record<string, string> = {
+    orders: "Đơn hàng",
+    unique_customers: "Khách hàng",
+};
+
 // Area Chart Component
 interface LineChartCardProps {
     title: string
@@ -63,7 +89,7 @@ export function LineChartCard({
 }: LineChartCardProps) {
     // Process the data to extract month names from period.start_date
     const processedData = data.map((item) => ({
-        month: new Date(item.period.start_date).toLocaleString("en-US", { month: "short" }),
+        month: new Date(item.period.start_date).toLocaleString("vi-VN", { month: "long", year: "numeric" }),
         ...item.values,
     }))
 
@@ -81,14 +107,14 @@ export function LineChartCard({
 
     // Create a more descriptive label mapping
     const labelMap: Record<string, string> = {
-        gmv: "GMV",
-        orders: "Orders",
-        unique_customers: "Unique Customers",
-        aov: "Average Order Value",
-        avg_bill_per_user: "Avg Bill Per User",
+        gmv: "Tổng giá trị hàng hoá",
+        orders: "Đơn hàng",
+        unique_customers: "Khách hàng",
+        aov: "Giá trị đơn hàng trung bình",
+        avg_bill_per_user: "Mức chi tiêu trung bình mỗi khách hàng",
         arpu: "ARPU",
-        orders_per_day: "Orders Per Day",
-        orders_per_day_per_store: "Orders Per Day Per Store",
+        orders_per_day: "Đơn hàng mỗi ngày",
+        orders_per_day_per_store: "Đơn hàng/ngày/cửa hàng",
     }
 
     return (
@@ -115,7 +141,7 @@ export function LineChartCard({
                             className="text-xs"
                             tickFormatter={valueFormatter}
                             domain={["auto", "auto"]}
-                            label={{ value: "Money Values", angle: -90, position: "insideLeft" }}
+                            label={{ value: "Giá trị tiền tệ", angle: -90, position: "insideLeft" }}
                         />
                         <YAxis
                             yAxisId="right"
@@ -123,7 +149,7 @@ export function LineChartCard({
                             className="text-xs"
                             tickFormatter={valueFormatter}
                             domain={["auto", "auto"]}
-                            label={{ value: "Quantity Values", angle: 90, position: "insideRight" }}
+                            label={{ value: "Số lượng", angle: 90, position: "insideRight" }}
                         />
                         <Tooltip formatter={(value, name) => [valueFormatter(value as number), labelMap[name as string] || name]} />
                         <Legend formatter={(value) => labelMap[value] || value} />
@@ -172,7 +198,7 @@ function CustomTooltipBarContent({
             {payload.map((entry, index) => (
                 <div key={index} className="flex justify-between gap-2">
                     <span className="capitalize" style={{ color: entry.color }}>
-                        {String(entry.name).replace(/_/g, " ")} 
+                        {barChartLabelMap[entry.name as string] || String(entry.name).replace(/_/g, " ")} 
                     </span>
                     <span>{formatter(Number(entry.value))}</span>
                 </div>
@@ -205,9 +231,10 @@ export function BarChartCard({
     // Create config object for ChartContainer
     const config: Record<string, { label: string; color: string }> = {}
     const transformedData = transformBarChartData(data);
+    // Map data keys to Vietnamese labels in config
     barKeys.forEach((key, index) => {
         config[key] = {
-            label: key,
+            label: barChartLabelMap[key] || key, // Use Vietnamese label or key
             color: `hsl(var(--chart-${index + 1}))`,
         }
     })
@@ -262,18 +289,28 @@ interface PieChartCardProps {
 
 function groupAOVRanges(data: dashboardDataInterface[]) {
     const result = {
-        "< 200": 0,
-        "200 – 400": 0,
-        "400 – 600": 0,
-        "> 600": 0,
+        "< 500": 0,
+        "500 – 1000": 0,
+        "1000 – 1500": 0,
+        "1500 – 2000": 0,
+        "2000 – 2500": 0,
+        "2500 – 3000": 0,
+        "3000 – 4000": 0,
+        "4000 – 5000": 0,
+        "> 5000": 0,
     };
 
     data.forEach((item) => {
         const aov = item.values.aov;
-        if (aov < 200) result["< 200"]++;
-        else if (aov < 400) result["200 – 400"]++;
-        else if (aov < 600) result["400 – 600"]++;
-        else result["> 600"]++;
+        if (aov < 500) result["< 500"]++;
+        else if (aov < 1000) result["500 – 1000"]++;
+        else if (aov < 1500) result["1000 – 1500"]++;
+        else if (aov < 2000) result["1500 – 2000"]++;
+        else if (aov < 2500) result["2000 – 2500"]++;
+        else if (aov < 3000) result["2500 – 3000"]++;
+        else if (aov < 4000) result["3000 – 4000"]++;
+        else if (aov < 5000) result["4000 – 5000"]++;
+        else result["> 5000"]++;
     });
 
     // Chỉ trả về những mục có value > 0
@@ -311,13 +348,15 @@ export function PieChartCard({
                             fill="#8884d8"
                             dataKey={dataKey}
                             nameKey={nameKey}
-                            label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                            label={({ percent }) => `${(percent * 100).toFixed(0)}%`}
                         >
                             {transformedData.map((entry, index) => (
                                 <Cell key={`cell-${index}`} fill={colors[index % colors.length]} />
                             ))}
                         </Pie>
-                        <Tooltip formatter={(value) => [valueFormatter(value as number), "Count"]} />
+                        <Tooltip
+                            content={<CustomPieTooltipContent />}
+                        />
                     </PieChart>
                 </ResponsiveContainer>
             </CardContent>

@@ -47,12 +47,12 @@ export default function Login() {
           <Card>
             <CardHeader className="text-center">
               <CardTitle className="text-xl text-primary">Chào mừng trở lại</CardTitle>
-              <CardDescription>Đăng nhập bằng tài khoản Google của bạn</CardDescription>
+              <CardDescription>Đăng nhập bằng tài khoản của bạn</CardDescription>
             </CardHeader>
             <CardContent>
               <form onSubmit={handleSubmit}>
                 <div className="grid gap-6">
-                  <div className="flex flex-col gap-4">
+                  {/* <div className="flex flex-col gap-4">
                     <Button variant="outline" className="w-full">
                       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
                         <path
@@ -62,9 +62,9 @@ export default function Login() {
                       </svg>
                       Đăng nhập bằng Google
                     </Button>
-                  </div>
+                  </div> */}
                   <div className="relative text-center text-sm after:absolute after:inset-0 after:top-1/2 after:z-0 after:flex after:items-center after:border-t after:border-border">
-                    <span className="relative z-10 bg-background px-2 text-muted-foreground">Hoặc tiếp tục với</span>
+                    <span className="relative z-10 bg-background px-2 text-muted-foreground">Tiến hành đăng nhập với</span>
                   </div>
                   <div className="grid gap-6">
                     <div className="grid gap-2">

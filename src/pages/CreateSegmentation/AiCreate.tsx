@@ -14,7 +14,7 @@ import { headers } from "next/headers"
 import { updateChatHistory, updateHistoryResult } from "@/utils/aiFunctionHelper"
 
 export default function AiCreate() {
-    const [activeTab, setActiveTab] = useState("sql")
+    const [activeTab, setActiveTab] = useState("model")
     const [isLoading, setIsLoading] = useState(false)
     const { token } = useContext(AuthContext);
     const [isModification, setIsModification] = useState(true)

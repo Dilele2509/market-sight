@@ -13,19 +13,7 @@ export default function MicroSegmentation() {
 
     return (
         <DashboardShell>
-            {!connection ? (
-                <div className="flex flex-col gap-6 items-center justify-center h-[60vh]">
-                    <Alert variant="destructive" className="max-w-md text-center">
-                        <AlertTitle>Yêu cầu kết nối cơ sở dữ liệu</AlertTitle>
-                        <AlertDescription>
-                            Chưa có dữ liệu nào được nhập. Vui lòng điều hướng đến trang Nhập dữ liệu để kết nối với cơ sở dữ liệu của bạn.
-                        </AlertDescription>
-                    </Alert>
-                    <Button onClick={() => navigate("/connect-data")} className="mt-4">
-                        Đi đến kết nối
-                    </Button>
-                </div>
-            ) : (<div className="flex flex-col gap-6">
+            <div className="flex flex-col gap-6">
                 <h1 className="text-3xl font-bold tracking-tight">Phân Khúc Vi Mô</h1>
                 <Tabs
                     defaultValue="rfm"
@@ -39,7 +27,7 @@ export default function MicroSegmentation() {
                 </Tabs>
 
                 <Outlet />
-            </div>)}
+            </div>
         </DashboardShell>
     );
 }
