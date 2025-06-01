@@ -1,4 +1,4 @@
-﻿"use client"
+"use client"
 
 import { useContext, useEffect, useState } from "react"
 import { ChatInterface } from "@/components/blocks/AIChat/chat-interface"
