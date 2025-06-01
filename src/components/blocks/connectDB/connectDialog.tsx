@@ -1,4 +1,4 @@
-import { useContext, useState } from "react";
+﻿import { useContext, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogFooter, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -118,7 +118,7 @@ export default function ConnectionDialog() {
                     <h3 className="text-lg font-medium">Định dạng URL kết nối</h3>
                     <Card className="p-4 bg-background border border-gray-300 rounded-md">
                         <p className="font-mono break-all text-sm">
-                            postgresql://postgres.cyjehsjjvcakeizrehjy:[YOUR-PASSWORD]@aws-0-ap-southeast-1.pooler.supabase.com:6543/postgres
+                            postgresql://[your_username]:[your_password]@[your_host]:[your_port]/[your_database]
                         </p>
                     </Card>
                     <p className="text-sm text-gray-600">

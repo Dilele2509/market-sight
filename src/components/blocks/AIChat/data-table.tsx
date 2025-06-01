@@ -1,4 +1,4 @@
-import { axiosPrivate } from "@/API/axios";
+﻿import { axiosPrivate } from "@/API/axios";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import AuthContext from "@/context/AuthContext";
 import { useSegmentData } from "@/context/SegmentDataContext";
@@ -27,18 +27,11 @@ export function DataTable({ previewResponseData }: DataTableProps) {
         setPreviewLoading(true);
 
         try {
-            const connectionUrl = localStorage.getItem(CONNECTION_STORAGE_KEY)
-
-            if (!connectionUrl) {
-                toast.error("Connection URL not configured. Please set the connection URL first.");
-                setPreviewLoading(false);
-                return;
-            }
 
             // console.log("Executing SQL query for preview:", sqlQuery);
 
             try {
-                const url = new URL(connectionUrl);
+                const url = new URL("postgresql://postgres.cyjehsjjvcakeizrehjy:nguyenlegiangha@aws-0-ap-southeast-1.pooler.supabase.com:6543/postgres");
                 const username = url.username;
                 const password = url.password;
                 const host = url.hostname;

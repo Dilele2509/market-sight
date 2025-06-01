@@ -1,4 +1,4 @@
-import { useEffect, useContext } from "react";
+﻿import { useEffect, useContext } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
@@ -101,7 +101,7 @@ export default function SegmentBuilder({ onBack, editSegment }: SegmentBuilderPr
             // console.log("Executing SQL query for preview:", sqlQuery);
 
             try {
-                const url = new URL(connectionUrl);
+                const url = new URL("postgresql://postgres.cyjehsjjvcakeizrehjy:nguyenlegiangha@aws-0-ap-southeast-1.pooler.supabase.com:6543/postgres");
                 const username = url.username;
                 const password = url.password; 
                 const host = url.hostname;

@@ -1,4 +1,4 @@
-"use client"
+﻿"use client"
 
 import { useContext, useEffect, useState } from "react"
 import { ChatInterface } from "@/components/blocks/AIChat/chat-interface"
@@ -132,7 +132,7 @@ export default function AiCreate() {
                 if (filter) {
                     toast.success('AI response success');
                 }
-            } else if (res.status === 200 && !res.data.success) {
+            }else if (res.status === 200 && !res.data.success) {
                 const dataRes: ResponseData = res.data;
                 console.log('New responseData:', dataRes);
                 if (dataRes.data) {

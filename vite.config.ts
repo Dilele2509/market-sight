@@ -8,6 +8,7 @@ export default defineConfig(({ mode }) => ({
   server: {
     host: "::",
     port: 80,
+    allowedHosts: ['retailsight.pantech.vn'],
   },
   plugins: [
     react(),
